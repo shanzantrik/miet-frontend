@@ -163,7 +163,7 @@ export default function RootLayout({
               <h1 style={{ fontFamily: 'Righteous, cursive', fontSize: '1.7rem', color: '#5a67d8', fontWeight: 700, margin: 0, lineHeight: 1 }}>
                 {lang === 'en' ? 'MieT' : 'मीत'} <span style={{ fontFamily: 'Josefin Sans, Arial, sans-serif', color: '#22543d', fontSize: '1.1rem', fontWeight: 500 }}>({lang === 'en' ? 'मीत' : 'MieT'})</span>
               </h1>
-              <div style={{ fontFamily: 'Josefin Sans, Arial, sans-serif', color: '#5a67d8', fontSize: '1rem', fontWeight: 500, marginTop: 2 }}>
+              <div className="logo-tagline" style={{ fontFamily: 'Josefin Sans, Arial, sans-serif', color: '#5a67d8', fontSize: '1rem', fontWeight: 500, marginTop: 2 }}>
                 {lang === 'en' ? 'mind inclusion education technology' : 'माइंड इन्क्लूजन एजुकेशन टेक्नॉलॉजी'}
               </div>
             </div>
