@@ -240,7 +240,18 @@ export default function SearchPanel() {
             <button
               type="button"
               onClick={handleVoiceSearch}
-              style={{ position: 'absolute', right: 12, top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', color: listening ? 'var(--accent)' : 'var(--text-accent-alt)', fontSize: 22, cursor: 'pointer', padding: 0 }}
+              style={{
+                position: 'absolute',
+                right: 12,
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'none',
+                border: 'none',
+                color: listening ? '#e53e3e' : '#fff',
+                fontSize: 22,
+                cursor: 'pointer',
+                padding: 0
+              }}
               aria-label="Voice search"
             >
               <FaMicrophone />
