@@ -184,7 +184,7 @@ export default function WelcomeBoard() {
             }}>Education</div>
             <div style={{
               position: 'absolute',
-              left: 18,
+              left: -115,
               top: 160,
               transform: 'translate(0, -50%)',
               color: '#5a67d8',
