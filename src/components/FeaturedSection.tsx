@@ -1,57 +1,7 @@
-import React, { useRef, useState, useEffect } from 'react';
+'use client';
 
-const featuredConsultants = [
-  {
-    id: 1,
-    name: 'Dr. Asha Mehta',
-    image: 'https://images.unsplash.com/photo-1511367461989-f85a21fda167?auto=format&fit=facearea&w=256&h=256&facepad=2',
-    expertise: 'Child Psychologist',
-    city: 'Delhi',
-    mode: 'Online',
-    tagline: 'Empowering children and families with compassion and expertise.',
-    highlights: '15+ years experience · Award-winning speaker · Author',
-  },
-  {
-    id: 2,
-    name: 'Mr. Rajiv Kumar',
-    image: 'https://images.unsplash.com/photo-1508214751196-bcfd4ca60f91?auto=format&fit=facearea&w=256&h=256&facepad=2',
-    expertise: 'Speech Therapist',
-    city: 'Noida',
-    mode: 'At Home',
-    tagline: 'Unlocking communication, one word at a time.',
-    highlights: '10+ years · Multilingual · Parent favorite',
-  },
-  {
-    id: 3,
-    name: 'Ms. Priya Singh',
-    image: 'https://images.unsplash.com/photo-1529626455594-4ff0802cfb7e?auto=format&fit=facearea&w=256&h=256&facepad=2',
-    expertise: 'Special Educator',
-    city: 'Gurgaon',
-    mode: 'Online',
-    tagline: 'Inclusive learning for every child.',
-    highlights: '8+ years · Certified SEN · Creative teaching',
-  },
-  {
-    id: 4,
-    name: 'Dr. Neha Sharma',
-    image: 'https://images.unsplash.com/photo-1517841905240-472988babdf9?auto=format&fit=facearea&w=256&h=256&facepad=2',
-    expertise: 'Clinical Psychologist',
-    city: 'Delhi',
-    mode: 'At Home',
-    tagline: 'Mental wellness, made accessible.',
-    highlights: '12+ years · CBT specialist · Empathy-driven',
-  },
-  {
-    id: 5,
-    name: 'Mr. Anil Kapoor',
-    image: 'https://images.unsplash.com/photo-1463453091185-61582044d556?auto=format&fit=facearea&w=256&h=256&facepad=2',
-    expertise: 'Occupational Therapist',
-    city: 'Gurgaon',
-    mode: 'Online',
-    tagline: 'Building skills for independent living.',
-    highlights: '9+ years · Sensory integration · Fun sessions',
-  },
-];
+import React, { useRef, useState, useEffect } from 'react';
+import { consultants, Consultant } from './consultantsData';
 
 function getVisibleCount(width: number) {
   if (width < 600) return 1;
@@ -64,8 +14,8 @@ function getVisibleCount(width: number) {
 export default function FeaturedSection() {
   const [current, setCurrent] = useState(0);
   const [hovering, setHovering] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(getVisibleCount(typeof window !== 'undefined' ? window.innerWidth : 1200));
-  const [bookingConsultant, setBookingConsultant] = useState<typeof featuredConsultants[0] | null>(null);
+  const [visibleCount, setVisibleCount] = useState(3);
+  const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
   const [bookingName, setBookingName] = useState('');
@@ -77,6 +27,7 @@ export default function FeaturedSection() {
 
   // Responsive visibleCount
   useEffect(() => {
+    setVisibleCount(getVisibleCount(window.innerWidth));
     const handleResize = () => setVisibleCount(getVisibleCount(window.innerWidth));
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -86,7 +37,7 @@ export default function FeaturedSection() {
   useEffect(() => {
     if (!hovering) {
       intervalRef.current = setInterval(() => {
-        setCurrent(c => (c + 1) % featuredConsultants.length);
+        setCurrent(c => (c + 1) % consultants.length);
       }, 3500);
     } else if (intervalRef.current) {
       clearInterval(intervalRef.current);
@@ -97,14 +48,14 @@ export default function FeaturedSection() {
   }, [hovering]);
 
   // Arrow navigation
-  const goLeft = () => setCurrent(c => (c - 1 + featuredConsultants.length) % featuredConsultants.length);
-  const goRight = () => setCurrent(c => (c + 1) % featuredConsultants.length);
+  const goLeft = () => setCurrent(c => (c - 1 + consultants.length) % consultants.length);
+  const goRight = () => setCurrent(c => (c + 1) % consultants.length);
 
   // Get the visible consultants in a circular way
   const getVisibleConsultants = () => {
     const result = [];
     for (let i = 0; i < visibleCount; i++) {
-      result.push(featuredConsultants[(current + i) % featuredConsultants.length]);
+      result.push(consultants[(current + i) % consultants.length]);
     }
     return result;
   };
@@ -268,7 +219,7 @@ export default function FeaturedSection() {
       </div>
       {/* Bullets */}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 18 }}>
-        {featuredConsultants.map((_, idx) => (
+        {consultants.map((_, idx) => (
           <span
             key={idx}
             onClick={() => setCurrent(idx)}

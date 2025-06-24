@@ -1,3 +1,4 @@
+'use client';
 import React, { useState } from 'react';
 import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
@@ -207,7 +208,7 @@ export default function TopBar() {
                 </div>
               )}
             </div>
-            <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</a>
+            <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</a>
             <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</a>
             {/* Resources with submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleResourcesEnter} onMouseOut={handleResourcesLeave}>
@@ -264,7 +265,7 @@ export default function TopBar() {
                     <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Technology</a>
                   </div>
                 </div>
-                <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
+                <a href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
                 <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
                 {/* Resources submenu */}
                 <div style={{ marginBottom: 8 }}>
