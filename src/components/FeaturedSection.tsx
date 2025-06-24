@@ -314,31 +314,31 @@ export default function FeaturedSection() {
               </div>
             </div>
             <form onSubmit={e => { e.preventDefault(); alert('Booking submitted! (not really)'); setBookingConsultant(null); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Date
-                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4 }} />
+                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Time
-                <input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4 }} />
+                <input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Name
-                <input type="text" value={bookingName} onChange={e => setBookingName(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4 }} />
+                <input type="text" value={bookingName} onChange={e => setBookingName(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Email
-                <input type="email" value={bookingEmail} onChange={e => setBookingEmail(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4 }} />
+                <input type="email" value={bookingEmail} onChange={e => setBookingEmail(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Phone
-                <input type="tel" value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4 }} />
+                <input type="tel" value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
-              <label style={{ fontWeight: 600, color: '#22543d' }}>
+              <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Notes
-                <textarea value={bookingNotes} onChange={e => setBookingNotes(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1.5px solid #5a67d8', marginTop: 4, minHeight: 48 }} />
+                <textarea value={bookingNotes} onChange={e => setBookingNotes(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4, minHeight: 48 }} />
               </label>
-              <button type="submit" style={{ background: '#5a67d8', color: '#fff', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 8 }}>Book Now</button>
+              <button type="submit" style={{ background: 'var(--accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 8 }}>Book Now</button>
             </form>
           </div>
         </div>

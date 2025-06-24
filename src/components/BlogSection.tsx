@@ -83,7 +83,7 @@ export default function BlogSection() {
                 <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16, marginBottom: 6, textAlign: 'left', width: '100%' }}>{post.title}</div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: 13, marginBottom: 8, textAlign: 'left', width: '100%' }}>{post.excerpt}</div>
                 <div style={{ color: 'var(--accent)', fontSize: 12, fontWeight: 600, marginBottom: 2 }}>{post.category}</div>
-                <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 2 }}>{new Date(post.date).toLocaleDateString()}</div>
+                <div style={{ color: 'var(--text-secondary)', fontSize: 12, marginBottom: 2 }}>{post.date}</div>
                 <div style={{ color: 'var(--text-accent-alt)', fontSize: 13, fontWeight: 600 }}>{post.author}</div>
               </div>
             </div>

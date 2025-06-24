@@ -247,9 +247,9 @@ export default function SearchPanel() {
             </button>
           </div>
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-            <button type="button" onClick={handleNearby} style={{ background: nearby ? 'var(--accent)' : 'var(--muted)', color: nearby ? 'var(--text-accent-alt)' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Nearby</button>
+            <button type="button" onClick={handleNearby} style={{ background: nearby ? 'var(--accent)' : 'var(--muted)', color: nearby ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Nearby</button>
             {MODES.map(m => (
-              <button key={m} type="button" onClick={() => { setMode(m); setNearby(false); setPage(1); }} style={{ background: mode === m && !nearby ? 'var(--accent)' : 'var(--muted)', color: mode === m && !nearby ? 'var(--text-accent-alt)' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>{m}</button>
+              <button key={m} type="button" onClick={() => { setMode(m); setNearby(false); setPage(1); }} style={{ background: mode === m && !nearby ? 'var(--accent)' : 'var(--muted)', color: mode === m && !nearby ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>{m}</button>
             ))}
             <button type="button" style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Resources</button>
             <button type="button" style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Explore All</button>
@@ -288,7 +288,7 @@ export default function SearchPanel() {
                 <div style={{ color: 'var(--text-accent)', fontSize: 15 }}>{c.expertise}</div>
                 <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>{c.city} &middot; <span style={{ color: c.mode === 'Online' ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{c.mode}</span></div>
               </div>
-              <button onClick={() => setBookingConsultant(c)} style={{ background: 'var(--accent)', color: 'var(--text-accent-alt)', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Book</button>
+              <button onClick={() => setBookingConsultant(c)} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Book</button>
             </div>
           ))}
         </div>

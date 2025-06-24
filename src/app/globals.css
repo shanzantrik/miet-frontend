@@ -10,6 +10,7 @@
   --text-accent: #5a67d8;
   --text-accent-alt: #22543d;
   --border: #e2e8f0;
+  --text-on-accent: #fff;
 }
 
 body.high-contrast {
@@ -24,6 +25,7 @@ body.high-contrast {
   --text-accent: #90cdf4;
   --text-accent-alt: #38a169;
   --border: #444;
+  --text-on-accent: #fff;
 }
 
 @media (prefers-color-scheme: dark) {
