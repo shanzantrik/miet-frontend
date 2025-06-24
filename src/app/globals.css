@@ -1,6 +1,29 @@
 :root {
   --background: #ffffff;
   --foreground: #171717;
+  --accent: #5a67d8;
+  --accent-alt: #22543d;
+  --card: #fff;
+  --muted: #f7fafc;
+  --muted-alt: #e6f0f7;
+  --text-secondary: #444;
+  --text-accent: #5a67d8;
+  --text-accent-alt: #22543d;
+  --border: #e2e8f0;
+}
+
+body.high-contrast {
+  --background: #181818;
+  --foreground: #ededed;
+  --accent: #90cdf4;
+  --accent-alt: #38a169;
+  --card: #232323;
+  --muted: #232323;
+  --muted-alt: #232323;
+  --text-secondary: #b0b0b0;
+  --text-accent: #90cdf4;
+  --text-accent-alt: #38a169;
+  --border: #444;
 }
 
 @media (prefers-color-scheme: dark) {

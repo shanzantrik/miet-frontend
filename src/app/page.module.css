@@ -608,7 +608,23 @@ a.secondary {
     min-width: 0;
     position: static;
     top: unset;
-    height: auto;
+  }
+}
+
+@media (min-width: 701px) and (max-width: 1100px) {
+  .mapWrap {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    height: 350px !important;
+    margin: 0 auto;
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 8px rgba(90, 103, 216, 0.08);
+    background: #fff;
+    position: relative;
+    display: flex;
+    align-items: stretch;
   }
 }
 
@@ -1619,15 +1635,15 @@ a.secondary {
   }
 }
 
-@media (max-width: 700px) {
+@media (min-width: 701px) and (max-width: 1100px) {
   .mapWrap {
-    width: 100vw;
+    width: 100%;
     min-width: 0;
-    max-width: 100vw;
-    height: 320px;
+    max-width: 100%;
+    height: 350px !important;
     margin: 0 auto;
-    border-radius: 12px;
-    overflow: visible;
+    border-radius: 14px;
+    overflow: hidden;
     box-shadow: 0 2px 8px rgba(90, 103, 216, 0.08);
     background: #fff;
     position: relative;
