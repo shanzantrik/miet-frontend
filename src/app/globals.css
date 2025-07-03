@@ -141,3 +141,54 @@ a {
     padding: 0.08rem 0.15rem !important;
   }
 }
+
+/* --- TopBar and high-contrast styles moved from TopBar.tsx --- */
+.topbar-root {
+  position: sticky;
+  top: 0;
+  left: 0;
+  z-index: 1200;
+  width: 100%;
+  min-height: 80px;
+  background: #fff;
+}
+
+@supports not (position: sticky) {
+  .topbar-root {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    z-index: 1200;
+  }
+}
+
+body {
+  font-size: var(--site-font-size, 1em);
+  background: #fff;
+  color: #22543d;
+}
+
+body.high-contrast {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+body.high-contrast .topbar-root,
+body.high-contrast [style*="background: #fff"],
+body.high-contrast [style*="background:#fff"] {
+  background: #222 !important;
+  color: #fff !important;
+}
+
+body.high-contrast [style*="color: #22543d"],
+body.high-contrast [style*="color:#22543d"] {
+  color: #fff !important;
+}
+
+body.high-contrast [style*="border: 1px solid #22543d"],
+body.high-contrast [style*="border:1px solid #22543d"] {
+  border: 1px solid #fff !important;
+}
+
+/* --- End TopBar and high-contrast styles --- */

@@ -2,6 +2,7 @@
 import React, { useState } from 'react';
 import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
+import Link from 'next/link';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
   <span style={{ fontSize: 18, marginRight: 4 }}>{code === 'en' ? '🇬🇧' : '🇮🇳'}</span>
@@ -111,54 +112,11 @@ export default function TopBar() {
   // Only one TopBar: no duplicate rendering
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
-      <style>{`
-        .topbar-root {
-          position: sticky;
-          top: 0;
-          left: 0;
-          z-index: 1200;
-          width: 100%;
-          min-height: 80px;
-          background: ${highContrast ? '#222' : '#fff'};
-        }
-        @supports not (position: sticky) {
-          .topbar-root {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            z-index: 1200;
-          }
-        }
-        body {
-          font-size: var(--site-font-size, 1em);
-          background: #fff;
-          color: #22543d;
-        }
-        body.high-contrast {
-          background: #222 !important;
-          color: #fff !important;
-        }
-        body.high-contrast .topbar-root,
-        body.high-contrast [style*="background: #fff"],
-        body.high-contrast [style*="background:#fff"] {
-          background: #222 !important;
-          color: #fff !important;
-        }
-        body.high-contrast [style*="color: #22543d"],
-        body.high-contrast [style*="color:#22543d"] {
-          color: #fff !important;
-        }
-        body.high-contrast [style*="border: 1px solid #22543d"],
-        body.high-contrast [style*="border:1px solid #22543d"] {
-          border: 1px solid #fff !important;
-        }
-      `}</style>
       {/* Utility Row */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '2px 2vw', background: '#e6f0f7' }}>
         <div style={{ display: 'flex', gap: 16 }}>
-          <a href="#" aria-label="Home" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18 }}><FaHome /></a>
-          <a href="#" aria-label="Sitemap" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Sitemap</a>
+          <Link href="/" aria-label="Home" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18 }}><FaHome /></Link>
+          <Link href="/sitemap" aria-label="Sitemap" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Sitemap</Link>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <button aria-label="Decrease font size" onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontWeight: 700, fontSize: 18, padding: '0 6px' }}>A-</button>
@@ -184,44 +142,46 @@ export default function TopBar() {
       {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 2vw', background: highContrast ? '#222' : '#fff', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
-          <img src="/miet-main.webp" alt="MieT Logo" style={{ height: 56, width: 56, borderRadius: 12, background: '#f7fafc' }} />
+          <Link href="/">
+            <img src="/miet-main.webp" alt="MieT Logo" style={{ height: 56, width: 56, borderRadius: 12, background: '#f7fafc' }} />
+          </Link>
           <span style={{ fontFamily: 'Righteous, cursive', fontSize: 28, color: '#5a67d8', fontWeight: 700 }}>MieT</span>
         </div>
         {/* Main Navigation (desktop) */}
         {!isMobile && (
           <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center' }}>
-            <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></a>
-            <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</a>
+            <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></Link>
+            <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</Link>
             {/* Services with two-column submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleServicesEnter} onMouseOut={handleServicesLeave}>
               <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
               {showServices && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', padding: 16, zIndex: 20, minWidth: 260, marginTop: 0 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, padding: '4px 0' }}>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Mind</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Inclusion</a>
+                    <Link href="/services/mind" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Mind</Link>
+                    <Link href="/services/inclusion" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Inclusion</Link>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, marginLeft: 24, padding: '4px 0' }}>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Education</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Technology</a>
+                    <Link href="/services/education" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Education</Link>
+                    <Link href="/services/technology" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Technology</Link>
                   </div>
                 </div>
               )}
             </div>
-            <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</a>
-            <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</a>
+            <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
+            <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
             {/* Resources with submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleResourcesEnter} onMouseOut={handleResourcesLeave}>
               <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
               {showResources && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
-                  <a href="#" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</a>
-                  <a href="#" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</a>
-                  <a href="#" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</a>
+                  <Link href="/blog" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
+                  <Link href="/legal" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</Link>
+                  <Link href="/resources" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</Link>
                 </div>
               )}
             </div>
-            <a href="#" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</a>
+            <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</Link>
           </nav>
         )}
         {/* Hamburger for mobile */}
@@ -253,30 +213,30 @@ export default function TopBar() {
                 <FaTimes />
               </button>
               <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, display: 'flex', alignItems: 'center', marginBottom: 8 }}><FaHome style={{ marginRight: 8 }} />Home</a>
-                <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</a>
+                <Link href="/" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, display: 'flex', alignItems: 'center', marginBottom: 8 }}><FaHome style={{ marginRight: 8 }} />Home</Link>
+                <Link href="/about" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</Link>
                 {/* Services submenu */}
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Services</div>
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Mind</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Inclusion</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Education</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Technology</a>
+                    <Link href="/services/mind" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Mind</Link>
+                    <Link href="/services/inclusion" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Inclusion</Link>
+                    <Link href="/services/education" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Education</Link>
+                    <Link href="/services/technology" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Technology</Link>
                   </div>
                 </div>
-                <a href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
-                <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
+                <Link href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</Link>
+                <Link href="/marketplace" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</Link>
                 {/* Resources submenu */}
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Resources</div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</a>
-                    <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</a>
+                    <Link href="/blog" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</Link>
+                    <Link href="/legal" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</Link>
+                    <Link href="/resources" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</Link>
                   </div>
                 </div>
-                <a href="#" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Contact Us</a>
+                <Link href="/contact" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Contact Us</Link>
                 <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
                   <button style={{ background: '#5a67d8', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }}>Login</button>
                   <button style={{ background: '#22543d', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }}>Sign Up</button>
