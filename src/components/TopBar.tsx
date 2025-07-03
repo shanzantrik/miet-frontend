@@ -113,10 +113,19 @@ export default function TopBar() {
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
       {/* Utility Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '2px 2vw', background: '#e6f0f7' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '2px 2vw', background: highContrast ? '#000' : '#e6f0f7' }}>
         <div style={{ display: 'flex', gap: 16 }}>
-          <Link href="/" aria-label="Home" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18 }}><FaHome /></Link>
-          <Link href="/sitemap" aria-label="Sitemap" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Sitemap</Link>
+          <a href="#" aria-label="Home" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18 }}><FaHome /></a>
+          <a
+            href="#"
+            aria-label="Sitemap"
+            style={{
+              color: highContrast ? '#fff' : '#22543d',
+              textDecoration: 'none'
+            }}
+          >
+            Sitemap
+          </a>
         </div>
         <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
           <button aria-label="Decrease font size" onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontWeight: 700, fontSize: 18, padding: '0 6px' }}>A-</button>
@@ -149,12 +158,12 @@ export default function TopBar() {
         </div>
         {/* Main Navigation (desktop) */}
         {!isMobile && (
-          <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center' }}>
-            <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></Link>
-            <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</Link>
+          <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center', color: highContrast ? '#000' : '#22543d' }}>
+            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></a>
+            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>About Us</a>
             {/* Services with two-column submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleServicesEnter} onMouseOut={handleServicesLeave}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
+              <button style={{ background: 'none', border: 'none', color: highContrast ? '#000' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
               {showServices && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', padding: 16, zIndex: 20, minWidth: 260, marginTop: 0 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, padding: '4px 0' }}>
@@ -168,11 +177,11 @@ export default function TopBar() {
                 </div>
               )}
             </div>
-            <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
-            <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
+            <a href="/consultants" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Consultants</a>
+            <a href="/marketplace" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Marketplace</a>
             {/* Resources with submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleResourcesEnter} onMouseOut={handleResourcesLeave}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
+              <button style={{ background: 'none', border: 'none', color: highContrast ? '#000' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
               {showResources && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
                   <Link href="/blog" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
@@ -181,7 +190,7 @@ export default function TopBar() {
                 </div>
               )}
             </div>
-            <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</Link>
+            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Contact Us</a>
           </nav>
         )}
         {/* Hamburger for mobile */}
@@ -225,8 +234,8 @@ export default function TopBar() {
                     <Link href="/services/technology" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Technology</Link>
                   </div>
                 </div>
-                <Link href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</Link>
-                <Link href="/marketplace" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</Link>
+                <a href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
+                <a href="/marketplace" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
                 {/* Resources submenu */}
                 <div style={{ marginBottom: 8 }}>
                   <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Resources</div>

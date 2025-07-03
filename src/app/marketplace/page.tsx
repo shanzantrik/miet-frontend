@@ -1,191 +1,129 @@
-"use client";
-import React, { useState } from 'react';
+'use client';
+
+import React from 'react';
+import { categories, marketplaceItems } from '../../components/marketplaceData';
+import Link from 'next/link';
 import TopBar from '../../components/TopBar';
 import Footer from '../../components/Footer';
-import { marketplaceItems, categories } from '../../components/marketplaceData';
-
-// Define the type for marketplace items
-type MarketplaceItem = {
-  id: number;
-  category: string;
-  title: string;
-  image: string;
-  desc: string;
-  price: string;
-  type?: string; // optional, for one-time/monthly/yearly etc
-};
-
-const FILTERS = [
-  { label: 'All', value: '' },
-  ...categories.map(cat => ({ label: cat, value: cat }))
-];
-
-const typeFilters = [
-  { label: 'All Types', value: '' },
-  { label: 'One Time', value: 'one-time' },
-  { label: 'Monthly', value: 'monthly' },
-  { label: 'Yearly', value: 'yearly' },
-];
-
-type SidebarProps = {
-  selectedCategory: string;
-  setSelectedCategory: (cat: string) => void;
-  selectedType: string;
-  setSelectedType: (type: string) => void;
-};
-
-function Sidebar({ selectedCategory, setSelectedCategory, selectedType, setSelectedType }: SidebarProps) {
-  return (
-    <aside style={{ minWidth: 220, background: '#f7fafc', borderRadius: 16, padding: 24, boxShadow: '0 2px 12px #e2e8f0', height: 'fit-content', marginTop: 24 }}>
-      <h3 style={{ fontSize: 20, fontWeight: 700, marginBottom: 18, color: '#22543d' }}>Filters</h3>
-      <div style={{ marginBottom: 24 }}>
-        <div style={{ fontWeight: 600, marginBottom: 8 }}>Category</div>
-        {FILTERS.map(f => (
-          <button
-            key={f.value}
-            onClick={() => setSelectedCategory(f.value)}
-            style={{
-              display: 'block',
-              background: selectedCategory === f.value ? '#22543d' : 'transparent',
-              color: selectedCategory === f.value ? '#fff' : '#22543d',
-              border: 'none',
-              borderRadius: 6,
-              padding: '8px 12px',
-              marginBottom: 6,
-              fontWeight: 600,
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'left',
-              transition: 'background 0.2s',
-            }}
-            aria-pressed={selectedCategory === f.value}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-      <div>
-        <div style={{ fontWeight: 600, marginBottom: 8 }}>Type</div>
-        {typeFilters.map(f => (
-          <button
-            key={f.value}
-            onClick={() => setSelectedType(f.value)}
-            style={{
-              display: 'block',
-              background: selectedType === f.value ? '#22543d' : 'transparent',
-              color: selectedType === f.value ? '#fff' : '#22543d',
-              border: 'none',
-              borderRadius: 6,
-              padding: '8px 12px',
-              marginBottom: 6,
-              fontWeight: 600,
-              cursor: 'pointer',
-              width: '100%',
-              textAlign: 'left',
-              transition: 'background 0.2s',
-            }}
-            aria-pressed={selectedType === f.value}
-          >
-            {f.label}
-          </button>
-        ))}
-      </div>
-    </aside>
-  );
-}
-
-function CourseCard({ item }: { item: MarketplaceItem }) {
-  return (
-    <div style={{ width: 260, background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 18, marginBottom: 24 }}>
-      <img src={item.image} alt={item.title} style={{ width: 100, height: 100, objectFit: 'cover', borderRadius: 12, marginBottom: 14 }} />
-      <div style={{ fontWeight: 700, fontSize: 18, marginBottom: 6, color: '#22543d' }}>{item.title}</div>
-      <div style={{ color: '#555', fontWeight: 400, fontSize: 15, marginBottom: 10 }}>{item.desc}</div>
-      <div style={{ color: '#5a67d8', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>{item.price}</div>
-      <button style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 700, fontSize: 16, cursor: 'pointer', marginTop: 'auto' }}>Buy Now</button>
-    </div>
-  );
-}
-
-function ConsultationCard({ item }: { item: MarketplaceItem }) {
-  return (
-    <div style={{ display: 'flex', background: '#f0fff4', borderRadius: 14, boxShadow: '0 2px 12px #c6f6d5', alignItems: 'center', padding: 18, marginBottom: 24, minWidth: 400, maxWidth: 600 }}>
-      <img src={item.image} alt={item.title} style={{ width: 110, height: 110, objectFit: 'cover', borderRadius: 14, marginRight: 24 }} />
-      <div style={{ flex: 1 }}>
-        <div style={{ fontWeight: 700, fontSize: 20, marginBottom: 6, color: '#22543d' }}>{item.title}</div>
-        <div style={{ color: '#555', fontWeight: 400, fontSize: 15, marginBottom: 10 }}>{item.desc}</div>
-        <div style={{ color: '#38a169', fontWeight: 700, fontSize: 16, marginBottom: 12 }}>{item.price}</div>
-        <button style={{ background: '#38a169', color: '#fff', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Book Now</button>
-      </div>
-    </div>
-  );
-}
-
-function BookCard({ item }: { item: MarketplaceItem }) {
-  return (
-    <div style={{ width: 220, background: '#f7fafc', borderRadius: 14, boxShadow: '0 2px 12px #e2e8f0', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16, marginBottom: 24 }}>
-      <img src={item.image} alt={item.title} style={{ width: 80, height: 110, objectFit: 'cover', borderRadius: 8, marginBottom: 10, boxShadow: '0 1px 6px #b2f5ea' }} />
-      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, color: '#22543d' }}>{item.title}</div>
-      <div style={{ color: '#555', fontWeight: 400, fontSize: 14, marginBottom: 8 }}>{item.desc}</div>
-      <div style={{ color: '#d69e2e', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{item.price}</div>
-      <button style={{ background: '#d69e2e', color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Buy Book</button>
-    </div>
-  );
-}
-
-function ProductCard({ item }: { item: MarketplaceItem }) {
-  return (
-    <div style={{ width: 220, background: '#fff5f7', borderRadius: 14, boxShadow: '0 2px 12px #fed7e2', display: 'flex', flexDirection: 'column', alignItems: 'center', padding: 16, marginBottom: 24 }}>
-      <img src={item.image} alt={item.title} style={{ width: 90, height: 90, objectFit: 'cover', borderRadius: 12, marginBottom: 10, boxShadow: '0 1px 6px #fbb6ce' }} />
-      <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 4, color: '#b83280' }}>{item.title}</div>
-      <div style={{ color: '#555', fontWeight: 400, fontSize: 14, marginBottom: 8 }}>{item.desc}</div>
-      <div style={{ color: '#b83280', fontWeight: 700, fontSize: 15, marginBottom: 10 }}>{item.price}</div>
-      <button style={{ background: '#b83280', color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Buy Product</button>
-    </div>
-  );
-}
-
-function getCardComponent(item: MarketplaceItem) {
-  if (item.category === 'Courses') return CourseCard;
-  if (item.category === 'Consultations') return ConsultationCard;
-  if (item.category === 'Books') return BookCard;
-  if (item.category === 'Products') return ProductCard;
-  // fallback
-  return CourseCard;
-}
 
 export default function MarketplacePage() {
-  const [selectedCategory, setSelectedCategory] = useState<string>('');
-  const [selectedType, setSelectedType] = useState<string>('');
+  const getCategoryCount = (category: string) => {
+    return marketplaceItems.filter(item => item.category === category).length;
+  };
 
-  // Filter logic (extend as needed)
-  const filtered = (marketplaceItems as MarketplaceItem[]).filter(item =>
-    (!selectedCategory || item.category === selectedCategory) &&
-    (!selectedType || (item.type && item.type === selectedType))
-  );
+  const getCategoryIcon = (category: string) => {
+    const icons: { [key: string]: string } = {
+      'Courses': '📚',
+      'Books': '📖',
+      'Apps': '📱',
+      'Gadgets': '🔧',
+      'Products': '🛍️',
+      'Others': '📦'
+    };
+    return icons[category] || '📋';
+  };
 
   return (
     <>
       <TopBar />
-      <div style={{ display: 'flex', maxWidth: 1300, margin: '0 auto', padding: '32px 0 48px 0', gap: 36, minHeight: 600 }}>
-        <Sidebar
-          selectedCategory={selectedCategory}
-          setSelectedCategory={setSelectedCategory}
-          selectedType={selectedType}
-          setSelectedType={setSelectedType}
-        />
-        <main style={{ flex: 1, minWidth: 0 }}>
-          <h1 style={{ fontFamily: 'Righteous, cursive', color: '#22543d', fontSize: 32, fontWeight: 800, marginBottom: 18 }}>Marketplace</h1>
-          <div style={{ color: '#555', fontSize: 18, marginBottom: 32 }}>Explore our curated selection of courses, consultation packages, books, and products.</div>
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: 32 }}>
-            {filtered.length === 0 ? (
-              <div style={{ color: '#e53e3e', fontWeight: 600, fontSize: 18 }}>No items found.</div>
-            ) : filtered.map(item => {
-              const Card = getCardComponent(item);
-              return <Card key={item.id} item={item} />;
-            })}
+      <section style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', minHeight: '100vh' }} aria-label="Marketplace">
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Marketplace</h2>
+        <p style={{ color: '#666', fontSize: 18, marginBottom: 32, maxWidth: 600, margin: '0 auto 32px' }}>
+          Discover comprehensive resources for special education, therapy, and inclusive learning
+        </p>
+
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 24, maxWidth: 1200, margin: '0 auto', padding: '0 20px' }}>
+          {categories.map(category => (
+            <Link
+              key={category}
+              href={`/marketplace/${category.toLowerCase().replace(/\s+/g, '-')}`}
+              style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
+            >
+              <div style={{
+                background: 'var(--muted)',
+                borderRadius: 16,
+                padding: 32,
+                textAlign: 'center',
+                boxShadow: '0 2px 12px var(--accent-20)',
+                transition: 'transform 0.2s, box-shadow 0.2s',
+                cursor: 'pointer',
+                border: '2px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-4px)';
+                e.currentTarget.style.boxShadow = '0 4px 20px rgba(90,103,216,0.3)';
+                e.currentTarget.style.borderColor = '#5a67d8';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 2px 12px rgba(90,103,216,0.2)';
+                e.currentTarget.style.borderColor = 'transparent';
+              }}
+              >
+                <div style={{ fontSize: 48, marginBottom: 16 }}>{getCategoryIcon(category)}</div>
+                <h3 style={{ color: '#5a67d8', fontWeight: 700, fontSize: 22, marginBottom: 8 }}>{category}</h3>
+                <p style={{ color: '#666', fontSize: 16, marginBottom: 12 }}>
+                  {getCategoryCount(category)} {getCategoryCount(category) === 1 ? 'item' : 'items'} available
+                </p>
+                <div style={{
+                  background: '#5a67d8',
+                  color: 'white',
+                  padding: '8px 16px',
+                  borderRadius: 8,
+                  fontSize: 14,
+                  fontWeight: 600,
+                  display: 'inline-block'
+                }}>
+                  Browse {category}
+                </div>
+              </div>
+            </Link>
+          ))}
+        </div>
+
+        <div style={{ marginTop: 48, maxWidth: 1200, margin: '48px auto 0', padding: '0 20px' }}>
+          <h3 style={{ color: '#5a67d8', fontWeight: 700, fontSize: 24, marginBottom: 24 }}>Featured Items</h3>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 20 }}>
+            {marketplaceItems.slice(0, 6).map(item => (
+              <div key={item.id} style={{
+                background: 'var(--muted)',
+                borderRadius: 12,
+                padding: 20,
+                textAlign: 'center',
+                boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
+              }}>
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  style={{
+                    width: '100%',
+                    height: 120,
+                    objectFit: 'cover',
+                    borderRadius: 8,
+                    marginBottom: 12
+                  }}
+                />
+                <h4 style={{ color: '#22543d', fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{item.title}</h4>
+                <p style={{ color: '#666', fontSize: 14, marginBottom: 8 }}>{item.desc}</p>
+                <div style={{ color: '#5a67d8', fontWeight: 700, fontSize: 16 }}>{item.price}</div>
+                <div style={{
+                  background: '#5a67d8',
+                  color: 'white',
+                  padding: '6px 12px',
+                  borderRadius: 6,
+                  fontSize: 12,
+                  fontWeight: 600,
+                  display: 'inline-block',
+                  marginTop: 8,
+                  cursor: 'pointer'
+                }}>
+                  View Details
+                </div>
+              </div>
+            ))}
           </div>
-        </main>
-      </div>
+        </div>
+      </section>
       <Footer />
     </>
   );
