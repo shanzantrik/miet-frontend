@@ -5,6 +5,7 @@ import { categories, marketplaceItems } from '../../components/marketplaceData';
 import Link from 'next/link';
 import TopBar from '../../components/TopBar';
 import Footer from '../../components/Footer';
+import Image from 'next/image';
 
 export default function MarketplacePage() {
   const getCategoryCount = (category: string) => {
@@ -92,16 +93,13 @@ export default function MarketplacePage() {
                 textAlign: 'center',
                 boxShadow: '0 2px 8px rgba(0,0,0,0.1)'
               }}>
-                <img
+                <Image
                   src={item.image}
                   alt={item.title}
-                  style={{
-                    width: '100%',
-                    height: 120,
-                    objectFit: 'cover',
-                    borderRadius: 8,
-                    marginBottom: 12
-                  }}
+                  width={400}
+                  height={120}
+                  style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }}
+                  priority
                 />
                 <h4 style={{ color: '#22543d', fontWeight: 600, fontSize: 16, marginBottom: 4 }}>{item.title}</h4>
                 <p style={{ color: '#666', fontSize: 14, marginBottom: 8 }}>{item.desc}</p>

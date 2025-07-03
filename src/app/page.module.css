@@ -1651,3 +1651,38 @@ a.secondary {
     align-items: stretch;
   }
 }
+
+/* AboutSection styles moved from inline <style> for hydration fix */
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (max-width: 900px) {
+  .about-section [role='tabpanel']>div {
+    flex-direction: column !important;
+    gap: 24px !important;
+  }
+}
+
+@media (max-width: 600px) {
+  .about-section {
+    padding: 1.2rem 0 !important;
+  }
+
+  .about-section h2 {
+    font-size: 22px !important;
+  }
+
+  .about-section button {
+    font-size: 15px !important;
+    padding: 0.5rem 1.1rem !important;
+  }
+}

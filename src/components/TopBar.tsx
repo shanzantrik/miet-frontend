@@ -3,6 +3,7 @@ import React, { useState } from 'react';
 import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
   <span style={{ fontSize: 18, marginRight: 4 }}>{code === 'en' ? '🇬🇧' : '🇮🇳'}</span>
@@ -152,45 +153,45 @@ export default function TopBar() {
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 2vw', background: highContrast ? '#222' : '#fff', position: 'relative' }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
           <Link href="/">
-            <img src="/miet-main.webp" alt="MieT Logo" style={{ height: 56, width: 56, borderRadius: 12, background: '#f7fafc' }} />
+            <Image src="/miet-main.webp" alt="MieT Logo" width={56} height={56} style={{ borderRadius: 12, background: '#f7fafc' }} priority />
           </Link>
           <span style={{ fontFamily: 'Righteous, cursive', fontSize: 28, color: '#5a67d8', fontWeight: 700 }}>MieT</span>
         </div>
         {/* Main Navigation (desktop) */}
         {!isMobile && (
-          <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center', color: highContrast ? '#000' : '#22543d' }}>
-            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></a>
-            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>About Us</a>
+          <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center', color: highContrast ? '#fff' : '#22543d' }}>
+            <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></Link>
+            <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</Link>
             {/* Services with two-column submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleServicesEnter} onMouseOut={handleServicesLeave}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#000' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
+              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
               {showServices && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', padding: 16, zIndex: 20, minWidth: 260, marginTop: 0 }}>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, padding: '4px 0' }}>
-                    <Link href="/services/mind" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Mind</Link>
-                    <Link href="/services/inclusion" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Inclusion</Link>
+                    <Link href="/services/mind" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Mind</Link>
+                    <Link href="/services/inclusion" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Inclusion</Link>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, marginLeft: 24, padding: '4px 0' }}>
-                    <Link href="/services/education" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Education</Link>
-                    <Link href="/services/technology" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Technology</Link>
+                    <Link href="/services/education" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Education</Link>
+                    <Link href="/services/technology" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Technology</Link>
                   </div>
                 </div>
               )}
             </div>
-            <a href="/consultants" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Consultants</a>
-            <a href="/marketplace" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Marketplace</a>
+            <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
+            <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
             {/* Resources with submenu */}
             <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleResourcesEnter} onMouseOut={handleResourcesLeave}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#000' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
+              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
               {showResources && (
                 <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
-                  <Link href="/blog" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
-                  <Link href="/legal" style={{ color: '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</Link>
-                  <Link href="/resources" style={{ color: '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</Link>
+                  <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
+                  <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</Link>
+                  <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</Link>
                 </div>
               )}
             </div>
-            <a href="#" style={{ color: highContrast ? '#000' : '#22543d', textDecoration: 'none' }}>Contact Us</a>
+            <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</Link>
           </nav>
         )}
         {/* Hamburger for mobile */}

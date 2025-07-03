@@ -157,17 +157,7 @@ export default function AboutSection() {
       style={{ background: 'var(--muted-alt)', padding: '2.5rem 0', textAlign: 'center' }}
       aria-label="About us"
     >
-      <h2
-        style={{
-          fontFamily: 'Righteous, cursive',
-          color: 'var(--accent)',
-          fontSize: 28,
-          fontWeight: 700,
-          marginBottom: 24,
-        }}
-      >
-        About Us
-      </h2>
+
       <div
         style={{
           display: 'flex',
@@ -219,30 +209,6 @@ export default function AboutSection() {
       >
         {tabs[activeTab].content}
       </div>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        @media (max-width: 900px) {
-          .about-section [role='tabpanel'] > div {
-            flex-direction: column !important;
-            gap: 24px !important;
-          }
-        }
-        @media (max-width: 600px) {
-          .about-section {
-            padding: 1.2rem 0 !important;
-          }
-          .about-section h2 {
-            font-size: 22px !important;
-          }
-          .about-section button {
-            font-size: 15px !important;
-            padding: 0.5rem 1.1rem !important;
-          }
-        }
-      `}</style>
     </section>
   );
 }
