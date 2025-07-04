@@ -39,8 +39,8 @@ interface Consultant {
   bank_account?: string;
   bank_ifsc?: string;
   status?: 'online' | 'offline';
-  category_ids?: number[];
-  subcategory_ids?: number[];
+  category_ids?: number[] | string[];
+  subcategory_ids?: number[] | string[];
   slots?: string[];
 }
 
@@ -53,7 +53,7 @@ interface User {
 }
 
 // Extend the form state to allow confirmPassword (not persisted to backend)
-type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: number[]; subcategory_ids: number[] };
+type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
 
 export default function AdminDashboard() {
   const router = useRouter();
@@ -72,7 +72,8 @@ export default function AdminDashboard() {
   const [consultantForm, setConsultantForm] = useState<ConsultantForm>({ category_ids: [], subcategory_ids: [] });
   const [consultantEditId, setConsultantEditId] = useState<number | null>(null);
   const [consultantProfile, setConsultantProfile] = useState<Consultant | null>(null);
-  const [showProfileModal, setShowProfileModal] = useState(false);
+  const [showProfileModal, setShowProfileModal] = useState(false); // for superadmin
+  const [showConsultantProfileModal, setShowConsultantProfileModal] = useState(false); // for consultant details
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   });
@@ -99,6 +100,18 @@ export default function AdminDashboard() {
     category_ids: [],
     subcategory_ids: [],
     suggestions: [{ title: '', description: '', redirect_url: '' }],
+    subscription_start: '',
+    subscription_end: '',
+    discount: '',
+    monthly_price: '',
+    yearly_price: '',
+    center_address: '',
+    center_lat: '',
+    center_lng: '',
+    event_start: '',
+    event_end: '',
+    event_image: null as File | null,
+    event_meet_link: '',
   });
   const [serviceEditId, setServiceEditId] = useState(null);
   const [selectedConsultantIds, setSelectedConsultantIds] = useState<number[]>([]);
@@ -106,6 +119,12 @@ export default function AdminDashboard() {
   const [consultationDate, setConsultationDate] = useState('');
   const [therapyFrequency, setTherapyFrequency] = useState<'weekly' | 'monthly'>('weekly');
   const [therapyPeriod, setTherapyPeriod] = useState(1);
+  // Track if consultant form has been loaded for editing
+  const [consultantFormLoaded, setConsultantFormLoaded] = useState(false);
+  // Services state for list and modal
+  const [services, setServices] = useState<any[]>([]);
+  const [serviceProfile, setServiceProfile] = useState<any | null>(null);
+  const [showServiceProfileModal, setShowServiceProfileModal] = useState(false);
 
   // Auth check
   useEffect(() => {
@@ -163,7 +182,27 @@ export default function AdminDashboard() {
     const res = await fetch("http://localhost:4000/api/consultants", {
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) setConsultants(await res.json());
+    if (res.ok) {
+      const consultants = await res.json();
+      // For each consultant, fetch their slots from the backend
+      const consultantsWithSlots = await Promise.all(
+        consultants.map(async (c: Consultant) => {
+          const slotRes = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, {
+            headers: { Authorization: `Bearer ${token}` },
+          });
+          if (slotRes.ok) {
+            const slots = await slotRes.json();
+            return {
+              ...c,
+              slots: slots.map((slot: { date: string; start_time: string; end_time: string; id: number }) => `${slot.date} ${slot.start_time}${slot.end_time ? '-' + slot.end_time : ''}`),
+            };
+          } else {
+            return { ...c, slots: [] };
+          }
+        })
+      );
+      setConsultants(consultantsWithSlots);
+    }
   }
 
   // Fetch users
@@ -181,13 +220,12 @@ export default function AdminDashboard() {
   // Fetch services
   async function fetchServices() {
     const token = localStorage.getItem('admin_jwt');
-    await fetch('http://localhost:4000/api/services', {
+    const res = await fetch('http://localhost:4000/api/services', {
       headers: { Authorization: `Bearer ${token}` },
     });
-    // If you want to use the services data, reintroduce useState for services and setServices here.
-    // Otherwise, just remove this call.
-    // Example: const data = await res.json();
-    // (do something with data if needed)
+    if (res.ok) {
+      setServices(await res.json());
+    }
   }
   useEffect(() => {
     if (activeMenu === 'services') fetchServices();
@@ -309,43 +347,80 @@ export default function AdminDashboard() {
     { key: 'services', label: 'Services', icon: <FaTags size={20} /> },
   ];
 
+  // Helper to save slots to backend
+  async function saveConsultantSlots(consultantId: number, slots: { date: string; time: string; endTime?: string }[]) {
+    // First, fetch existing slots and delete them all (for update)
+    const token = localStorage.getItem("admin_jwt");
+    const res = await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+    if (res.ok) {
+      const existing = await res.json();
+      for (const slot of existing) {
+        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+      }
+    }
+    // Add new slots
+    for (const slot of slots) {
+      if (slot.date && slot.time) {
+        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+          body: JSON.stringify({ date: slot.date, start_time: slot.time, end_time: slot.endTime || '' })
+        });
+      }
+    }
+  }
+
   // Consultant CRUD
   async function handleConsultantSubmit(e: React.FormEvent) {
     e.preventDefault();
     const token = localStorage.getItem("admin_jwt");
     const method = consultantEditId ? "PUT" : "POST";
     const url = consultantEditId ? `http://localhost:4000/api/consultants/${consultantEditId}` : "http://localhost:4000/api/consultants";
-    // Include slots in the payload
-    const payload = { ...consultantForm, slots: consultantSlots };
+    // Convert category_ids and subcategory_ids to number[] before submitting
+    const payload = {
+      ...consultantForm,
+      category_ids: Array.isArray(consultantForm.category_ids) ? consultantForm.category_ids.map(Number) : [],
+      subcategory_ids: Array.isArray(consultantForm.subcategory_ids) ? consultantForm.subcategory_ids.map(Number) : [],
+    };
     const res = await fetch(url, {
       method,
       headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
       body: JSON.stringify(payload),
     });
     if (res.ok) {
+      let consultantId = consultantEditId;
+      if (!consultantEditId) {
+        const data = await res.json();
+        consultantId = data.id;
+      }
+      if (consultantId) {
+        await saveConsultantSlots(consultantId, consultantSlots);
+      }
       setConsultantForm({ category_ids: [], subcategory_ids: [] });
       setConsultantEditId(null);
       setConsultantSlots([]);
+      setConsultantFormLoaded(false);
       fetchConsultants();
     }
   }
   async function handleConsultantEdit(c: Consultant) {
     if (typeof c.id === 'number') {
       setConsultantEditId(c.id);
-      setConsultantForm({ ...c, category_ids: c.category_ids || [], subcategory_ids: c.subcategory_ids || [] });
-      // Ensure slots are in the correct format: { date, time, endTime }
-      if (Array.isArray(c.slots) && c.slots.length > 0) {
-        setConsultantSlots((c.slots as unknown[]).map((slot) => {
-          if (typeof slot === 'string') {
-            const [datePart, timePart] = slot.split(' ');
-            const [time, endTime] = (timePart || '').split('-');
-            return { date: datePart || '', time: time || '', endTime: endTime || '' };
-          }
-          return { date: '', time: '', endTime: '' };
-        }));
+      setConsultantForm({
+        ...c,
+        category_ids: Array.isArray(c.category_ids) ? c.category_ids.map(id => String(id)) : [],
+        subcategory_ids: Array.isArray(c.subcategory_ids) ? c.subcategory_ids.map(id => String(id)) : [],
+      });
+      // Fetch slots from backend
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+      if (res.ok) {
+        const slots = await res.json();
+        setConsultantSlots(slots.map((slot: { date: string; start_time: string; end_time: string; id: number }) => ({ date: slot.date, time: slot.start_time, endTime: slot.end_time })));
       } else {
         setConsultantSlots([]);
       }
+      setConsultantFormLoaded(true);
     }
   }
   async function handleConsultantDelete(id?: number) {
@@ -373,6 +448,7 @@ export default function AdminDashboard() {
     setConsultantEditId(null);
     setConsultantForm({ category_ids: [], subcategory_ids: [] });
     setConsultantSlots([]);
+    setConsultantFormLoaded(false);
   };
 
   // File upload placeholder
@@ -388,7 +464,7 @@ export default function AdminDashboard() {
       });
       if (!res.ok) throw new Error('Upload failed');
       const data = await res.json();
-      // data.url should be the uploaded file URL (e.g., /uploads/filename.jpg)
+      // Use the URL as-is
       setConsultantForm(f => ({ ...f, [field]: data.url }));
     } catch {
       alert('Image upload failed.');
@@ -495,7 +571,34 @@ export default function AdminDashboard() {
     });
     if (res.ok) {
       setServiceForm({
-        name: '', description: '', delivery_mode: 'online', service_type: 'appointment', appointment_type: '', event_type: '', test_type: '', revenue_type: 'paid', price: '', renewal_date: '', center: '', test_redirect_url: '', consultant_ids: [], category_ids: [], subcategory_ids: [], suggestions: [{ title: '', description: '', redirect_url: '' }],
+        name: '',
+        description: '',
+        delivery_mode: 'online',
+        service_type: 'appointment',
+        appointment_type: '',
+        event_type: '',
+        test_type: '',
+        revenue_type: 'paid',
+        price: '',
+        renewal_date: '',
+        center: '',
+        test_redirect_url: '',
+        consultant_ids: [],
+        category_ids: [],
+        subcategory_ids: [],
+        suggestions: [{ title: '', description: '', redirect_url: '' }],
+        subscription_start: '',
+        subscription_end: '',
+        discount: '',
+        monthly_price: '',
+        yearly_price: '',
+        center_address: '',
+        center_lat: '',
+        center_lng: '',
+        event_start: '',
+        event_end: '',
+        event_image: null as File | null,
+        event_meet_link: '',
       });
       setServiceEditId(null);
       fetchServices();
@@ -524,23 +627,25 @@ export default function AdminDashboard() {
   useEffect(() => {
     const ids = (serviceForm.consultant_ids || []).map(Number).filter(Boolean);
     setSelectedConsultantIds(ids);
-    // Simulate fetching availability for each consultant (replace with real API if available)
-    const fetchAvailability = async (id: number) => {
-      // Placeholder: simulate 3 slots per consultant
-      return [
-        '2024-06-10 10:00-11:00',
-        '2024-06-11 14:00-15:00',
-        '2024-06-12 09:00-09:30',
-      ];
-    };
-    (async () => {
-      const avail: Record<number, string[]> = {};
-      for (const id of ids) {
-        avail[id] = await fetchAvailability(id);
+    // Fetch actual slots from the consultants array
+    const avail: Record<number, string[]> = {};
+    for (const id of ids) {
+      const consultant = consultants.find(c => c.id === id);
+      if (consultant && Array.isArray(consultant.slots)) {
+        avail[id] = (consultant.slots as (string | { date: string; time: string; endTime?: string })[]).map(slot => {
+          if (typeof slot === 'string') {
+            return slot;
+          } else if (typeof slot === 'object' && 'date' in slot && 'time' in slot) {
+            return `${slot.date} ${slot.time}${slot.endTime ? '-' + slot.endTime : ''}`;
+          }
+          return '';
+        }).filter(Boolean);
+      } else {
+        avail[id] = [];
       }
-      setConsultantAvailability(avail);
-    })();
-  }, [serviceForm.consultant_ids]);
+    }
+    setConsultantAvailability(avail);
+  }, [serviceForm.consultant_ids, consultants]);
 
   // Helper: get all available dates for selected consultants
   const getAvailableDates = () => {
@@ -549,33 +654,55 @@ export default function AdminDashboard() {
     const dates = Array.from(new Set(allSlots.map(slot => slot.split(' ')[0])));
     return dates;
   };
-  // Helper: get available time slots for a given date
+
+  // Helper: get all blocked dates (dates with no available slots for any selected consultant)
+  const getBlockedDates = () => {
+    // Get all dates in the next 90 days
+    const today = new Date();
+    const blocked: string[] = [];
+    for (let i = 0; i < 90; i++) {
+      const d = new Date(today);
+      d.setDate(today.getDate() + i);
+      const dateStr = d.toISOString().slice(0, 10);
+      if (!getAvailableDates().includes(dateStr)) {
+        blocked.push(dateStr);
+      }
+    }
+    return blocked;
+  };
+
+  // Helper: format date as DD/MM/YYYY
+  const formatDate = (dateStr: string) => {
+    const [year, month, day] = dateStr.split('-');
+    return `${day}/${month}/${year}`;
+  };
+
+  // Helper: format time as HH:MMAM/PM
+  const formatTime = (time: string) => {
+    const [h, m] = time.split(':');
+    const hour = parseInt(h, 10);
+    const ampm = hour >= 12 ? 'PM' : 'AM';
+    const hour12 = hour % 12 === 0 ? 12 : hour % 12;
+    return `${hour12}:${m}${ampm}`;
+  };
+
+  // Helper: get available time slots for a given date, formatted
   const getTimeSlotsForDate = (date: string) => {
     return selectedConsultantIds.flatMap(cid =>
       (consultantAvailability[cid] || [])
         .filter(slot => slot.startsWith(date))
         .map(slot => {
           const time = slot.split(' ')[1];
-          // Convert to AM/PM
+          if (!time) return '';
           const [start, end] = time.split('-');
-          const toAMPM = (t: string) => {
-            const [h, m] = t.split(':');
-            const hour = parseInt(h, 10);
-            const ampm = hour >= 12 ? 'PM' : 'AM';
-            const hour12 = hour % 12 === 0 ? 12 : hour % 12;
-            return `${hour12}:${m} ${ampm}`;
-          };
-          return `${toAMPM(start)} - ${toAMPM(end)}`;
+          if (end) {
+            return `${formatTime(start)} - ${formatTime(end)}`;
+          } else {
+            return formatTime(start);
+          }
         })
     );
   };
-
-  // When editing a consultant, load their slots if available
-  useEffect(() => {
-    if (consultantEditId && consultantForm && Array.isArray((consultantForm as any).slots)) {
-      setConsultantSlots((consultantForm as any).slots);
-    }
-  }, [consultantEditId, consultantForm]);
 
   // Add, edit, and remove slot handlers
   const handleAddSlot = () => {
@@ -587,6 +714,61 @@ export default function AdminDashboard() {
   const handleRemoveSlot = (idx: number) => {
     setConsultantSlots(slots => slots.filter((_, i) => i !== idx));
   };
+
+  // Ensure form fields are hydrated after consultantForm is loaded for editing
+  useEffect(() => {
+    if (consultantEditId && consultantFormLoaded) {
+      // Ensure category_ids and subcategory_ids are strings for select value
+      setConsultantForm(f => ({
+        ...f,
+        category_ids: Array.isArray(f.category_ids) ? f.category_ids.map(id => String(id)) : [],
+        subcategory_ids: Array.isArray(f.subcategory_ids) ? f.subcategory_ids.map(id => String(id)) : [],
+      }));
+    }
+  }, [consultantEditId, consultantFormLoaded]);
+
+  // Event image change handler
+  const handleEventImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setServiceForm(prev => ({ ...prev, event_image: file }));
+    }
+  };
+
+  // Generate Google Meet link
+  const generateMeetLink = () => {
+    // This is a placeholder and should be replaced with actual implementation
+    return `https://meet.google.com/new?authuser=0&hs=177&authuser=0`;
+  };
+
+  // View service details
+  async function handleServiceProfile(id: number) {
+    const token = localStorage.getItem('admin_jwt');
+    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) {
+      setServiceProfile(await res.json());
+      setShowServiceProfileModal(true);
+    }
+  }
+
+  // Edit service
+  async function handleServiceEdit(s: any) {
+    setServiceEditId(s.id);
+    setServiceForm({ ...s, event_image: null });
+  }
+
+  // Delete service
+  async function handleServiceDelete(id: number) {
+    if (!confirm('Delete this service?')) return;
+    const token = localStorage.getItem('admin_jwt');
+    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) fetchServices();
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
@@ -835,7 +1017,7 @@ export default function AdminDashboard() {
                     <tr key={c.id}>
                       <td style={{ padding: 10 }}>
                         {c.image ? (
-                          <Image src={c.image} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                          <Image src={`http://localhost:4000${c.image}`} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} unoptimized />
                         ) : (
                           <span style={{ display: 'inline-block', width: 44, height: 44, borderRadius: 8, background: '#e2e8f0' }} />
                         )}
@@ -855,7 +1037,7 @@ export default function AdminDashboard() {
                         </label>
                       </td>
                       <td style={{ padding: 10 }}>
-                        <button onClick={() => handleConsultantProfile(c.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
+                        <button onClick={() => { handleConsultantProfile(c.id); setShowConsultantProfileModal(true); }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
                         <button onClick={() => handleConsultantEdit(c)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
                         <button onClick={() => handleConsultantDelete(c.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
@@ -967,7 +1149,7 @@ export default function AdminDashboard() {
                       <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Categories</label>
                       <select
                         multiple
-                        value={Array.isArray(consultantForm.category_ids) ? consultantForm.category_ids.map(String) : []}
+                        value={Array.isArray(consultantForm.category_ids) ? consultantForm.category_ids.map(id => String(id)) : []}
                         onChange={e => handleConsultantMultiSelect('category_ids', Array.from(e.target.selectedOptions, opt => Number(opt.value)))}
                         style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}
                       >
@@ -980,12 +1162,15 @@ export default function AdminDashboard() {
                       <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Subcategories</label>
                       <select
                         multiple
-                        value={Array.isArray(consultantForm.subcategory_ids) ? consultantForm.subcategory_ids.map(String) : []}
+                        value={Array.isArray(consultantForm.subcategory_ids) ? consultantForm.subcategory_ids.map(id => String(id)) : []}
                         onChange={e => handleConsultantMultiSelect('subcategory_ids', Array.from(e.target.selectedOptions, opt => Number(opt.value)))}
                         style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}
                       >
                         {subcategories
-                          .filter(s => Array.isArray(consultantForm.category_ids) && consultantForm.category_ids.includes(s.category_id))
+                          .filter(s => {
+                            if (!Array.isArray(consultantForm.category_ids)) return false;
+                            return consultantForm.category_ids.map(Number).includes(Number(s.category_id));
+                          })
                           .map(sub => (
                             <option key={sub.id} value={sub.id}>{sub.name}</option>
                           ))}
@@ -1028,14 +1213,21 @@ export default function AdminDashboard() {
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>Consultant Image</label>
                     <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'image')} style={{ marginBottom: 8 }} />
                     {consultantForm.image && (
-                      <Image src={consultantForm.image.startsWith('http') ? consultantForm.image : `/uploads/${consultantForm.image.replace(/^.*[\\/]/, '')}`} alt="Consultant" width={80} height={80} style={{ borderRadius: 10, objectFit: 'cover', border: '1px solid #e2e8f0' }} />
+                      <Image
+                        src={`http://localhost:4000${consultantForm.image}`}
+                        alt="Consultant"
+                        width={80}
+                        height={80}
+                        style={{ borderRadius: 10, objectFit: 'cover', border: '1px solid #e2e8f0' }}
+                        unoptimized
+                      />
                     )}
                   </div>
                   <div>
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>ID Proof (upload)</label>
                     <input type="file" accept="image/*,.pdf" onChange={e => handleFileUpload(e, 'id_proof_url')} style={{ marginBottom: 8 }} />
                     {consultantForm.id_proof_url && (
-                      <a href={consultantForm.id_proof_url} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
+                      <a href={`http://localhost:4000${consultantForm.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
                         View Uploaded
                       </a>
                     )}
@@ -1047,35 +1239,48 @@ export default function AdminDashboard() {
                 </div>
               </form>
               {/* Consultant Profile View */}
-              {consultantProfile && (
-                <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 24 }}>
-                  <h3 style={{ fontSize: 22, fontWeight: 700, color: '#22543d', marginBottom: 12 }}>{consultantProfile.name}</h3>
-                  {consultantProfile.image && (
-                    <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                      <Image src={consultantProfile.image} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} />
-                    </div>
-                  )}
-                  <div style={{ color: '#5a67d8', fontWeight: 600, marginBottom: 8 }}>{consultantProfile.tagline}</div>
-                  <div style={{ marginBottom: 8 }}><b>Email:</b> {consultantProfile.email}</div>
-                  <div style={{ marginBottom: 8 }}><b>Phone:</b> {consultantProfile.phone}</div>
-                  <div style={{ marginBottom: 8 }}><b>Status:</b> {consultantProfile.status}</div>
-                  <div style={{ marginBottom: 8 }}><b>Speciality:</b> {consultantProfile.speciality}</div>
-                  <div style={{ marginBottom: 8 }}><b>Description:</b> {consultantProfile.description}</div>
-                  <div style={{ marginBottom: 8 }}><b>Address:</b> {consultantProfile.address}</div>
-                  <div style={{ marginBottom: 8 }}>
-                    <b>ID Proof:</b> {consultantProfile.id_proof_type}
-                    {consultantProfile.id_proof_url && (
-                      <>
-                        {' '}
-                        <a href={consultantProfile.id_proof_url} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
-                          View Document
-                        </a>
-                      </>
+              {showConsultantProfileModal && consultantProfile && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: 'rgba(0,0,0,0.35)',
+                  zIndex: 1000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #e2e8f0', padding: 32, minWidth: 340, maxWidth: 480, width: '100%', position: 'relative' }}>
+                    <button onClick={() => { setShowConsultantProfileModal(false); setConsultantProfile(null); }} style={{ position: 'absolute', top: 16, right: 16, background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}>Close</button>
+                    <h3 style={{ fontSize: 22, fontWeight: 700, color: '#22543d', marginBottom: 12 }}>{consultantProfile.name}</h3>
+                    {consultantProfile.image && (
+                      <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+                        <Image src={`http://localhost:4000${consultantProfile.image}`} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} unoptimized />
+                      </div>
                     )}
+                    <div style={{ color: '#5a67d8', fontWeight: 600, marginBottom: 8 }}>{consultantProfile.tagline}</div>
+                    <div style={{ marginBottom: 8 }}><b>Email:</b> {consultantProfile.email}</div>
+                    <div style={{ marginBottom: 8 }}><b>Phone:</b> {consultantProfile.phone}</div>
+                    <div style={{ marginBottom: 8 }}><b>Status:</b> {consultantProfile.status}</div>
+                    <div style={{ marginBottom: 8 }}><b>Speciality:</b> {consultantProfile.speciality}</div>
+                    <div style={{ marginBottom: 8 }}><b>Description:</b> {consultantProfile.description}</div>
+                    <div style={{ marginBottom: 8 }}><b>Address:</b> {consultantProfile.address}</div>
+                    <div style={{ marginBottom: 8 }}>
+                      <b>ID Proof:</b> {consultantProfile.id_proof_type}
+                      {consultantProfile.id_proof_url && (
+                        <>
+                          {' '}
+                          <a href={`http://localhost:4000${consultantProfile.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
+                            View Document
+                          </a>
+                        </>
+                      )}
+                    </div>
+                    <div style={{ marginBottom: 8 }}><b>Aadhar:</b> {consultantProfile.aadhar}</div>
+                    <div style={{ marginBottom: 8 }}><b>Bank:</b> {consultantProfile.bank_account} / {consultantProfile.bank_ifsc}</div>
                   </div>
-                  <div style={{ marginBottom: 8 }}><b>Aadhar:</b> {consultantProfile.aadhar}</div>
-                  <div style={{ marginBottom: 8 }}><b>Bank:</b> {consultantProfile.bank_account} / {consultantProfile.bank_ifsc}</div>
-                  <button onClick={() => setConsultantProfile(null)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 16, cursor: 'pointer', marginTop: 12 }}>Close</button>
                 </div>
               )}
             </section>
@@ -1136,6 +1341,7 @@ export default function AdminDashboard() {
           {/* Services CRUD */}
           {activeMenu === 'services' && (
             <section>
+              {/* Service Form (restored conditional logic) */}
               <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Services</h2>
               <form onSubmit={handleServiceSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 32, alignItems: 'flex-start' }}>
                 <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -1170,115 +1376,52 @@ export default function AdminDashboard() {
                           <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                         ))}
                       </select>
-                      {/* Show availability for selected consultants */}
-                      {selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
-                          <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 6 }}>Consultant Availability:</div>
-                          {selectedConsultantIds.map(cid => (
-                            <div key={cid} style={{ marginBottom: 8 }}>
-                              <span style={{ color: '#5a67d8', fontWeight: 500 }}>{consultants.find(c => c.id === cid)?.name || 'Consultant'}:</span>
-                              <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                                {(consultantAvailability[cid] || []).map((slot, idx) => (
-                                  <li key={idx} style={{ color: '#22543d', fontSize: 15 }}>{slot}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Conditional UI for Appointment Type with calendar and AM/PM slots */}
-                      {serviceForm.service_type === 'appointment' && serviceForm.appointment_type === 'consultation' && selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 18, background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px #e2e8f0', padding: 24 }}>
-                          <div style={{ fontWeight: 700, color: '#22543d', fontSize: 18, marginBottom: 10 }}>Book a One Time Consultation</div>
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Select Date</label>
-                          <input
-                            type="date"
-                            value={consultationDate}
-                            onChange={e => setConsultationDate(e.target.value)}
-                            style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }}
-                            min={getAvailableDates()[0]}
-                            max={getAvailableDates()[getAvailableDates().length - 1]}
-                            list="available-dates-consultation"
-                          />
-                          <datalist id="available-dates-consultation">
-                            {getAvailableDates().map(date => (
-                              <option key={date} value={date} />
-                            ))}
-                          </datalist>
-                          {/* Only allow selecting available dates */}
-                          {consultationDate && getAvailableDates().includes(consultationDate) && (
-                            <>
-                              <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Available Time Slots:</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                                {getTimeSlotsForDate(consultationDate).map((slot, idx) => (
-                                  <div key={idx} style={{ background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 16px', color: '#22543d', fontWeight: 600 }}>{slot}</div>
-                                ))}
-                                {getTimeSlotsForDate(consultationDate).length === 0 && (
-                                  <span style={{ color: '#e53e3e', fontWeight: 500 }}>No slots available for this date.</span>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
-                      {serviceForm.service_type === 'appointment' && serviceForm.appointment_type === 'therapy' && selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 18, background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px #e2e8f0', padding: 24 }}>
-                          <div style={{ fontWeight: 700, color: '#22543d', fontSize: 18, marginBottom: 10 }}>Book a Therapy Package</div>
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Frequency</label>
-                          <select value={therapyFrequency} onChange={e => setTherapyFrequency(e.target.value as 'weekly' | 'monthly')} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }}>
-                            <option value="weekly">Weekly</option>
-                            <option value="monthly">Monthly</option>
-                          </select>
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Number of {therapyFrequency === 'weekly' ? 'Weeks' : 'Months'}</label>
-                          <input type="number" min={1} value={therapyPeriod} onChange={e => setTherapyPeriod(Number(e.target.value))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Select Date</label>
-                          <input
-                            type="date"
-                            value={consultationDate}
-                            onChange={e => setConsultationDate(e.target.value)}
-                            style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }}
-                            min={getAvailableDates()[0]}
-                            max={getAvailableDates()[getAvailableDates().length - 1]}
-                            list="available-dates-therapy"
-                          />
-                          <datalist id="available-dates-therapy">
-                            {getAvailableDates().map(date => (
-                              <option key={date} value={date} />
-                            ))}
-                          </datalist>
-                          {consultationDate && getAvailableDates().includes(consultationDate) && (
-                            <>
-                              <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Available Time Slots:</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                                {getTimeSlotsForDate(consultationDate).map((slot, idx) => (
-                                  <div key={idx} style={{ background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 16px', color: '#22543d', fontWeight: 600 }}>{slot}</div>
-                                ))}
-                                {getTimeSlotsForDate(consultationDate).length === 0 && (
-                                  <span style={{ color: '#e53e3e', fontWeight: 500 }}>No slots available for this date.</span>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
                     </>
                   )}
                   {serviceForm.service_type === 'subscription' && (
                     <>
-                      <label style={{ fontWeight: 600, color: '#22543d' }}>Renewal Date</label>
-                      <input name="renewal_date" type="date" value={serviceForm.renewal_date} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center</label>
-                      <input name="center" value={serviceForm.center} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription Start Date</label>
+                      <input type="date" name="subscription_start" value={serviceForm.subscription_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription End Date</label>
+                      <input type="date" name="subscription_end" value={serviceForm.subscription_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Discount (%)</label>
+                      <input type="number" name="discount" value={serviceForm.discount || ''} onChange={handleServiceFormChange} min={0} max={100} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Monthly Price</label>
+                      <input type="number" name="monthly_price" value={serviceForm.monthly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Yearly Price</label>
+                      <input type="number" name="yearly_price" value={serviceForm.yearly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      {serviceForm.delivery_mode === 'offline' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                        </>
+                      )}
                     </>
                   )}
                   {serviceForm.service_type === 'event' && (
                     <>
-                      <label style={{ fontWeight: 600, color: '#22543d' }}>Event Type</label>
-                      <select name="event_type" value={serviceForm.event_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-                        <option value="">Select</option>
-                        <option value="webinar">Webinar</option>
-                        <option value="seminar">Seminar</option>
-                      </select>
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Event Start Date & Time</label>
+                      <input type="datetime-local" name="event_start" value={serviceForm.event_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Event End Date & Time</label>
+                      <input type="datetime-local" name="event_end" value={serviceForm.event_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Event Image</label>
+                      <input type="file" name="event_image" accept="image/*" onChange={handleEventImageChange} style={{ marginBottom: 12 }} required />
+                      {serviceForm.delivery_mode === 'offline' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                        </>
+                      )}
+                      {serviceForm.delivery_mode === 'online' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Google Meet Link</label>
+                          <input type="text" name="event_meet_link" value={generateMeetLink()} readOnly style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, background: '#f7fafc' }} />
+                        </>
+                      )}
                     </>
                   )}
                   {serviceForm.service_type === 'test' && (
@@ -1330,9 +1473,89 @@ export default function AdminDashboard() {
                       {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
                     </div>
                   ))}
-                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={handleAddSuggestion} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8 }}>Add Suggestion</button>}
+                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8 }}>Add Suggestion</button>}
                 </div>
               </form>
+              {/* Services List Table */}
+              <h3 style={{ fontSize: 20, fontWeight: 700, color: '#22543d', marginBottom: 10 }}>All Services</h3>
+              <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
+                <thead>
+                  <tr style={{ background: '#f7fafc' }}>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Name</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Type</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Delivery</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Price</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Created</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {services.map(s => (
+                    <tr key={s.id} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: 10 }}>{s.name}</td>
+                      <td style={{ padding: 10 }}>{s.service_type}</td>
+                      <td style={{ padding: 10 }}>{s.delivery_mode}</td>
+                      <td style={{ padding: 10 }}>{s.price}</td>
+                      <td style={{ padding: 10 }}>{s.created_at ? new Date(s.created_at).toLocaleString() : ''}</td>
+                      <td style={{ padding: 10 }}>
+                        <button onClick={() => handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
+                        <button onClick={() => handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => handleServiceDelete(s.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* Service Profile Modal */}
+              {showServiceProfileModal && serviceProfile && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: 'rgba(0,0,0,0.35)',
+                  zIndex: 1000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <div style={{ background: '#fff', borderRadius: 12, padding: 32, minWidth: 400, maxWidth: 600, maxHeight: '90vh', overflowY: 'auto', boxShadow: '0 2px 12px #e2e8f0', position: 'relative' }}>
+                    <button onClick={() => setShowServiceProfileModal(false)} style={{ position: 'absolute', top: 12, right: 12, background: '#e2e8f0', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, cursor: 'pointer' }}>Close</button>
+                    <h2 style={{ fontWeight: 700, color: '#22543d', marginBottom: 12 }}>{serviceProfile.name}</h2>
+                    <div style={{ marginBottom: 8 }}><b>Type:</b> {serviceProfile.service_type}</div>
+                    <div style={{ marginBottom: 8 }}><b>Delivery:</b> {serviceProfile.delivery_mode}</div>
+                    <div style={{ marginBottom: 8 }}><b>Description:</b> {serviceProfile.description}</div>
+                    <div style={{ marginBottom: 8 }}><b>Price:</b> {serviceProfile.price}</div>
+                    <div style={{ marginBottom: 8 }}><b>Revenue Type:</b> {serviceProfile.revenue_type}</div>
+                    {serviceProfile.service_type === 'subscription' && (
+                      <>
+                        <div style={{ marginBottom: 8 }}><b>Subscription Start:</b> {serviceProfile.subscription_start}</div>
+                        <div style={{ marginBottom: 8 }}><b>Subscription End:</b> {serviceProfile.subscription_end}</div>
+                        <div style={{ marginBottom: 8 }}><b>Discount:</b> {serviceProfile.discount}</div>
+                        <div style={{ marginBottom: 8 }}><b>Monthly Price:</b> {serviceProfile.monthly_price}</div>
+                        <div style={{ marginBottom: 8 }}><b>Yearly Price:</b> {serviceProfile.yearly_price}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Name:</b> {serviceProfile.center}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Address:</b> {serviceProfile.center_address}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Location:</b> {serviceProfile.center_lat}, {serviceProfile.center_lng}</div>
+                      </>
+                    )}
+                    {serviceProfile.service_type === 'event' && (
+                      <>
+                        <div style={{ marginBottom: 8 }}><b>Event Type:</b> {serviceProfile.event_type}</div>
+                        <div style={{ marginBottom: 8 }}><b>Event Start:</b> {serviceProfile.event_start}</div>
+                        <div style={{ marginBottom: 8 }}><b>Event End:</b> {serviceProfile.event_end}</div>
+                        <div style={{ marginBottom: 8 }}><b>Event Image:</b> {serviceProfile.event_image && (<img src={serviceProfile.event_image} alt="Event" style={{ maxWidth: 180, maxHeight: 120, display: 'block', marginTop: 6 }} />)}</div>
+                        <div style={{ marginBottom: 8 }}><b>Google Meet Link:</b> {serviceProfile.event_meet_link}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Name:</b> {serviceProfile.center}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Address:</b> {serviceProfile.center_address}</div>
+                        <div style={{ marginBottom: 8 }}><b>Center Location:</b> {serviceProfile.center_lat}, {serviceProfile.center_lng}</div>
+                      </>
+                    )}
+                    <div style={{ marginBottom: 8 }}><b>Created:</b> {serviceProfile.created_at ? new Date(serviceProfile.created_at).toLocaleString() : ''}</div>
+                  </div>
+                </div>
+              )}
             </section>
           )}
         </main>

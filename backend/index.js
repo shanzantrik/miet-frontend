@@ -98,6 +98,18 @@ async function setupDatabase() {
       renewal_date TEXT,
       center TEXT,
       test_redirect_url TEXT,
+      subscription_start TEXT,
+      subscription_end TEXT,
+      discount REAL,
+      monthly_price REAL,
+      yearly_price REAL,
+      center_address TEXT,
+      center_lat REAL,
+      center_lng REAL,
+      event_start TEXT,
+      event_end TEXT,
+      event_image TEXT,
+      event_meet_link TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
     CREATE TABLE IF NOT EXISTS service_ailment_categories (
@@ -156,6 +168,27 @@ async function setupDatabase() {
   }
   // Ensure all users have status
   await db.exec("UPDATE users SET status = 'active' WHERE status IS NULL");
+
+  // --- MIGRATION: Add new service fields if missing ---
+  const serviceCols = await db.all("PRAGMA table_info(services)");
+  const addCol = async (col, type) => {
+    if (!serviceCols.some(c => c.name === col)) {
+      await db.exec(`ALTER TABLE services ADD COLUMN ${col} ${type}`);
+      console.log(`Migrated: Added ${col} column to services table.`);
+    }
+  };
+  await addCol('subscription_start', 'TEXT');
+  await addCol('subscription_end', 'TEXT');
+  await addCol('discount', 'REAL');
+  await addCol('monthly_price', 'REAL');
+  await addCol('yearly_price', 'REAL');
+  await addCol('center_address', 'TEXT');
+  await addCol('center_lat', 'REAL');
+  await addCol('center_lng', 'REAL');
+  await addCol('event_start', 'TEXT');
+  await addCol('event_end', 'TEXT');
+  await addCol('event_image', 'TEXT');
+  await addCol('event_meet_link', 'TEXT');
 }
 
 (async () => {
@@ -422,7 +455,7 @@ app.get('/api/services/:id', authenticateToken, requireRole('superadmin'), async
 });
 // Create service
 app.post('/api/services', authenticateToken, requireRole('superadmin'), async (req, res) => {
-  const { name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, consultant_ids = [], category_ids = [], subcategory_ids = [], suggestions = [] } = req.body;
+  const { name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, consultant_ids = [], category_ids = [], subcategory_ids = [], suggestions = [], subscription_start, subscription_end, discount, monthly_price, yearly_price, center_address, center_lat, center_lng, event_start, event_end, event_image, event_meet_link } = req.body;
   if (!name || !delivery_mode || !service_type || !revenue_type) return res.status(400).json({ error: 'Missing required fields' });
   // For appointment, must have at least one consultant
   if (service_type === 'appointment' && (!Array.isArray(consultant_ids) || consultant_ids.length === 0)) {
@@ -430,8 +463,8 @@ app.post('/api/services', authenticateToken, requireRole('superadmin'), async (r
   }
   // Insert service
   const result = await db.run(
-    `INSERT INTO services (name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
-    name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url
+    `INSERT INTO services (name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, subscription_start, subscription_end, discount, monthly_price, yearly_price, center_address, center_lat, center_lng, event_start, event_end, event_image, event_meet_link, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, datetime('now'))`,
+    name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, subscription_start, subscription_end, discount, monthly_price, yearly_price, center_address, center_lat, center_lng, event_start, event_end, event_image, event_meet_link
   );
   const service_id = result.lastID;
   // Link consultants
@@ -457,7 +490,7 @@ app.post('/api/services', authenticateToken, requireRole('superadmin'), async (r
 // Update service
 app.put('/api/services/:id', authenticateToken, requireRole('superadmin'), async (req, res) => {
   const { id } = req.params;
-  const { name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, consultant_ids = [], category_ids = [], subcategory_ids = [], suggestions = [] } = req.body;
+  const { name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, consultant_ids = [], category_ids = [], subcategory_ids = [], suggestions = [], subscription_start, subscription_end, discount, monthly_price, yearly_price, center_address, center_lat, center_lng, event_start, event_end, event_image, event_meet_link } = req.body;
   const service = await db.get('SELECT * FROM services WHERE id = ?', id);
   if (!service) return res.status(404).json({ error: 'Not found' });
   // For appointment, must have at least one consultant
@@ -466,8 +499,8 @@ app.put('/api/services/:id', authenticateToken, requireRole('superadmin'), async
   }
   // Update service
   await db.run(
-    `UPDATE services SET name = ?, description = ?, delivery_mode = ?, service_type = ?, appointment_type = ?, event_type = ?, test_type = ?, revenue_type = ?, price = ?, renewal_date = ?, center = ?, test_redirect_url = ? WHERE id = ?`,
-    name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, id
+    `UPDATE services SET name = ?, description = ?, delivery_mode = ?, service_type = ?, appointment_type = ?, event_type = ?, test_type = ?, revenue_type = ?, price = ?, renewal_date = ?, center = ?, test_redirect_url = ?, subscription_start = ?, subscription_end = ?, discount = ?, monthly_price = ?, yearly_price = ?, center_address = ?, center_lat = ?, center_lng = ?, event_start = ?, event_end = ?, event_image = ?, event_meet_link = ? WHERE id = ?`,
+    name, description, delivery_mode, service_type, appointment_type, event_type, test_type, revenue_type, price, renewal_date, center, test_redirect_url, subscription_start, subscription_end, discount, monthly_price, yearly_price, center_address, center_lat, center_lng, event_start, event_end, event_image, event_meet_link, id
   );
   // Update consultants
   await db.run('DELETE FROM services_consultants WHERE service_id = ?', id);
@@ -540,7 +573,15 @@ const storage = multer.diskStorage({
   },
   filename: function (req, file, cb) {
     const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
-    cb(null, uniqueSuffix + '-' + file.originalname.replace(/\s+/g, '_'));
+    let safeName = file.originalname
+      .toLowerCase()
+      .normalize('NFKD')
+      .replace(/[\u0300-\u036f]/g, '') // Remove diacritics
+      .replace(/[^\x00-\x7F]/g, '') // Remove all non-ASCII characters (including â¯)
+      .replace(/\s+/g, '_') // Replace whitespace with _
+      .replace(/['"`]/g, '') // Remove apostrophes and quotes
+      .replace(/[^a-z0-9._-]/g, '_'); // Replace all other non-safe chars with _
+    cb(null, uniqueSuffix + '-' + safeName);
   }
 });
 const upload = multer({ storage });
