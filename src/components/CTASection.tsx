@@ -291,7 +291,9 @@ export default function CTASection() {
           </form>
         )}
       </div>
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes fadeIn {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
@@ -358,7 +360,9 @@ export default function CTASection() {
             font-size: 10px !important;
           }
         }
-      `}</style>
+      `,
+        }}
+      />
     </section>
   );
 }

@@ -90,7 +90,9 @@ export default function BlogSection() {
           ))}
         </div>
       </div>
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         .blog-marquee-outer { position: relative; }
         .blog-marquee {
           animation-play-state: running;
@@ -117,7 +119,9 @@ export default function BlogSection() {
           .blog-marquee-outer { height: 260px; }
           .blog-marquee > div { width: 170px !important; min-height: 200px !important; }
         }
-      `}</style>
+      `,
+        }}
+      />
     </section>
   );
 }

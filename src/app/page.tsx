@@ -3,7 +3,6 @@ import TopBar from '../components/TopBar';
 import WelcomeBoard from '../components/WelcomeBoard';
 import SearchPanel from '../components/SearchPanel';
 import FeaturedSection from '../components/FeaturedSection';
-import AboutSection from '../components/AboutSection';
 import MarketplaceSection from '../components/MarketplaceSection';
 import CTASection from '../components/CTASection';
 import BlogSection from '../components/BlogSection';
@@ -28,7 +27,6 @@ export default function Home() {
           Know More
         </a>
       </section>
-      <AboutSection />
       <MarketplaceSection />
       <CTASection />
       <BlogSection />

@@ -55,6 +55,39 @@ interface User {
 // Extend the form state to allow confirmPassword (not persisted to backend)
 type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
 
+interface ServiceType {
+  id?: number;
+  name: string;
+  description: string;
+  delivery_mode: string;
+  service_type: string;
+  appointment_type?: string;
+  event_type?: string;
+  test_type?: string;
+  revenue_type?: string;
+  price?: string;
+  renewal_date?: string;
+  center?: string;
+  test_redirect_url?: string;
+  consultant_ids?: string[];
+  category_ids?: string[];
+  subcategory_ids?: string[];
+  suggestions?: { title: string; description: string; redirect_url: string }[];
+  subscription_start?: string;
+  subscription_end?: string;
+  discount?: string;
+  monthly_price?: string;
+  yearly_price?: string;
+  center_address?: string;
+  center_lat?: string;
+  center_lng?: string;
+  event_start?: string;
+  event_end?: string;
+  event_image?: string;
+  event_meet_link?: string;
+  created_at?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -113,17 +146,15 @@ export default function AdminDashboard() {
     event_image: null as File | null,
     event_meet_link: '',
   });
-  const [serviceEditId, setServiceEditId] = useState(null);
+  const [serviceEditId, setServiceEditId] = useState<number | null>(null);
   const [selectedConsultantIds, setSelectedConsultantIds] = useState<number[]>([]);
   const [consultantAvailability, setConsultantAvailability] = useState<Record<number, string[]>>({}); // consultantId -> array of slots
   const [consultationDate, setConsultationDate] = useState('');
-  const [therapyFrequency, setTherapyFrequency] = useState<'weekly' | 'monthly'>('weekly');
-  const [therapyPeriod, setTherapyPeriod] = useState(1);
   // Track if consultant form has been loaded for editing
   const [consultantFormLoaded, setConsultantFormLoaded] = useState(false);
   // Services state for list and modal
-  const [services, setServices] = useState<any[]>([]);
-  const [serviceProfile, setServiceProfile] = useState<any | null>(null);
+  const [services, setServices] = useState<ServiceType[]>([]);
+  const [serviceProfile, setServiceProfile] = useState<ServiceType | null>(null);
   const [showServiceProfileModal, setShowServiceProfileModal] = useState(false);
 
   // Auth check
@@ -754,9 +785,9 @@ export default function AdminDashboard() {
   }
 
   // Edit service
-  async function handleServiceEdit(s: any) {
-    setServiceEditId(s.id);
-    setServiceForm({ ...s, event_image: null });
+  async function handleServiceEdit(s: ServiceType) {
+    setServiceEditId(s.id ?? null);
+    setServiceForm({ ...s, event_image: null as File | null, appointment_type: '', event_type: '', test_type: '', revenue_type: 'paid', price: '', renewal_date: '', center: '', test_redirect_url: '', consultant_ids: [], category_ids: [], subcategory_ids: [], suggestions: [{ title: '', description: '', redirect_url: '' }], subscription_start: '', subscription_end: '', discount: '', monthly_price: '', yearly_price: '', center_address: '', center_lat: '', center_lng: '', event_start: '', event_end: '', event_meet_link: '' });
   }
 
   // Delete service
@@ -1392,6 +1423,45 @@ export default function AdminDashboard() {
                           ))}
                         </div>
                       )}
+                      {/* Calendar and slot selection for consultation */}
+                      {serviceForm.appointment_type === 'consultation' && selectedConsultantIds.length > 0 && (
+                        <div style={{ marginTop: 18, background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px #e2e8f0', padding: 24 }}>
+                          <div style={{ fontWeight: 700, color: '#22543d', fontSize: 18, marginBottom: 10 }}>Book a One Time Consultation</div>
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Select Date</label>
+                          <input
+                            type="date"
+                            value={consultationDate}
+                            onChange={e => setConsultationDate(e.target.value)}
+                            style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }}
+                            min={getAvailableDates()[0]}
+                            max={getAvailableDates()[getAvailableDates().length - 1]}
+                            list="available-dates-consultation"
+                          />
+                          <datalist id="available-dates-consultation">
+                            {getAvailableDates().map(date => (
+                              <option key={date} value={date} />
+                            ))}
+                          </datalist>
+                          {/* Show blocked dates visually (disabled) */}
+                          <div style={{ color: '#e53e3e', fontSize: 14, marginBottom: 8 }}>
+                            Blocked Dates: {getBlockedDates().length > 0 ? getBlockedDates().map(d => formatDate(d)).join(', ') : 'None'}
+                          </div>
+                          {/* Only allow selecting available dates */}
+                          {consultationDate && getAvailableDates().includes(consultationDate) && (
+                            <>
+                              <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Available Time Slots:</div>
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
+                                {getTimeSlotsForDate(consultationDate).map((slot, idx) => (
+                                  <div key={idx} style={{ background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 16px', color: '#22543d', fontWeight: 600 }}>{slot}</div>
+                                ))}
+                                {getTimeSlotsForDate(consultationDate).length === 0 && (
+                                  <span style={{ color: '#e53e3e', fontWeight: 500 }}>No slots available for this date.</span>
+                                )}
+                              </div>
+                            </>
+                          )}
+                        </div>
+                      )}
                     </>
                   )}
                   {serviceForm.service_type === 'subscription' && (
@@ -1564,11 +1634,11 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{s.service_type}</td>
                       <td style={{ padding: 10 }}>{s.delivery_mode}</td>
                       <td style={{ padding: 10 }}>{s.price}</td>
-                      <td style={{ padding: 10 }}>{s.created_at ? new Date(s.created_at).toLocaleString() : ''}</td>
+                      <td style={{ padding: 10 }}>{s.created_at ? s.created_at.split('T')[0] : ''}</td>
                       <td style={{ padding: 10 }}>
-                        <button onClick={() => handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
-                        <button onClick={() => handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleServiceDelete(s.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => s.id !== undefined && handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
+                        <button onClick={() => s.id !== undefined && handleServiceEdit(s)} className="edit-btn">Edit</button>
+                        <button onClick={() => s.id !== undefined && handleServiceDelete(s.id)} className="delete-btn">Delete</button>
                       </td>
                     </tr>
                   ))}

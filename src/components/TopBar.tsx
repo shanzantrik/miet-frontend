@@ -14,8 +14,6 @@ export default function TopBar() {
   const [showLang, setShowLang] = useState(false);
   const [fontSize, setFontSize] = useState(1);
   const [highContrast, setHighContrast] = useState(false);
-  const [showServices, setShowServices] = useState(false);
-  const [showResources, setShowResources] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
 
   // Modal state
@@ -54,12 +52,6 @@ export default function TopBar() {
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
   }, []);
-
-  // Handlers to keep dropdown open when hovering submenu
-  const handleServicesEnter = () => setShowServices(true);
-  const handleServicesLeave = () => setShowServices(false);
-  const handleResourcesEnter = () => setShowResources(true);
-  const handleResourcesLeave = () => setShowResources(false);
 
   // Modal component
   const Modal = ({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
@@ -162,41 +154,27 @@ export default function TopBar() {
           <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center', color: highContrast ? '#fff' : '#22543d' }}>
             <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></Link>
             <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</Link>
-            {/* Services with two-column submenu */}
-            <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleServicesEnter} onMouseOut={handleServicesLeave}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Services ▼</button>
-              {showServices && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', padding: 16, zIndex: 20, minWidth: 260, marginTop: 0 }}>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, padding: '4px 0' }}>
-                    <Link href="/services/mind" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Mind</Link>
-                    <Link href="/services/inclusion" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Inclusion</Link>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8, minWidth: 120, marginLeft: 24, padding: '4px 0' }}>
-                    <Link href="/services/education" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Education</Link>
-                    <Link href="/services/technology" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Technology</Link>
-                  </div>
-                </div>
-              )}
-            </div>
+            {/* Services with single link */}
+            <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Services</Link>
             <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
             <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
-            {/* Resources with submenu */}
-            <div style={{ position: 'relative', margin: 0 }} onMouseOver={handleResourcesEnter} onMouseOut={handleResourcesLeave}>
+            {/* Resources with submenu - removed for now */}
+            {/* <div style={{ position: 'relative', margin: 0 }} onMouseOver={() => setShowResources(true)} onMouseOut={() => setShowResources(false)}>
               <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
               {showResources && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
+                <div style={{ position: 'absolute', top: '100%', left: 0, background: highContrast ? '#222' : '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
                   <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
                   <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</Link>
                   <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</Link>
                 </div>
               )}
-            </div>
+            </div> */}
             <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</Link>
           </nav>
         )}
         {/* Hamburger for mobile */}
         {isMobile && (
-          <button onClick={() => setMobileMenu(m => !m)} aria-label="Open menu" style={{ background: 'none', border: 'none', fontSize: 32, color: '#5a67d8', cursor: 'pointer', marginLeft: 16 }}>
+          <button onClick={() => setMobileMenu(m => !m)} aria-label="Open menu" style={{ background: 'none', border: 'none', fontSize: 32, color: highContrast ? '#fff' : '#5a67d8', cursor: 'pointer', marginLeft: 16 }}>
             {mobileMenu ? <FaTimes /> : <FaBars />}
           </button>
         )}
@@ -216,51 +194,26 @@ export default function TopBar() {
           </div>
         </div>
         {/* Mobile menu overlay */}
-        {isMobile && mobileMenu && (
-          <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.92)', zIndex: 2000, display: 'flex', flexDirection: 'column', alignItems: 'flex-end', transition: 'background 0.3s' }} onClick={e => { if (e.target === e.currentTarget) setMobileMenu(false); }}>
-            <div style={{ width: '80vw', maxWidth: 340, height: '100%', background: '#fff', boxShadow: '-2px 0 24px rgba(90,103,216,0.13)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', padding: '2.5rem 1.5rem 1.5rem 1.5rem', position: 'relative', animation: 'slideInRight 0.3s' }}>
-              <button onClick={() => setMobileMenu(false)} style={{ background: 'none', border: 'none', fontSize: 32, color: '#5a67d8', alignSelf: 'flex-end', marginBottom: 24, cursor: 'pointer' }} aria-label="Close menu">
-                <FaTimes />
-              </button>
-              <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-                <Link href="/" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, display: 'flex', alignItems: 'center', marginBottom: 8 }}><FaHome style={{ marginRight: 8 }} />Home</Link>
-                <Link href="/about" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</Link>
-                {/* Services submenu */}
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Services</div>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                    <Link href="/services/mind" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Mind</Link>
-                    <Link href="/services/inclusion" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Inclusion</Link>
-                    <Link href="/services/education" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Education</Link>
-                    <Link href="/services/technology" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Technology</Link>
-                  </div>
+        {mobileMenu && (
+          <div style={{ position: 'absolute', top: 70, right: 0, background: highContrast ? '#222' : '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 2px 12px #5a67d822', padding: 24, zIndex: 100, minWidth: 220 }}>
+            <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+              <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, display: 'flex', alignItems: 'center', marginBottom: 8 }}><FaHome style={{ marginRight: 8 }} />Home</Link>
+              <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</Link>
+              {/* Services submenu */}
+              <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Services</Link>
+              <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
+              <a href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
+              {/* Resources submenu - removed for now */}
+              {/* <div style={{ marginBottom: 8 }}>
+                <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 4 }}>Resources</div>
+                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
+                  <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</Link>
+                  <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</Link>
+                  <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</Link>
                 </div>
-                <a href="/consultants" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
-                <a href="/marketplace" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
-                {/* Resources submenu */}
-                <div style={{ marginBottom: 8 }}>
-                  <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Resources</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: 6 }}>
-                    <Link href="/blog" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</Link>
-                    <Link href="/legal" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</Link>
-                    <Link href="/resources" style={{ color: '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</Link>
-                  </div>
-                </div>
-                <Link href="/contact" style={{ color: '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Contact Us</Link>
-                <div style={{ display: 'flex', gap: 8, marginTop: 16 }}>
-                  <button style={{ background: '#5a67d8', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }}>Login</button>
-                  <button style={{ background: '#22543d', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }}>Sign Up</button>
-                </div>
-                <div style={{ display: 'flex', gap: 8, marginTop: 12 }}>
-                  <a href="#" aria-label="Facebook"><FaFacebookF /></a>
-                  <a href="#" aria-label="Instagram"><FaInstagram /></a>
-                  <a href="#" aria-label="LinkedIn"><FaLinkedinIn /></a>
-                  <a href="#" aria-label="YouTube"><FaYoutube /></a>
-                  <a href="#" aria-label="Twitter"><FaTwitter /></a>
-                  <a href="#" aria-label="Google Review"><span style={{ fontWeight: 700, fontSize: 18, margin: '0 4px' }}>G</span></a>
-                </div>
-              </nav>
-            </div>
+              </div> */}
+              <a href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18 }}>Contact Us</a>
+            </nav>
           </div>
         )}
         {/* Modals for Login and Signup */}

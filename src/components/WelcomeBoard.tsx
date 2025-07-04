@@ -203,7 +203,9 @@ export default function WelcomeBoard() {
           </div>
         </div>
       </div>
-      <style>{`
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
         @keyframes rotateCircles {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -257,7 +259,9 @@ export default function WelcomeBoard() {
             text-align: center !important;
           }
         }
-      `}</style>
+      `,
+        }}
+      />
     </section>
   );
 }
