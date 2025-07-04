@@ -2,6 +2,7 @@
 import React, { useState } from "react";
 import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
+import Link from 'next/link';
 
 const serviceCards = [
   {
@@ -117,9 +118,9 @@ export default function ServicesPage() {
                     {card.cta}
                   </a>
                 ) : card.key === 'tests' ? (
-                  <a href="http://localhost:3000/#test-section" style={{ marginTop: 'auto', background: card.color, color: '#fff', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, textDecoration: 'none', boxShadow: '0 2px 12px #5a67d822', transition: 'background 0.2s', display: 'inline-block' }}>
+                  <Link href="/#test-section" style={{ marginTop: 'auto', background: card.color, color: '#fff', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, textDecoration: 'none', boxShadow: '0 2px 12px #5a67d822', transition: 'background 0.2s', display: 'inline-block' }}>
                     {card.cta}
-                  </a>
+                  </Link>
                 ) : (
                   <a href={card.ctaLink} style={{ marginTop: 'auto', background: card.color, color: '#fff', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, textDecoration: 'none', boxShadow: '0 2px 12px #5a67d822', transition: 'background 0.2s', display: 'inline-block' }}>
                     {card.cta}

@@ -182,7 +182,7 @@ export default function AdminDashboard() {
   async function fetchCategories() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/categories", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch categories");
@@ -196,7 +196,7 @@ export default function AdminDashboard() {
   async function fetchSubcategories() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/subcategories", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch subcategories");
@@ -210,7 +210,7 @@ export default function AdminDashboard() {
 
   async function fetchConsultants() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch("http://localhost:4000/api/consultants", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -218,7 +218,7 @@ export default function AdminDashboard() {
       // For each consultant, fetch their slots from the backend
       const consultantsWithSlots = await Promise.all(
         consultants.map(async (c: Consultant) => {
-          const slotRes = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, {
+          const slotRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/availability`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (slotRes.ok) {
@@ -239,7 +239,7 @@ export default function AdminDashboard() {
   // Fetch users
   async function fetchUsers() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch("http://localhost:4000/api/users", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setUsers(await res.json());
@@ -251,7 +251,7 @@ export default function AdminDashboard() {
   // Fetch services
   async function fetchServices() {
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch('http://localhost:4000/api/services', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -268,7 +268,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = catEditId ? "PUT" : "POST";
-      const url = catEditId ? `http://localhost:4000/api/categories/${catEditId}` : "http://localhost:4000/api/categories";
+      const url = catEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${catEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`;
       const res = await fetch(url, {
         method,
         headers: {
@@ -295,7 +295,7 @@ export default function AdminDashboard() {
     if (!confirm("Delete this category?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/categories/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
@@ -314,7 +314,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = subEditId ? "PUT" : "POST";
-      const url = subEditId ? `http://localhost:4000/api/subcategories/${subEditId}` : "http://localhost:4000/api/subcategories";
+      const url = subEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${subEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`;
       const res = await fetch(url, {
         method,
         headers: {
@@ -343,7 +343,7 @@ export default function AdminDashboard() {
     if (!confirm("Delete this subcategory?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`http://localhost:4000/api/subcategories/${id}`, {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${id}`, {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
@@ -382,17 +382,17 @@ export default function AdminDashboard() {
   async function saveConsultantSlots(consultantId: number, slots: { date: string; time: string; endTime?: string }[]) {
     // First, fetch existing slots and delete them all (for update)
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       const existing = await res.json();
       for (const slot of existing) {
-        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       }
     }
     // Add new slots
     for (const slot of slots) {
       if (slot.date && slot.time) {
-        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ date: slot.date, start_time: slot.time, end_time: slot.endTime || '' })
@@ -406,7 +406,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const token = localStorage.getItem("admin_jwt");
     const method = consultantEditId ? "PUT" : "POST";
-    const url = consultantEditId ? `http://localhost:4000/api/consultants/${consultantEditId}` : "http://localhost:4000/api/consultants";
+    const url = consultantEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`;
     // Convert category_ids and subcategory_ids to number[] before submitting
     const payload = {
       ...consultantForm,
@@ -444,7 +444,7 @@ export default function AdminDashboard() {
       });
       // Fetch slots from backend
       const token = localStorage.getItem("admin_jwt");
-      const res = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/availability`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const slots = await res.json();
         setConsultantSlots(slots.map((slot: { date: string; start_time: string; end_time: string; id: number }) => ({ date: slot.date, time: slot.start_time, endTime: slot.end_time })));
@@ -458,7 +458,7 @@ export default function AdminDashboard() {
     if (typeof id !== 'number') return;
     if (!confirm("Delete this consultant?")) return;
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -467,7 +467,7 @@ export default function AdminDashboard() {
   async function handleConsultantProfile(id?: number) {
     if (typeof id !== 'number') return;
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setConsultantProfile(await res.json());
@@ -489,7 +489,7 @@ export default function AdminDashboard() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch('http://localhost:4000/api/upload', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -531,7 +531,7 @@ export default function AdminDashboard() {
   async function handleToggleConsultantStatus(c: Consultant) {
     const token = localStorage.getItem("admin_jwt");
     const newStatus = c.status === 'online' ? 'offline' : 'online';
-    await fetch(`http://localhost:4000/api/consultants/${c.id}/status`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status: newStatus })
@@ -544,7 +544,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const token = localStorage.getItem("admin_jwt");
     const method = userEditId ? "PUT" : "POST";
-    const url = userEditId ? `http://localhost:4000/api/users/${userEditId}` : "http://localhost:4000/api/users";
+    const url = userEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users`;
     const body = userEditId ? { username: userForm.username, role: userForm.role } : userForm;
     const res = await fetch(url, {
       method,
@@ -564,7 +564,7 @@ export default function AdminDashboard() {
   async function handleUserDelete(id: number) {
     if (!confirm("Delete this user?")) return;
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/users/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${id}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -581,7 +581,7 @@ export default function AdminDashboard() {
   async function handleToggleUserStatus(u: User) {
     const token = localStorage.getItem("admin_jwt");
     const newStatus = u.status === 'active' ? 'inactive' : 'active';
-    await fetch(`http://localhost:4000/api/users/${u.id}/status`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${u.id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status: newStatus })
@@ -594,7 +594,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const token = localStorage.getItem('admin_jwt');
     const method = serviceEditId ? 'PUT' : 'POST';
-    const url = serviceEditId ? `http://localhost:4000/api/services/${serviceEditId}` : 'http://localhost:4000/api/services';
+    const url = serviceEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${serviceEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`;
     const res = await fetch(url, {
       method,
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
@@ -775,7 +775,7 @@ export default function AdminDashboard() {
   // View service details
   async function handleServiceProfile(id: number) {
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -794,7 +794,7 @@ export default function AdminDashboard() {
   async function handleServiceDelete(id: number) {
     if (!confirm('Delete this service?')) return;
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${id}`, {
       method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     });
@@ -1048,7 +1048,7 @@ export default function AdminDashboard() {
                     <tr key={c.id}>
                       <td style={{ padding: 10 }}>
                         {c.image ? (
-                          <Image src={`http://localhost:4000${c.image}`} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} unoptimized />
+                          <Image src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${c.image}`} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} unoptimized />
                         ) : (
                           <span style={{ display: 'inline-block', width: 44, height: 44, borderRadius: 8, background: '#e2e8f0' }} />
                         )}
@@ -1245,7 +1245,7 @@ export default function AdminDashboard() {
                     <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'image')} style={{ marginBottom: 8 }} />
                     {consultantForm.image && (
                       <Image
-                        src={`http://localhost:4000${consultantForm.image}`}
+                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantForm.image}`}
                         alt="Consultant"
                         width={80}
                         height={80}
@@ -1258,7 +1258,7 @@ export default function AdminDashboard() {
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>ID Proof (upload)</label>
                     <input type="file" accept="image/*,.pdf" onChange={e => handleFileUpload(e, 'id_proof_url')} style={{ marginBottom: 8 }} />
                     {consultantForm.id_proof_url && (
-                      <a href={`http://localhost:4000${consultantForm.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
+                      <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantForm.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
                         View Uploaded
                       </a>
                     )}
@@ -1288,7 +1288,7 @@ export default function AdminDashboard() {
                     <h3 style={{ fontSize: 22, fontWeight: 700, color: '#22543d', marginBottom: 12 }}>{consultantProfile.name}</h3>
                     {consultantProfile.image && (
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                        <Image src={`http://localhost:4000${consultantProfile.image}`} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} unoptimized />
+                        <Image src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantProfile.image}`} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} unoptimized />
                       </div>
                     )}
                     <div style={{ color: '#5a67d8', fontWeight: 600, marginBottom: 8 }}>{consultantProfile.tagline}</div>
@@ -1303,7 +1303,7 @@ export default function AdminDashboard() {
                       {consultantProfile.id_proof_url && (
                         <>
                           {' '}
-                          <a href={`http://localhost:4000${consultantProfile.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
+                          <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantProfile.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
                             View Document
                           </a>
                         </>
