@@ -1376,6 +1376,22 @@ export default function AdminDashboard() {
                           <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                         ))}
                       </select>
+                      {/* Show availability for selected consultants */}
+                      {selectedConsultantIds.length > 0 && (
+                        <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
+                          <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 6 }}>Consultant Availability:</div>
+                          {selectedConsultantIds.map(cid => (
+                            <div key={cid} style={{ marginBottom: 8 }}>
+                              <span style={{ color: '#5a67d8', fontWeight: 500 }}>{consultants.find(c => c.id === cid)?.name || 'Consultant'}:</span>
+                              <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
+                                {(consultantAvailability[cid] || []).map((slot, idx) => (
+                                  <li key={idx} style={{ color: '#22543d', fontSize: 15 }}>{slot}</li>
+                                ))}
+                              </ul>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </>
                   )}
                   {serviceForm.service_type === 'subscription' && (
@@ -1414,6 +1430,28 @@ export default function AdminDashboard() {
                           <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
                           <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          {/* Google Maps/Autocomplete for location */}
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
+                          {isLoaded && (
+                            <GoogleMap
+                              mapContainerStyle={{ width: '100%', height: 220 }}
+                              center={{
+                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
+                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
+                              }}
+                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
+                              onClick={e => {
+                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
+                              }}
+                            >
+                              {serviceForm.center_lat && serviceForm.center_lng && (
+                                <Marker
+                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
+                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
+                                />
+                              )}
+                            </GoogleMap>
+                          )}
                         </>
                       )}
                       {serviceForm.delivery_mode === 'online' && (
@@ -1436,6 +1474,36 @@ export default function AdminDashboard() {
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Test Redirect URL</label>
                           <input name="test_redirect_url" value={serviceForm.test_redirect_url} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                        </>
+                      )}
+                      {serviceForm.test_type === 'offline' && serviceForm.delivery_mode === 'offline' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          {/* Google Maps/Autocomplete for location */}
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
+                          {isLoaded && (
+                            <GoogleMap
+                              mapContainerStyle={{ width: '100%', height: 220 }}
+                              center={{
+                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
+                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
+                              }}
+                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
+                              onClick={e => {
+                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
+                              }}
+                            >
+                              {serviceForm.center_lat && serviceForm.center_lng && (
+                                <Marker
+                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
+                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
+                                />
+                              )}
+                            </GoogleMap>
+                          )}
                         </>
                       )}
                     </>
