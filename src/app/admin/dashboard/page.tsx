@@ -156,6 +156,15 @@ export default function AdminDashboard() {
   const [services, setServices] = useState<ServiceType[]>([]);
   const [serviceProfile, setServiceProfile] = useState<ServiceType | null>(null);
   const [showServiceProfileModal, setShowServiceProfileModal] = useState(false);
+  // Add state for name and email
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  // Add these states at the top of your component
+  const [formLoading, setFormLoading] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  // Add these states at the top of your component
+  const [serviceFormLoading, setServiceFormLoading] = useState(false);
+  const [serviceFormMessage, setServiceFormMessage] = useState('');
 
   // Auth check
   useEffect(() => {
@@ -592,47 +601,59 @@ export default function AdminDashboard() {
   // Service CRUD
   async function handleServiceSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setServiceFormLoading(true);
+    setServiceFormMessage('');
     const token = localStorage.getItem('admin_jwt');
     const method = serviceEditId ? 'PUT' : 'POST';
     const url = serviceEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${serviceEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`;
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(serviceForm),
-    });
-    if (res.ok) {
-      setServiceForm({
-        name: '',
-        description: '',
-        delivery_mode: 'online',
-        service_type: 'appointment',
-        appointment_type: '',
-        event_type: '',
-        test_type: '',
-        revenue_type: 'paid',
-        price: '',
-        renewal_date: '',
-        center: '',
-        test_redirect_url: '',
-        consultant_ids: [],
-        category_ids: [],
-        subcategory_ids: [],
-        suggestions: [{ title: '', description: '', redirect_url: '' }],
-        subscription_start: '',
-        subscription_end: '',
-        discount: '',
-        monthly_price: '',
-        yearly_price: '',
-        center_address: '',
-        center_lat: '',
-        center_lng: '',
-        event_start: '',
-        event_end: '',
-        event_image: null as File | null,
-        event_meet_link: '',
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(serviceForm),
       });
-      setServiceEditId(null);
-      fetchServices();
+      if (res.ok) {
+        setServiceForm({
+          name: '',
+          description: '',
+          delivery_mode: 'online',
+          service_type: 'appointment',
+          appointment_type: '',
+          event_type: '',
+          test_type: '',
+          revenue_type: 'paid',
+          price: '',
+          renewal_date: '',
+          center: '',
+          test_redirect_url: '',
+          consultant_ids: [],
+          category_ids: [],
+          subcategory_ids: [],
+          suggestions: [{ title: '', description: '', redirect_url: '' }],
+          subscription_start: '',
+          subscription_end: '',
+          discount: '',
+          monthly_price: '',
+          yearly_price: '',
+          center_address: '',
+          center_lat: '',
+          center_lng: '',
+          event_start: '',
+          event_end: '',
+          event_image: null as File | null,
+          event_meet_link: '',
+        });
+        setServiceEditId(null);
+        fetchServices();
+        setServiceFormMessage('Service submitted successfully!');
+      } else {
+        setServiceFormMessage('Error submitting service.');
+      }
+    } catch (err) {
+      setServiceFormMessage('Error submitting service.');
+      console.error('Error submitting service:', err);
+    } finally {
+      setServiceFormLoading(false);
     }
   }
   const handleServiceFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -800,6 +821,30 @@ export default function AdminDashboard() {
     });
     if (res.ok) fetchServices();
   }
+
+  // Form submit handler for name and email
+  const handleSimpleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormMessage('');
+    const data = { name: formName, email: formEmail };
+    console.log('Form data to submit:', data);
+    try {
+      const res = await fetch('http://localhost:4000/submit-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      setFormMessage('Form submitted successfully!');
+      console.log('Server response:', result);
+    } catch (err) {
+      setFormMessage('Error submitting form.');
+      console.error('Error submitting form:', err);
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
@@ -1264,11 +1309,11 @@ export default function AdminDashboard() {
                     )}
                   </div>
                 </div>
-                <div style={{ flexBasis: '100%', display: 'flex', gap: 12, marginTop: 12 }}>
-                  <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
-                  {consultantEditId && <button type="button" onClick={handleConsultantFormCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '12px 24px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>Cancel</button>}
-                </div>
               </form>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button type="submit" form="consultant-form" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
+                {consultantEditId && <button type="button" onClick={handleConsultantFormCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '12px 24px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>Cancel</button>}
+              </div>
               {/* Consultant Profile View */}
               {showConsultantProfileModal && consultantProfile && (
                 <div style={{
@@ -1374,168 +1419,91 @@ export default function AdminDashboard() {
             <section>
               {/* Service Form (restored conditional logic) */}
               <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Services</h2>
-              <form onSubmit={handleServiceSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 32, alignItems: 'flex-start' }}>
-                <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <form onSubmit={handleServiceSubmit} style={{ width: 600, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 16, marginBottom: 32 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
+                  {/* Always show these fields */}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
-                  <input name="name" value={serviceForm.name} onChange={handleServiceFormChange} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <input name="name" value={serviceForm.name} onChange={handleServiceFormChange} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
-                  <textarea name="description" value={serviceForm.description} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                  <textarea name="description" value={serviceForm.description} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Delivery Mode</label>
-                  <select name="delivery_mode" value={serviceForm.delivery_mode} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <select name="delivery_mode" value={serviceForm.delivery_mode} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                     <option value="online">Online</option>
                     <option value="offline">Offline</option>
                   </select>
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Service Type</label>
-                  <select name="service_type" value={serviceForm.service_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <select name="service_type" value={serviceForm.service_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                     <option value="appointment">Appointment</option>
                     <option value="subscription">Subscription</option>
                     <option value="event">Event</option>
                     <option value="test">Test</option>
                   </select>
-                  {/* Conditional fields for each type */}
+
+                  {/* Appointment-specific fields */}
                   {serviceForm.service_type === 'appointment' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Appointment Type</label>
-                      <select name="appointment_type" value={serviceForm.appointment_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                      <select name="appointment_type" value={serviceForm.appointment_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                         <option value="">Select</option>
                         <option value="consultation">Consultation</option>
                         <option value="therapy">Therapy</option>
                       </select>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Consultants</label>
-                      <select name="consultant_ids" multiple value={serviceForm.consultant_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                      <select name="consultant_ids" multiple value={serviceForm.consultant_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                         {consultants.map(c => (
                           <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                         ))}
                       </select>
-                      {/* Show availability for selected consultants */}
-                      {selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
-                          <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 6 }}>Consultant Availability:</div>
-                          {selectedConsultantIds.map(cid => (
-                            <div key={cid} style={{ marginBottom: 8 }}>
-                              <span style={{ color: '#5a67d8', fontWeight: 500 }}>{consultants.find(c => c.id === cid)?.name || 'Consultant'}:</span>
-                              <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                                {(consultantAvailability[cid] || []).map((slot, idx) => (
-                                  <li key={idx} style={{ color: '#22543d', fontSize: 15 }}>{slot}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      )}
-                      {/* Calendar and slot selection for consultation */}
-                      {serviceForm.appointment_type === 'consultation' && selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 18, background: '#fff', borderRadius: 10, boxShadow: '0 2px 12px #e2e8f0', padding: 24 }}>
-                          <div style={{ fontWeight: 700, color: '#22543d', fontSize: 18, marginBottom: 10 }}>Book a One Time Consultation</div>
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Select Date</label>
-                          <input
-                            type="date"
-                            value={consultationDate}
-                            onChange={e => setConsultationDate(e.target.value)}
-                            style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }}
-                            min={getAvailableDates()[0]}
-                            max={getAvailableDates()[getAvailableDates().length - 1]}
-                            list="available-dates-consultation"
-                          />
-                          <datalist id="available-dates-consultation">
-                            {getAvailableDates().map(date => (
-                              <option key={date} value={date} />
-                            ))}
-                          </datalist>
-                          {/* Show blocked dates visually (disabled) */}
-                          <div style={{ color: '#e53e3e', fontSize: 14, marginBottom: 8 }}>
-                            Blocked Dates: {getBlockedDates().length > 0 ? getBlockedDates().map(d => formatDate(d)).join(', ') : 'None'}
-                          </div>
-                          {/* Only allow selecting available dates */}
-                          {consultationDate && getAvailableDates().includes(consultationDate) && (
-                            <>
-                              <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Available Time Slots:</div>
-                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 12 }}>
-                                {getTimeSlotsForDate(consultationDate).map((slot, idx) => (
-                                  <div key={idx} style={{ background: '#f7fafc', border: '1px solid #e2e8f0', borderRadius: 6, padding: '8px 16px', color: '#22543d', fontWeight: 600 }}>{slot}</div>
-                                ))}
-                                {getTimeSlotsForDate(consultationDate).length === 0 && (
-                                  <span style={{ color: '#e53e3e', fontWeight: 500 }}>No slots available for this date.</span>
-                                )}
-                              </div>
-                            </>
-                          )}
-                        </div>
-                      )}
                     </>
                   )}
+
+                  {/* Subscription-specific fields */}
                   {serviceForm.service_type === 'subscription' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription Start Date</label>
-                      <input type="date" name="subscription_start" value={serviceForm.subscription_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <input type="date" name="subscription_start" value={serviceForm.subscription_start || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription End Date</label>
-                      <input type="date" name="subscription_end" value={serviceForm.subscription_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <input type="date" name="subscription_end" value={serviceForm.subscription_end || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Discount (%)</label>
-                      <input type="number" name="discount" value={serviceForm.discount || ''} onChange={handleServiceFormChange} min={0} max={100} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <input type="number" name="discount" value={serviceForm.discount || ''} onChange={handleServiceFormChange} min={0} max={100} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Monthly Price</label>
-                      <input type="number" name="monthly_price" value={serviceForm.monthly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <input type="number" name="monthly_price" value={serviceForm.monthly_price || ''} onChange={handleServiceFormChange} min={0} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Yearly Price</label>
-                      <input type="number" name="yearly_price" value={serviceForm.yearly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
-                      {serviceForm.delivery_mode === 'offline' && (
-                        <>
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                        </>
-                      )}
+                      <input type="number" name="yearly_price" value={serviceForm.yearly_price || ''} onChange={handleServiceFormChange} min={0} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                      <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                      <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                     </>
                   )}
+
+                  {/* Event-specific fields */}
                   {serviceForm.service_type === 'event' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event Start Date & Time</label>
-                      <input type="datetime-local" name="event_start" value={serviceForm.event_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <input type="datetime-local" name="event_start" value={serviceForm.event_start || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event End Date & Time</label>
-                      <input type="datetime-local" name="event_end" value={serviceForm.event_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <input type="datetime-local" name="event_end" value={serviceForm.event_end || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event Image</label>
-                      <input type="file" name="event_image" accept="image/*" onChange={handleEventImageChange} style={{ marginBottom: 12 }} required />
-                      {serviceForm.delivery_mode === 'offline' && (
-                        <>
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          {/* Google Maps/Autocomplete for location */}
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
-                          {isLoaded && (
-                            <GoogleMap
-                              mapContainerStyle={{ width: '100%', height: 220 }}
-                              center={{
-                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
-                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
-                              }}
-                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
-                              onClick={e => {
-                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
-                              }}
-                            >
-                              {serviceForm.center_lat && serviceForm.center_lng && (
-                                <Marker
-                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
-                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
-                                />
-                              )}
-                            </GoogleMap>
-                          )}
-                        </>
-                      )}
+                      <input type="file" name="event_image" accept="image/*" onChange={handleEventImageChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                      <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                      <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       {serviceForm.delivery_mode === 'online' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Google Meet Link</label>
-                          <input type="text" name="event_meet_link" value={generateMeetLink()} readOnly style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, background: '#f7fafc' }} />
+                          <input type="text" name="event_meet_link" value={generateMeetLink()} readOnly style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', background: '#f7fafc' }} />
                         </>
                       )}
                     </>
                   )}
+
+                  {/* Test-specific fields */}
                   {serviceForm.service_type === 'test' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Test Type</label>
-                      <select name="test_type" value={serviceForm.test_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                      <select name="test_type" value={serviceForm.test_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                         <option value="">Select</option>
                         <option value="online">Online</option>
                         <option value="offline">Offline</option>
@@ -1543,77 +1511,76 @@ export default function AdminDashboard() {
                       {serviceForm.test_type === 'online' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Test Redirect URL</label>
-                          <input name="test_redirect_url" value={serviceForm.test_redirect_url} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input name="test_redirect_url" value={serviceForm.test_redirect_url || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                         </>
                       )}
-                      {serviceForm.test_type === 'offline' && serviceForm.delivery_mode === 'offline' && (
+                      {serviceForm.test_type === 'offline' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          {/* Google Maps/Autocomplete for location */}
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
-                          {isLoaded && (
-                            <GoogleMap
-                              mapContainerStyle={{ width: '100%', height: 220 }}
-                              center={{
-                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
-                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
-                              }}
-                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
-                              onClick={e => {
-                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
-                              }}
-                            >
-                              {serviceForm.center_lat && serviceForm.center_lng && (
-                                <Marker
-                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
-                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
-                                />
-                              )}
-                            </GoogleMap>
-                          )}
+                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                         </>
                       )}
                     </>
                   )}
-                  <label style={{ fontWeight: 600, color: '#22543d' }}>Revenue Type</label>
-                  <select name="revenue_type" value={serviceForm.revenue_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-                    <option value="paid">Paid</option>
-                    <option value="promotional">Promotional (Free)</option>
-                  </select>
+
+                  {/* Always show these fields */}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
-                  <input name="price" type="number" value={serviceForm.price} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <input name="price" type="number" value={serviceForm.price} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Categories</label>
-                  <select name="category_ids" multiple value={serviceForm.category_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                  <select name="category_ids" multiple value={serviceForm.category_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Subcategories</label>
-                  <select name="subcategory_ids" multiple value={serviceForm.subcategory_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                  <select name="subcategory_ids" multiple value={serviceForm.subcategory_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                     {subcategories
-                      .filter((s: Subcategory) => (serviceForm.category_ids as (number | string)[]).map(Number).includes(s.category_id))
-                      .map((sub: Subcategory) => (
+                      .filter(s => Array.isArray(serviceForm.category_ids) ? serviceForm.category_ids.map(Number).includes(Number(s.category_id)) : true)
+                      .map(sub => (
                         <option key={sub.id} value={sub.id}>{sub.name}</option>
                       ))}
                   </select>
                 </div>
-                {/* Suggestions (CTA) */}
-                <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <label style={{ fontWeight: 600, color: '#22543d' }}>Call to Action Suggestions (max 5)</label>
-                  {serviceForm.suggestions.map((s, idx) => (
-                    <div key={idx} style={{ background: '#f7fafc', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                      <input placeholder="Title" value={s.title} onChange={e => handleSuggestionChange(idx, 'title', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                      <textarea placeholder="Description" value={s.description} onChange={e => handleSuggestionChange(idx, 'description', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
-                      <input placeholder="Redirect URL" value={s.redirect_url} onChange={e => handleSuggestionChange(idx, 'redirect_url', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                      {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
-                    </div>
-                  ))}
-                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8 }}>Add Suggestion</button>}
-                </div>
               </form>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 0, marginBottom: 32 }}>
+                <button
+                  type="submit"
+                  form="service-form"
+                  disabled={serviceFormLoading}
+                  style={{
+                    background: '#22543d',
+                    color: '#fff',
+                    borderRadius: 8,
+                    padding: '12px 32px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    border: 'none',
+                    cursor: serviceFormLoading ? 'not-allowed' : 'pointer',
+                    minWidth: 160
+                  }}
+                >
+                  {serviceFormLoading ? 'Submitting...' : 'Submit'}
+                </button>
+              </div>
+              <div style={{ width: 600, display: 'flex', flexDirection: 'column', gap: 18, margin: '0 auto', padding: 8 }}>
+                <label style={{ fontWeight: 600, color: '#22543d' }}>Call to Action Suggestions (max 5)</label>
+                {serviceForm.suggestions.map((s, idx) => (
+                  <div key={idx} style={{ background: '#f7fafc', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                    <input placeholder="Title" value={s.title} onChange={e => handleSuggestionChange(idx, 'title', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    <textarea placeholder="Description" value={s.description} onChange={e => handleSuggestionChange(idx, 'description', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
+                    <input placeholder="Redirect URL" value={s.redirect_url} onChange={e => handleSuggestionChange(idx, 'redirect_url', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
+                  </div>
+                ))}
+                {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8, marginBottom: 24, width: 120, alignSelf: 'center', paddingLeft: 12, paddingRight: 12 }}>Add Suggestion</button>}
+              </div>
+              {serviceFormMessage && (
+                <div style={{ marginTop: 12, color: serviceFormMessage.includes('success') ? 'green' : 'red', textAlign: 'center', width: '100%' }}>
+                  {serviceFormMessage}
+                </div>
+              )}
               {/* Services List Table */}
               <h3 style={{ fontSize: 20, fontWeight: 700, color: '#22543d', marginBottom: 10 }}>All Services</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
@@ -1637,8 +1604,8 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{s.created_at ? s.created_at.split('T')[0] : ''}</td>
                       <td style={{ padding: 10 }}>
                         <button onClick={() => s.id !== undefined && handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
-                        <button onClick={() => s.id !== undefined && handleServiceEdit(s)} className="edit-btn">Edit</button>
-                        <button onClick={() => s.id !== undefined && handleServiceDelete(s.id)} className="delete-btn">Delete</button>
+                        <button onClick={() => s.id !== undefined && handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => s.id !== undefined && handleServiceDelete(s.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
