@@ -291,74 +291,7 @@ export default function CTASection() {
           </form>
         )}
       </div>
-      <style>{`
-        @keyframes fadeIn {
-          from { opacity: 0; transform: translateY(20px); }
-          to { opacity: 1; transform: translateY(0); }
-        }
-        /* Calendar color overrides */
-        .rbc-calendar, .rbc-month-view, .rbc-header, .rbc-date-cell, .rbc-day-bg, .rbc-today, .rbc-off-range-bg, .rbc-selected-cell, .rbc-event, .rbc-toolbar, .rbc-row-content, .rbc-row, .rbc-month-row, .rbc-time-view, .rbc-time-header, .rbc-time-content, .rbc-timeslot-group {
-          color: var(--text-secondary) !important;
-          font-size: 13px !important;
-        }
-        .rbc-header {
-          background: var(--accent) !important;
-          color: var(--text-on-accent) !important;
-          font-weight: 700;
-          font-size: 1.05rem !important;
-          padding: 6px 0 !important;
-        }
-        .rbc-today {
-          background: var(--card) !important;
-        }
-        .rbc-selected-cell, .rbc-active {
-          background: var(--accent) !important;
-          color: var(--text-on-accent) !important;
-        }
-        .rbc-date-cell.rbc-now, .rbc-date-cell.rbc-current {
-          background: var(--text-accent-alt) !important;
-          color: var(--text-on-accent) !important;
-        }
-        .rbc-off-range {
-          color: var(--text-secondary) !important;
-        }
-        .rbc-toolbar button {
-          background: var(--accent) !important;
-          color: var(--text-on-accent) !important;
-          border-radius: 6px;
-          border: none;
-          font-weight: 600;
-          margin: 0 2px;
-          padding: 6px 14px;
-          font-size: 13px !important;
-        }
-        .rbc-toolbar button.rbc-active {
-          background: var(--text-accent-alt) !important;
-        }
-        .rbc-event {
-          background: var(--text-accent-alt) !important;
-          color: var(--text-on-accent) !important;
-        }
-        /* Responsive calendar */
-        @media (max-width: 900px) {
-          .cta-section > div[role="tabpanel"] {
-            max-width: 98vw !important;
-            padding: 10px !important;
-          }
-          .rbc-calendar {
-            font-size: 11px !important;
-          }
-        }
-        @media (max-width: 600px) {
-          .cta-section > div[role="tabpanel"] {
-            max-width: 100vw !important;
-            padding: 2px !important;
-          }
-          .rbc-calendar {
-            font-size: 10px !important;
-          }
-        }
-      `}</style>
+
     </section>
   );
 }

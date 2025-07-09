@@ -55,6 +55,23 @@ interface User {
 // Extend the form state to allow confirmPassword (not persisted to backend)
 type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
 
+// Add ConfirmModal component at the bottom of the file
+function ConfirmModal({ open, title, message, onConfirm, onCancel }: { open: boolean, title: string, message: string, onConfirm: () => void, onCancel: () => void }) {
+  if (!open) return null;
+  return (
+    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+      <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 320, maxWidth: 420, boxShadow: '0 4px 32px rgba(90,103,216,0.13)', position: 'relative', textAlign: 'center' }}>
+        <h3 style={{ color: '#e53e3e', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{title}</h3>
+        <div style={{ color: '#444', fontSize: 16, marginBottom: 24 }}>{message}</div>
+        <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
+          <button onClick={onCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Cancel</button>
+          <button onClick={onConfirm} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Delete</button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -125,6 +142,8 @@ export default function AdminDashboard() {
   const [services, setServices] = useState<any[]>([]);
   const [serviceProfile, setServiceProfile] = useState<any | null>(null);
   const [showServiceProfileModal, setShowServiceProfileModal] = useState(false);
+  // Add state for confirm modal
+  const [confirmModal, setConfirmModal] = useState<{ open: boolean, type: string, id: number | null, name?: string }>({ open: false, type: '', id: null, name: '' });
 
   // Auth check
   useEffect(() => {
@@ -260,21 +279,9 @@ export default function AdminDashboard() {
     setCatEditId(cat.id);
     setCatName(cat.name);
   }
-  async function handleCatDelete(id: number) {
-    if (!confirm("Delete this category?")) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:4000/api/categories/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
-      });
-      if (!res.ok) throw new Error();
-      fetchCategories();
-    } catch {
-      // setError("Failed to delete category");
-    } finally {
-      setLoading(false);
-    }
+  // Refactor delete handlers to use modal
+  async function handleCatDelete(id: number, name?: string) {
+    setConfirmModal({ open: true, type: 'category', id, name });
   }
 
   // Subcategory CRUD
@@ -308,21 +315,9 @@ export default function AdminDashboard() {
     setSubName(sub.name);
     setSubCatId(sub.category_id);
   }
-  async function handleSubDelete(id: number) {
-    if (!confirm("Delete this subcategory?")) return;
-    setLoading(true);
-    try {
-      const res = await fetch(`http://localhost:4000/api/subcategories/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
-      });
-      if (!res.ok) throw new Error();
-      fetchSubcategories();
-    } catch {
-      // setError("Failed to delete subcategory");
-    } finally {
-      setLoading(false);
-    }
+  // Refactor delete handlers to use modal
+  async function handleSubDelete(id: number, name?: string) {
+    setConfirmModal({ open: true, type: 'subcategory', id, name });
   }
 
   function handleLogout() {
@@ -423,15 +418,10 @@ export default function AdminDashboard() {
       setConsultantFormLoaded(true);
     }
   }
-  async function handleConsultantDelete(id?: number) {
+  // Refactor delete handlers to use modal
+  async function handleConsultantDelete(id?: number, name?: string) {
     if (typeof id !== 'number') return;
-    if (!confirm("Delete this consultant?")) return;
-    const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) fetchConsultants();
+    setConfirmModal({ open: true, type: 'consultant', id, name });
   }
   async function handleConsultantProfile(id?: number) {
     if (typeof id !== 'number') return;
@@ -530,14 +520,9 @@ export default function AdminDashboard() {
     setUserEditId(u.id);
     setUserForm({ id: u.id, username: u.username, role: u.role });
   }
-  async function handleUserDelete(id: number) {
-    if (!confirm("Delete this user?")) return;
-    const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/users/${id}`, {
-      method: "DELETE",
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) fetchUsers();
+  // Refactor delete handlers to use modal
+  async function handleUserDelete(id: number, name?: string) {
+    setConfirmModal({ open: true, type: 'user', id, name });
   }
   function handleUserFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setUserForm({ ...userForm, [e.target.name]: e.target.value });
@@ -759,15 +744,62 @@ export default function AdminDashboard() {
     setServiceForm({ ...s, event_image: null });
   }
 
-  // Delete service
-  async function handleServiceDelete(id: number) {
-    if (!confirm('Delete this service?')) return;
-    const token = localStorage.getItem('admin_jwt');
-    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) fetchServices();
+  // Refactor delete handlers to use modal
+  async function handleServiceDelete(id: number, name?: string) {
+    setConfirmModal({ open: true, type: 'service', id, name });
+  }
+
+  // Actual delete logic, called after confirm
+  async function confirmDelete() {
+    const { type, id } = confirmModal;
+    if (!id) return;
+    if (type === 'category') {
+      setLoading(true);
+      try {
+        const res = await fetch(`http://localhost:4000/api/categories/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+        });
+        if (!res.ok) throw new Error();
+        fetchCategories();
+      } finally {
+        setLoading(false);
+      }
+    } else if (type === 'subcategory') {
+      setLoading(true);
+      try {
+        const res = await fetch(`http://localhost:4000/api/subcategories/${id}`, {
+          method: "DELETE",
+          headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+        });
+        if (!res.ok) throw new Error();
+        fetchSubcategories();
+      } finally {
+        setLoading(false);
+      }
+    } else if (type === 'consultant') {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) fetchConsultants();
+    } else if (type === 'user') {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(`http://localhost:4000/api/users/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) fetchUsers();
+    } else if (type === 'service') {
+      const token = localStorage.getItem('admin_jwt');
+      const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) fetchServices();
+    }
+    setConfirmModal({ open: false, type: '', id: null, name: '' });
   }
 
   return (
@@ -948,7 +980,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{new Date(cat.created_at).toLocaleString()}</td>
                       <td style={{ padding: 10 }}>
                         <button onClick={() => handleCatEdit(cat)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleCatDelete(cat.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => handleCatDelete(cat.id, cat.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -988,7 +1020,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{new Date(sub.created_at).toLocaleString()}</td>
                       <td style={{ padding: 10 }}>
                         <button onClick={() => handleSubEdit(sub)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleSubDelete(sub.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => handleSubDelete(sub.id, sub.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -1039,7 +1071,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>
                         <button onClick={() => { handleConsultantProfile(c.id); setShowConsultantProfileModal(true); }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
                         <button onClick={() => handleConsultantEdit(c)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleConsultantDelete(c.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => handleConsultantDelete(c.id, c.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -1330,7 +1362,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{u.created_at ? new Date(u.created_at).toLocaleString() : ''}</td>
                       <td style={{ padding: 10 }}>
                         <button onClick={() => handleUserEdit(u)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleUserDelete(u.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => handleUserDelete(u.id, u.username)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -1343,8 +1375,9 @@ export default function AdminDashboard() {
             <section>
               {/* Service Form (restored conditional logic) */}
               <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Services</h2>
-              <form onSubmit={handleServiceSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 32, alignItems: 'flex-start' }}>
+              <form onSubmit={handleServiceSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, margin: '32px auto', alignItems: 'flex-start', maxWidth: 600 }}>
                 <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
+                  {/* Always show these fields */}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
                   <input name="name" value={serviceForm.name} onChange={handleServiceFormChange} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
@@ -1361,7 +1394,7 @@ export default function AdminDashboard() {
                     <option value="event">Event</option>
                     <option value="test">Test</option>
                   </select>
-                  {/* Conditional fields for each type */}
+                  {/* Appointment-specific fields */}
                   {serviceForm.service_type === 'appointment' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Appointment Type</label>
@@ -1376,7 +1409,6 @@ export default function AdminDashboard() {
                           <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                         ))}
                       </select>
-                      {/* Show availability for selected consultants */}
                       {selectedConsultantIds.length > 0 && (
                         <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
                           <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 6 }}>Consultant Availability:</div>
@@ -1394,6 +1426,7 @@ export default function AdminDashboard() {
                       )}
                     </>
                   )}
+                  {/* Subscription-specific fields */}
                   {serviceForm.service_type === 'subscription' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription Start Date</label>
@@ -1416,6 +1449,7 @@ export default function AdminDashboard() {
                       )}
                     </>
                   )}
+                  {/* Event-specific fields */}
                   {serviceForm.service_type === 'event' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event Start Date & Time</label>
@@ -1462,6 +1496,7 @@ export default function AdminDashboard() {
                       )}
                     </>
                   )}
+                  {/* Test-specific fields */}
                   {serviceForm.service_type === 'test' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Test Type</label>
@@ -1508,6 +1543,7 @@ export default function AdminDashboard() {
                       )}
                     </>
                   )}
+                  {/* Always show these fields */}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Revenue Type</label>
                   <select name="revenue_type" value={serviceForm.revenue_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                     <option value="paid">Paid</option>
@@ -1529,6 +1565,8 @@ export default function AdminDashboard() {
                         <option key={sub.id} value={sub.id}>{sub.name}</option>
                       ))}
                   </select>
+                  {/* Submit button */}
+                  <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer', margin: '24px auto 0', display: 'block', minWidth: 160 }}>Submit</button>
                 </div>
                 {/* Suggestions (CTA) */}
                 <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
@@ -1541,7 +1579,7 @@ export default function AdminDashboard() {
                       {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
                     </div>
                   ))}
-                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8 }}>Add Suggestion</button>}
+                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8, width: 140, alignSelf: 'center', marginBottom: 24 }}>Add Suggestion</button>}
                 </div>
               </form>
               {/* Services List Table */}
@@ -1568,7 +1606,7 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>
                         <button onClick={() => handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
                         <button onClick={() => handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleServiceDelete(s.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => handleServiceDelete(s.id, s.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
@@ -1630,6 +1668,14 @@ export default function AdminDashboard() {
       </div>
       {/* Footer */}
       <Footer />
+      {/* Confirm Modal */}
+      <ConfirmModal
+        open={confirmModal.open}
+        title={`Delete ${confirmModal.type.charAt(0).toUpperCase() + confirmModal.type.slice(1)}`}
+        message={`Are you sure you want to delete ${confirmModal.name || confirmModal.type}? This action cannot be undone.`}
+        onConfirm={confirmDelete}
+        onCancel={() => setConfirmModal({ open: false, type: '', id: null, name: '' })}
+      />
     </div>
   );
 }
