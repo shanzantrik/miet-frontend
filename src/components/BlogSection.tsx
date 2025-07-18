@@ -91,7 +91,38 @@ export default function BlogSection() {
           ))}
         </div>
       </div>
-      {/* Removed inline <style> tag, all styles moved to BlogSection.module.css */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        .blog-marquee-outer { position: relative; }
+        .blog-marquee {
+          animation-play-state: running;
+        }
+        .blog-marquee-outer:hover .blog-marquee {
+          animation-play-state: paused !important;
+        }
+        @keyframes marquee {
+          0% { transform: translateX(0); }
+          100% { transform: translateX(-50%); }
+        }
+        .blog-section::-webkit-scrollbar { display: none; }
+        .blog-section { -ms-overflow-style: none; scrollbar-width: none; }
+        @media (max-width: 1400px) {
+          .blog-marquee-outer { max-width: 100vw; }
+        }
+        @media (max-width: 1200px) {
+          .blog-marquee-outer { height: 350px; }
+        }
+        @media (max-width: 900px) {
+          .blog-marquee-outer { height: 320px; }
+        }
+        @media (max-width: 600px) {
+          .blog-marquee-outer { height: 260px; }
+          .blog-marquee > div { width: 170px !important; min-height: 200px !important; }
+        }
+      `,
+        }}
+      />
     </section>
   );
 }

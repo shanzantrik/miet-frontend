@@ -54,23 +54,39 @@ interface User {
 }
 
 // Extend the form state to allow confirmPassword (not persisted to backend)
-type ConsultantForm = Partial<Consultant> & { city?: string; confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
+type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
 
-// Add ConfirmModal component at the bottom of the file
-function ConfirmModal({ open, title, message, onConfirm, onCancel }: { open: boolean, title: string, message: string, onConfirm: () => void, onCancel: () => void }) {
-  if (!open) return null;
-  return (
-    <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 4000, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 320, maxWidth: 420, boxShadow: '0 4px 32px rgba(90,103,216,0.13)', position: 'relative', textAlign: 'center' }}>
-        <h3 style={{ color: '#e53e3e', fontWeight: 700, fontSize: 20, marginBottom: 12 }}>{title}</h3>
-        <div style={{ color: '#444', fontSize: 16, marginBottom: 24 }}>{message}</div>
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 16 }}>
-          <button onClick={onCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Cancel</button>
-          <button onClick={onConfirm} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Delete</button>
-        </div>
-      </div>
-    </div>
-  );
+interface ServiceType {
+  id?: number;
+  name: string;
+  description: string;
+  delivery_mode: string;
+  service_type: string;
+  appointment_type?: string;
+  event_type?: string;
+  test_type?: string;
+  revenue_type?: string;
+  price?: string;
+  renewal_date?: string;
+  center?: string;
+  test_redirect_url?: string;
+  consultant_ids?: string[];
+  category_ids?: string[];
+  subcategory_ids?: string[];
+  suggestions?: { title: string; description: string; redirect_url: string }[];
+  subscription_start?: string;
+  subscription_end?: string;
+  discount?: string;
+  monthly_price?: string;
+  yearly_price?: string;
+  center_address?: string;
+  center_lat?: string;
+  center_lng?: string;
+  event_start?: string;
+  event_end?: string;
+  event_image?: string;
+  event_meet_link?: string;
+  created_at?: string;
 }
 
 export default function AdminDashboard() {
@@ -131,20 +147,25 @@ export default function AdminDashboard() {
     event_image: null as File | null,
     event_meet_link: '',
   });
-  const [serviceEditId, setServiceEditId] = useState(null);
+  const [serviceEditId, setServiceEditId] = useState<number | null>(null);
   const [selectedConsultantIds, setSelectedConsultantIds] = useState<number[]>([]);
   const [consultantAvailability, setConsultantAvailability] = useState<Record<number, string[]>>({}); // consultantId -> array of slots
   const [consultationDate, setConsultationDate] = useState('');
-  const [therapyFrequency, setTherapyFrequency] = useState<'weekly' | 'monthly'>('weekly');
-  const [therapyPeriod, setTherapyPeriod] = useState(1);
   // Track if consultant form has been loaded for editing
   const [consultantFormLoaded, setConsultantFormLoaded] = useState(false);
   // Services state for list and modal
-  const [services, setServices] = useState<any[]>([]);
-  const [serviceProfile, setServiceProfile] = useState<any | null>(null);
+  const [services, setServices] = useState<ServiceType[]>([]);
+  const [serviceProfile, setServiceProfile] = useState<ServiceType | null>(null);
   const [showServiceProfileModal, setShowServiceProfileModal] = useState(false);
-  // Add state for confirm modal
-  const [confirmModal, setConfirmModal] = useState<{ open: boolean, type: string, id: number | null, name?: string }>({ open: false, type: '', id: null, name: '' });
+  // Add state for name and email
+  const [formName, setFormName] = useState('');
+  const [formEmail, setFormEmail] = useState('');
+  // Add these states at the top of your component
+  const [formLoading, setFormLoading] = useState(false);
+  const [formMessage, setFormMessage] = useState('');
+  // Add these states at the top of your component
+  const [serviceFormLoading, setServiceFormLoading] = useState(false);
+  const [serviceFormMessage, setServiceFormMessage] = useState('');
 
   // Auth check
   useEffect(() => {
@@ -171,7 +192,7 @@ export default function AdminDashboard() {
   async function fetchCategories() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/categories", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch categories");
@@ -185,7 +206,7 @@ export default function AdminDashboard() {
   async function fetchSubcategories() {
     setLoading(true);
     try {
-      const res = await fetch("http://localhost:4000/api/subcategories", {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`, {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch subcategories");
@@ -199,7 +220,7 @@ export default function AdminDashboard() {
 
   async function fetchConsultants() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch("http://localhost:4000/api/consultants", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -207,7 +228,7 @@ export default function AdminDashboard() {
       // For each consultant, fetch their slots from the backend
       const consultantsWithSlots = await Promise.all(
         consultants.map(async (c: Consultant) => {
-          const slotRes = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, {
+          const slotRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/availability`, {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (slotRes.ok) {
@@ -228,7 +249,7 @@ export default function AdminDashboard() {
   // Fetch users
   async function fetchUsers() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch("http://localhost:4000/api/users", {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setUsers(await res.json());
@@ -240,7 +261,7 @@ export default function AdminDashboard() {
   // Fetch services
   async function fetchServices() {
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch('http://localhost:4000/api/services', {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -257,7 +278,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = catEditId ? "PUT" : "POST";
-      const url = catEditId ? `http://localhost:4000/api/categories/${catEditId}` : "http://localhost:4000/api/categories";
+      const url = catEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${catEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`;
       const res = await fetch(url, {
         method,
         headers: {
@@ -280,9 +301,21 @@ export default function AdminDashboard() {
     setCatEditId(cat.id);
     setCatName(cat.name);
   }
-  // Refactor delete handlers to use modal
-  async function handleCatDelete(id: number, name?: string) {
-    setConfirmModal({ open: true, type: 'category', id, name });
+  async function handleCatDelete(id: number) {
+    if (!confirm("Delete this category?")) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+      });
+      if (!res.ok) throw new Error();
+      fetchCategories();
+    } catch {
+      // setError("Failed to delete category");
+    } finally {
+      setLoading(false);
+    }
   }
 
   // Subcategory CRUD
@@ -291,7 +324,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = subEditId ? "PUT" : "POST";
-      const url = subEditId ? `http://localhost:4000/api/subcategories/${subEditId}` : "http://localhost:4000/api/subcategories";
+      const url = subEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${subEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`;
       const res = await fetch(url, {
         method,
         headers: {
@@ -316,9 +349,21 @@ export default function AdminDashboard() {
     setSubName(sub.name);
     setSubCatId(sub.category_id);
   }
-  // Refactor delete handlers to use modal
-  async function handleSubDelete(id: number, name?: string) {
-    setConfirmModal({ open: true, type: 'subcategory', id, name });
+  async function handleSubDelete(id: number) {
+    if (!confirm("Delete this subcategory?")) return;
+    setLoading(true);
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${id}`, {
+        method: "DELETE",
+        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+      });
+      if (!res.ok) throw new Error();
+      fetchSubcategories();
+    } catch {
+      // setError("Failed to delete subcategory");
+    } finally {
+      setLoading(false);
+    }
   }
 
   function handleLogout() {
@@ -347,17 +392,17 @@ export default function AdminDashboard() {
   async function saveConsultantSlots(consultantId: number, slots: { date: string; time: string; endTime?: string }[]) {
     // First, fetch existing slots and delete them all (for update)
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       const existing = await res.json();
       for (const slot of existing) {
-        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       }
     }
     // Add new slots
     for (const slot of slots) {
       if (slot.date && slot.time) {
-        await fetch(`http://localhost:4000/api/consultants/${consultantId}/availability`, {
+        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ date: slot.date, start_time: slot.time, end_time: slot.endTime || '' })
@@ -371,7 +416,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const token = localStorage.getItem("admin_jwt");
     const method = consultantEditId ? "PUT" : "POST";
-    const url = consultantEditId ? `http://localhost:4000/api/consultants/${consultantEditId}` : "http://localhost:4000/api/consultants";
+    const url = consultantEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`;
     // Convert category_ids and subcategory_ids to number[] before submitting
     const payload = {
       ...consultantForm,
@@ -409,7 +454,7 @@ export default function AdminDashboard() {
       });
       // Fetch slots from backend
       const token = localStorage.getItem("admin_jwt");
-      const res = await fetch(`http://localhost:4000/api/consultants/${c.id}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/availability`, { headers: { Authorization: `Bearer ${token}` } });
       if (res.ok) {
         const slots = await res.json();
         setConsultantSlots(slots.map((slot: { date: string; start_time: string; end_time: string; id: number }) => ({ date: slot.date, time: slot.start_time, endTime: slot.end_time })));
@@ -422,12 +467,18 @@ export default function AdminDashboard() {
   // Refactor delete handlers to use modal
   async function handleConsultantDelete(id?: number, name?: string) {
     if (typeof id !== 'number') return;
-    setConfirmModal({ open: true, type: 'consultant', id, name });
+    if (!confirm("Delete this consultant?")) return;
+    const token = localStorage.getItem("admin_jwt");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) fetchConsultants();
   }
   async function handleConsultantProfile(id?: number) {
     if (typeof id !== 'number') return;
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setConsultantProfile(await res.json());
@@ -449,7 +500,7 @@ export default function AdminDashboard() {
     const formData = new FormData();
     formData.append('file', file);
     try {
-      const res = await fetch('http://localhost:4000/api/upload', {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/upload`, {
         method: 'POST',
         body: formData,
       });
@@ -491,7 +542,7 @@ export default function AdminDashboard() {
   async function handleToggleConsultantStatus(c: Consultant) {
     const token = localStorage.getItem("admin_jwt");
     const newStatus = c.status === 'online' ? 'offline' : 'online';
-    await fetch(`http://localhost:4000/api/consultants/${c.id}/status`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status: newStatus })
@@ -504,7 +555,7 @@ export default function AdminDashboard() {
     e.preventDefault();
     const token = localStorage.getItem("admin_jwt");
     const method = userEditId ? "PUT" : "POST";
-    const url = userEditId ? `http://localhost:4000/api/users/${userEditId}` : "http://localhost:4000/api/users";
+    const url = userEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${userEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users`;
     const body = userEditId ? { username: userForm.username, role: userForm.role } : userForm;
     const res = await fetch(url, {
       method,
@@ -521,9 +572,14 @@ export default function AdminDashboard() {
     setUserEditId(u.id);
     setUserForm({ id: u.id, username: u.username, role: u.role });
   }
-  // Refactor delete handlers to use modal
-  async function handleUserDelete(id: number, name?: string) {
-    setConfirmModal({ open: true, type: 'user', id, name });
+  async function handleUserDelete(id: number) {
+    if (!confirm("Delete this user?")) return;
+    const token = localStorage.getItem("admin_jwt");
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${id}`, {
+      method: "DELETE",
+      headers: { Authorization: `Bearer ${token}` },
+    });
+    if (res.ok) fetchUsers();
   }
   function handleUserFormChange(e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) {
     setUserForm({ ...userForm, [e.target.name]: e.target.value });
@@ -536,7 +592,7 @@ export default function AdminDashboard() {
   async function handleToggleUserStatus(u: User) {
     const token = localStorage.getItem("admin_jwt");
     const newStatus = u.status === 'active' ? 'inactive' : 'active';
-    await fetch(`http://localhost:4000/api/users/${u.id}/status`, {
+    await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users/${u.id}/status`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
       body: JSON.stringify({ status: newStatus })
@@ -547,47 +603,59 @@ export default function AdminDashboard() {
   // Service CRUD
   async function handleServiceSubmit(e: React.FormEvent) {
     e.preventDefault();
+    setServiceFormLoading(true);
+    setServiceFormMessage('');
     const token = localStorage.getItem('admin_jwt');
     const method = serviceEditId ? 'PUT' : 'POST';
-    const url = serviceEditId ? `http://localhost:4000/api/services/${serviceEditId}` : 'http://localhost:4000/api/services';
-    const res = await fetch(url, {
-      method,
-      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-      body: JSON.stringify(serviceForm),
-    });
-    if (res.ok) {
-      setServiceForm({
-        name: '',
-        description: '',
-        delivery_mode: 'online',
-        service_type: 'appointment',
-        appointment_type: '',
-        event_type: '',
-        test_type: '',
-        revenue_type: 'paid',
-        price: '',
-        renewal_date: '',
-        center: '',
-        test_redirect_url: '',
-        consultant_ids: [],
-        category_ids: [],
-        subcategory_ids: [],
-        suggestions: [{ title: '', description: '', redirect_url: '' }],
-        subscription_start: '',
-        subscription_end: '',
-        discount: '',
-        monthly_price: '',
-        yearly_price: '',
-        center_address: '',
-        center_lat: '',
-        center_lng: '',
-        event_start: '',
-        event_end: '',
-        event_image: null as File | null,
-        event_meet_link: '',
+    const url = serviceEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${serviceEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`;
+    try {
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify(serviceForm),
       });
-      setServiceEditId(null);
-      fetchServices();
+      if (res.ok) {
+        setServiceForm({
+          name: '',
+          description: '',
+          delivery_mode: 'online',
+          service_type: 'appointment',
+          appointment_type: '',
+          event_type: '',
+          test_type: '',
+          revenue_type: 'paid',
+          price: '',
+          renewal_date: '',
+          center: '',
+          test_redirect_url: '',
+          consultant_ids: [],
+          category_ids: [],
+          subcategory_ids: [],
+          suggestions: [{ title: '', description: '', redirect_url: '' }],
+          subscription_start: '',
+          subscription_end: '',
+          discount: '',
+          monthly_price: '',
+          yearly_price: '',
+          center_address: '',
+          center_lat: '',
+          center_lng: '',
+          event_start: '',
+          event_end: '',
+          event_image: null as File | null,
+          event_meet_link: '',
+        });
+        setServiceEditId(null);
+        fetchServices();
+        setServiceFormMessage('Service submitted successfully!');
+      } else {
+        setServiceFormMessage('Error submitting service.');
+      }
+    } catch (err) {
+      setServiceFormMessage('Error submitting service.');
+      console.error('Error submitting service:', err);
+    } finally {
+      setServiceFormLoading(false);
     }
   }
   const handleServiceFormChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -730,7 +798,7 @@ export default function AdminDashboard() {
   // View service details
   async function handleServiceProfile(id: number) {
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch(`http://localhost:4000/api/services/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${id}`, {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -740,112 +808,45 @@ export default function AdminDashboard() {
   }
 
   // Edit service
-  async function handleServiceEdit(s: any) {
-    setServiceEditId(s.id);
-    setServiceForm({ ...s, event_image: null });
+  async function handleServiceEdit(s: ServiceType) {
+    setServiceEditId(s.id ?? null);
+    setServiceForm({ ...s, event_image: null as File | null, appointment_type: '', event_type: '', test_type: '', revenue_type: 'paid', price: '', renewal_date: '', center: '', test_redirect_url: '', consultant_ids: [], category_ids: [], subcategory_ids: [], suggestions: [{ title: '', description: '', redirect_url: '' }], subscription_start: '', subscription_end: '', discount: '', monthly_price: '', yearly_price: '', center_address: '', center_lat: '', center_lng: '', event_start: '', event_end: '', event_meet_link: '' });
   }
 
-  // Refactor delete handlers to use modal
-  async function handleServiceDelete(id: number, name?: string) {
-    setConfirmModal({ open: true, type: 'service', id, name });
-  }
-
-  // Actual delete logic, called after confirm
-  async function confirmDelete() {
-    const { type, id } = confirmModal;
-    if (!id) return;
-    if (type === 'category') {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:4000/api/categories/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
-        });
-        if (!res.ok) throw new Error();
-        fetchCategories();
-      } finally {
-        setLoading(false);
-      }
-    } else if (type === 'subcategory') {
-      setLoading(true);
-      try {
-        const res = await fetch(`http://localhost:4000/api/subcategories/${id}`, {
-          method: "DELETE",
-          headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
-        });
-        if (!res.ok) throw new Error();
-        fetchSubcategories();
-      } finally {
-        setLoading(false);
-      }
-    } else if (type === 'consultant') {
-      const token = localStorage.getItem("admin_jwt");
-      const res = await fetch(`http://localhost:4000/api/consultants/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) fetchConsultants();
-    } else if (type === 'user') {
-      const token = localStorage.getItem("admin_jwt");
-      const res = await fetch(`http://localhost:4000/api/users/${id}`, {
-        method: "DELETE",
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) fetchUsers();
-    } else if (type === 'service') {
-      const token = localStorage.getItem('admin_jwt');
-      const res = await fetch(`http://localhost:4000/api/services/${id}`, {
-        method: 'DELETE',
-        headers: { Authorization: `Bearer ${token}` },
-      });
-      if (res.ok) fetchServices();
-    }
-    setConfirmModal({ open: false, type: '', id: null, name: '' });
-  }
-
-  // Replace allConsultants with consultants for city dropdown
-  const cities = useMemo(() => {
-    const citySet = new Set<string>();
-    consultants.forEach((c: any) => {
-      if (c.city && c.city.trim()) citySet.add(c.city.trim());
+  // Delete service
+  async function handleServiceDelete(id: number) {
+    if (!confirm('Delete this service?')) return;
+    const token = localStorage.getItem('admin_jwt');
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services/${id}`, {
+      method: 'DELETE',
+      headers: { Authorization: `Bearer ${token}` },
     });
-    return Array.from(citySet).sort();
-  }, [consultants]);
-  console.log('All consultants:', consultants);
-  console.log('Cities for dropdown:', cities);
-
-  // Add this function inside your AdminDashboard component:
-  async function handleMapClick(e: google.maps.MapMouseEvent) {
-    const lat = e.latLng?.lat();
-    const lng = e.latLng?.lng();
-    setConsultantForm(f => ({ ...f, location_lat: String(lat), location_lng: String(lng) }));
-
-    // Reverse geocode to get city
-    try {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      const response = await fetch(
-        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
-      );
-      const data = await response.json();
-      if (data.results && data.results.length > 0) {
-        // Try to find city in address components
-        let cityComponent = data.results[0].address_components.find((comp: any) =>
-          comp.types.includes('locality')
-        );
-        if (!cityComponent) {
-          // Fallback to administrative_area_level_2
-          cityComponent = data.results[0].address_components.find((comp: any) =>
-            comp.types.includes('administrative_area_level_2')
-          );
-        }
-        if (cityComponent) {
-          setConsultantForm(f => ({ ...f, city: cityComponent.long_name }));
-        }
-      }
-    } catch (err) {
-      console.error('Reverse geocoding failed:', err);
-    }
+    if (res.ok) fetchServices();
   }
+
+  // Form submit handler for name and email
+  const handleSimpleFormSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setFormLoading(true);
+    setFormMessage('');
+    const data = { name: formName, email: formEmail };
+    console.log('Form data to submit:', data);
+    try {
+      const res = await fetch('http://localhost:4000/submit-form', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(data),
+      });
+      const result = await res.json();
+      setFormMessage('Form submitted successfully!');
+      console.log('Server response:', result);
+    } catch (err) {
+      setFormMessage('Error submitting form.');
+      console.error('Error submitting form:', err);
+    } finally {
+      setFormLoading(false);
+    }
+  };
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
@@ -1094,7 +1095,7 @@ export default function AdminDashboard() {
                     <tr key={c.id}>
                       <td style={{ padding: 10 }}>
                         {c.image ? (
-                          <Image src={`http://localhost:4000${c.image}`} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} unoptimized />
+                          <Image src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${c.image}`} alt={c.name} width={44} height={44} style={{ borderRadius: 8, objectFit: 'cover', border: '1px solid #e2e8f0' }} unoptimized />
                         ) : (
                           <span style={{ display: 'inline-block', width: 44, height: 44, borderRadius: 8, background: '#e2e8f0' }} />
                         )}
@@ -1306,7 +1307,7 @@ export default function AdminDashboard() {
                     <input type="file" accept="image/*" onChange={e => handleFileUpload(e, 'image')} style={{ marginBottom: 8 }} />
                     {consultantForm.image && (
                       <Image
-                        src={`http://localhost:4000${consultantForm.image}`}
+                        src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantForm.image}`}
                         alt="Consultant"
                         width={80}
                         height={80}
@@ -1319,17 +1320,17 @@ export default function AdminDashboard() {
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>ID Proof (upload)</label>
                     <input type="file" accept="image/*,.pdf" onChange={e => handleFileUpload(e, 'id_proof_url')} style={{ marginBottom: 8 }} />
                     {consultantForm.id_proof_url && (
-                      <a href={`http://localhost:4000${consultantForm.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
+                      <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantForm.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontSize: 15 }}>
                         View Uploaded
                       </a>
                     )}
                   </div>
                 </div>
-                <div style={{ flexBasis: '100%', display: 'flex', gap: 12, marginTop: 12 }}>
-                  <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
-                  {consultantEditId && <button type="button" onClick={handleConsultantFormCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '12px 24px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>Cancel</button>}
-                </div>
               </form>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
+                <button type="submit" form="consultant-form" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
+                {consultantEditId && <button type="button" onClick={handleConsultantFormCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '12px 24px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>Cancel</button>}
+              </div>
               {/* Consultant Profile View */}
               {showConsultantProfileModal && consultantProfile && (
                 <div style={{
@@ -1349,7 +1350,7 @@ export default function AdminDashboard() {
                     <h3 style={{ fontSize: 22, fontWeight: 700, color: '#22543d', marginBottom: 12 }}>{consultantProfile.name}</h3>
                     {consultantProfile.image && (
                       <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
-                        <Image src={`http://localhost:4000${consultantProfile.image}`} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} unoptimized />
+                        <Image src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantProfile.image}`} alt={consultantProfile.name} width={100} height={100} style={{ borderRadius: 12, objectFit: 'cover', border: '1.5px solid #e2e8f0' }} unoptimized />
                       </div>
                     )}
                     <div style={{ color: '#5a67d8', fontWeight: 600, marginBottom: 8 }}>{consultantProfile.tagline}</div>
@@ -1364,7 +1365,7 @@ export default function AdminDashboard() {
                       {consultantProfile.id_proof_url && (
                         <>
                           {' '}
-                          <a href={`http://localhost:4000${consultantProfile.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
+                          <a href={`${process.env.NEXT_PUBLIC_BACKEND_URL}${consultantProfile.id_proof_url}`} target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', textDecoration: 'underline', fontWeight: 600 }}>
                             View Document
                           </a>
                         </>
@@ -1435,132 +1436,91 @@ export default function AdminDashboard() {
             <section>
               {/* Service Form (restored conditional logic) */}
               <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Services</h2>
-              <form onSubmit={handleServiceSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, margin: '32px auto', alignItems: 'flex-start', maxWidth: 600 }}>
-                <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
+              <form onSubmit={handleServiceSubmit} style={{ width: 600, margin: '0 auto', background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 16, marginBottom: 32 }}>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
                   {/* Always show these fields */}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
-                  <input name="name" value={serviceForm.name} onChange={handleServiceFormChange} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <input name="name" value={serviceForm.name} onChange={handleServiceFormChange} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
-                  <textarea name="description" value={serviceForm.description} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                  <textarea name="description" value={serviceForm.description} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Delivery Mode</label>
-                  <select name="delivery_mode" value={serviceForm.delivery_mode} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <select name="delivery_mode" value={serviceForm.delivery_mode} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                     <option value="online">Online</option>
                     <option value="offline">Offline</option>
                   </select>
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Service Type</label>
-                  <select name="service_type" value={serviceForm.service_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                  <select name="service_type" value={serviceForm.service_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                     <option value="appointment">Appointment</option>
                     <option value="subscription">Subscription</option>
                     <option value="event">Event</option>
                     <option value="test">Test</option>
                   </select>
+
                   {/* Appointment-specific fields */}
                   {serviceForm.service_type === 'appointment' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Appointment Type</label>
-                      <select name="appointment_type" value={serviceForm.appointment_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                      <select name="appointment_type" value={serviceForm.appointment_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                         <option value="">Select</option>
                         <option value="consultation">Consultation</option>
                         <option value="therapy">Therapy</option>
                       </select>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Consultants</label>
-                      <select name="consultant_ids" multiple value={serviceForm.consultant_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                      <select name="consultant_ids" multiple value={serviceForm.consultant_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                         {consultants.map(c => (
                           <option key={c.id} value={c.id}>{c.name} ({c.email})</option>
                         ))}
                       </select>
-                      {selectedConsultantIds.length > 0 && (
-                        <div style={{ marginTop: 12, background: '#f7fafc', borderRadius: 8, padding: 12, border: '1px solid #e2e8f0' }}>
-                          <div style={{ fontWeight: 600, color: '#22543d', marginBottom: 6 }}>Consultant Availability:</div>
-                          {selectedConsultantIds.map(cid => (
-                            <div key={cid} style={{ marginBottom: 8 }}>
-                              <span style={{ color: '#5a67d8', fontWeight: 500 }}>{consultants.find(c => c.id === cid)?.name || 'Consultant'}:</span>
-                              <ul style={{ margin: '4px 0 0 16px', padding: 0 }}>
-                                {(consultantAvailability[cid] || []).map((slot, idx) => (
-                                  <li key={idx} style={{ color: '#22543d', fontSize: 15 }}>{slot}</li>
-                                ))}
-                              </ul>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </>
                   )}
+
                   {/* Subscription-specific fields */}
                   {serviceForm.service_type === 'subscription' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription Start Date</label>
-                      <input type="date" name="subscription_start" value={serviceForm.subscription_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <input type="date" name="subscription_start" value={serviceForm.subscription_start || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Subscription End Date</label>
-                      <input type="date" name="subscription_end" value={serviceForm.subscription_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                      <input type="date" name="subscription_end" value={serviceForm.subscription_end || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Discount (%)</label>
-                      <input type="number" name="discount" value={serviceForm.discount || ''} onChange={handleServiceFormChange} min={0} max={100} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <input type="number" name="discount" value={serviceForm.discount || ''} onChange={handleServiceFormChange} min={0} max={100} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Monthly Price</label>
-                      <input type="number" name="monthly_price" value={serviceForm.monthly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
+                      <input type="number" name="monthly_price" value={serviceForm.monthly_price || ''} onChange={handleServiceFormChange} min={0} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Yearly Price</label>
-                      <input type="number" name="yearly_price" value={serviceForm.yearly_price || ''} onChange={handleServiceFormChange} min={0} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, width: 120 }} />
-                      {serviceForm.delivery_mode === 'offline' && (
-                        <>
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                        </>
-                      )}
+                      <input type="number" name="yearly_price" value={serviceForm.yearly_price || ''} onChange={handleServiceFormChange} min={0} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                      <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                      <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                     </>
                   )}
+
                   {/* Event-specific fields */}
                   {serviceForm.service_type === 'event' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event Start Date & Time</label>
-                      <input type="datetime-local" name="event_start" value={serviceForm.event_start || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <input type="datetime-local" name="event_start" value={serviceForm.event_start || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event End Date & Time</label>
-                      <input type="datetime-local" name="event_end" value={serviceForm.event_end || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} required />
+                      <input type="datetime-local" name="event_end" value={serviceForm.event_end || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Event Image</label>
-                      <input type="file" name="event_image" accept="image/*" onChange={handleEventImageChange} style={{ marginBottom: 12 }} required />
-                      {serviceForm.delivery_mode === 'offline' && (
-                        <>
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          {/* Google Maps/Autocomplete for location */}
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
-                          {isLoaded && (
-                            <GoogleMap
-                              mapContainerStyle={{ width: '100%', height: 220 }}
-                              center={{
-                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
-                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
-                              }}
-                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
-                              onClick={e => {
-                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
-                              }}
-                            >
-                              {serviceForm.center_lat && serviceForm.center_lng && (
-                                <Marker
-                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
-                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
-                                />
-                              )}
-                            </GoogleMap>
-                          )}
-                        </>
-                      )}
+                      <input type="file" name="event_image" accept="image/*" onChange={handleEventImageChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
+                      <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
+                      <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                       {serviceForm.delivery_mode === 'online' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Google Meet Link</label>
-                          <input type="text" name="event_meet_link" value={generateMeetLink()} readOnly style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12, background: '#f7fafc' }} />
+                          <input type="text" name="event_meet_link" value={generateMeetLink()} readOnly style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', background: '#f7fafc' }} />
                         </>
                       )}
                     </>
                   )}
+
                   {/* Test-specific fields */}
                   {serviceForm.service_type === 'test' && (
                     <>
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Test Type</label>
-                      <select name="test_type" value={serviceForm.test_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                      <select name="test_type" value={serviceForm.test_type} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }}>
                         <option value="">Select</option>
                         <option value="online">Online</option>
                         <option value="offline">Offline</option>
@@ -1568,80 +1528,78 @@ export default function AdminDashboard() {
                       {serviceForm.test_type === 'online' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Test Redirect URL</label>
-                          <input name="test_redirect_url" value={serviceForm.test_redirect_url} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input name="test_redirect_url" value={serviceForm.test_redirect_url || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                         </>
                       )}
-                      {serviceForm.test_type === 'offline' && serviceForm.delivery_mode === 'offline' && (
+                      {serviceForm.test_type === 'offline' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Center Name</label>
-                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
+                          <input type="text" name="center" value={serviceForm.center || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Center Address</label>
-                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', marginBottom: 12 }} />
-                          {/* Google Maps/Autocomplete for location */}
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Locate Center on Map</label>
-                          {isLoaded && (
-                            <GoogleMap
-                              mapContainerStyle={{ width: '100%', height: 220 }}
-                              center={{
-                                lat: serviceForm.center_lat ? parseFloat(serviceForm.center_lat) : defaultMapCenter.lat,
-                                lng: serviceForm.center_lng ? parseFloat(serviceForm.center_lng) : defaultMapCenter.lng,
-                              }}
-                              zoom={serviceForm.center_lat && serviceForm.center_lng ? 13 : 5}
-                              onClick={e => {
-                                setServiceForm(f => ({ ...f, center_lat: String(e.latLng?.lat() ?? ''), center_lng: String(e.latLng?.lng() ?? '') }));
-                              }}
-                            >
-                              {serviceForm.center_lat && serviceForm.center_lng && (
-                                <Marker
-                                  position={{ lat: parseFloat(serviceForm.center_lat), lng: parseFloat(serviceForm.center_lng) }}
-                                  icon={{ url: 'https://maps.google.com/mapfiles/ms/icons/red-dot.png' }}
-                                />
-                              )}
-                            </GoogleMap>
-                          )}
+                          <input type="text" name="center_address" value={serviceForm.center_address || ''} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                         </>
                       )}
                     </>
                   )}
+
                   {/* Always show these fields */}
-                  <label style={{ fontWeight: 600, color: '#22543d' }}>Revenue Type</label>
-                  <select name="revenue_type" value={serviceForm.revenue_type} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-                    <option value="paid">Paid</option>
-                    <option value="promotional">Promotional (Free)</option>
-                  </select>
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
-                  <input name="price" type="number" value={serviceForm.price} onChange={handleServiceFormChange} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                  <input name="price" type="number" value={serviceForm.price} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Categories</label>
-                  <select name="category_ids" multiple value={serviceForm.category_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                  <select name="category_ids" multiple value={serviceForm.category_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                     {categories.map(cat => (
                       <option key={cat.id} value={cat.id}>{cat.name}</option>
                     ))}
                   </select>
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Subcategories</label>
-                  <select name="subcategory_ids" multiple value={serviceForm.subcategory_ids.map(String)} onChange={handleServiceFormChange} style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
+                  <select name="subcategory_ids" multiple value={serviceForm.subcategory_ids?.map(String) || []} onChange={handleServiceFormChange} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }}>
                     {subcategories
-                      .filter((s: Subcategory) => (serviceForm.category_ids as (number | string)[]).map(Number).includes(s.category_id))
-                      .map((sub: Subcategory) => (
+                      .filter(s => Array.isArray(serviceForm.category_ids) ? serviceForm.category_ids.map(Number).includes(Number(s.category_id)) : true)
+                      .map(sub => (
                         <option key={sub.id} value={sub.id}>{sub.name}</option>
                       ))}
                   </select>
                   {/* Submit button */}
                   <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer', margin: '24px auto 0', display: 'block', minWidth: 160 }}>Submit</button>
                 </div>
-                {/* Suggestions (CTA) */}
-                <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
-                  <label style={{ fontWeight: 600, color: '#22543d' }}>Call to Action Suggestions (max 5)</label>
-                  {serviceForm.suggestions.map((s, idx) => (
-                    <div key={idx} style={{ background: '#f7fafc', borderRadius: 8, padding: 12, marginBottom: 8 }}>
-                      <input placeholder="Title" value={s.title} onChange={e => handleSuggestionChange(idx, 'title', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                      <textarea placeholder="Description" value={s.description} onChange={e => handleSuggestionChange(idx, 'description', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
-                      <input placeholder="Redirect URL" value={s.redirect_url} onChange={e => handleSuggestionChange(idx, 'redirect_url', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                      {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
-                    </div>
-                  ))}
-                  {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8, width: 140, alignSelf: 'center', marginBottom: 24 }}>Add Suggestion</button>}
-                </div>
               </form>
+              <div style={{ display: 'flex', justifyContent: 'center', marginTop: 0, marginBottom: 32 }}>
+                <button
+                  type="submit"
+                  form="service-form"
+                  disabled={serviceFormLoading}
+                  style={{
+                    background: '#22543d',
+                    color: '#fff',
+                    borderRadius: 8,
+                    padding: '12px 32px',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    border: 'none',
+                    cursor: serviceFormLoading ? 'not-allowed' : 'pointer',
+                    minWidth: 160
+                  }}
+                >
+                  {serviceFormLoading ? 'Submitting...' : 'Submit'}
+                </button>
+              </div>
+              <div style={{ width: 600, display: 'flex', flexDirection: 'column', gap: 18, margin: '0 auto', padding: 8 }}>
+                <label style={{ fontWeight: 600, color: '#22543d' }}>Call to Action Suggestions (max 5)</label>
+                {serviceForm.suggestions.map((s, idx) => (
+                  <div key={idx} style={{ background: '#f7fafc', borderRadius: 8, padding: 12, marginBottom: 8 }}>
+                    <input placeholder="Title" value={s.title} onChange={e => handleSuggestionChange(idx, 'title', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    <textarea placeholder="Description" value={s.description} onChange={e => handleSuggestionChange(idx, 'description', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 40 }} />
+                    <input placeholder="Redirect URL" value={s.redirect_url} onChange={e => handleSuggestionChange(idx, 'redirect_url', e.target.value)} style={{ width: '100%', marginBottom: 6, padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    {serviceForm.suggestions.length > 1 && <button type="button" onClick={() => handleRemoveSuggestion(idx)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '4px 12px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 4 }}>Remove</button>}
+                  </div>
+                ))}
+                {serviceForm.suggestions.length < 5 && <button type="button" onClick={() => handleAddSuggestion()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 15, cursor: 'pointer', marginTop: 8, marginBottom: 24, width: 120, alignSelf: 'center', paddingLeft: 12, paddingRight: 12 }}>Add Suggestion</button>}
+              </div>
+              {serviceFormMessage && (
+                <div style={{ marginTop: 12, color: serviceFormMessage.includes('success') ? 'green' : 'red', textAlign: 'center', width: '100%' }}>
+                  {serviceFormMessage}
+                </div>
+              )}
               {/* Services List Table */}
               <h3 style={{ fontSize: 20, fontWeight: 700, color: '#22543d', marginBottom: 10 }}>All Services</h3>
               <table style={{ width: '100%', borderCollapse: 'collapse', marginBottom: 24 }}>
@@ -1662,11 +1620,11 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>{s.service_type}</td>
                       <td style={{ padding: 10 }}>{s.delivery_mode}</td>
                       <td style={{ padding: 10 }}>{s.price}</td>
-                      <td style={{ padding: 10 }}>{s.created_at ? new Date(s.created_at).toLocaleString() : ''}</td>
+                      <td style={{ padding: 10 }}>{s.created_at ? s.created_at.split('T')[0] : ''}</td>
                       <td style={{ padding: 10 }}>
-                        <button onClick={() => handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
-                        <button onClick={() => handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleServiceDelete(s.id, s.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => s.id !== undefined && handleServiceProfile(s.id)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
+                        <button onClick={() => s.id !== undefined && handleServiceEdit(s)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => s.id !== undefined && handleServiceDelete(s.id)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}

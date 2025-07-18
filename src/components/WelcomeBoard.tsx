@@ -200,7 +200,65 @@ export default function WelcomeBoard() {
           </div>
         </div>
       </div>
-      {/* Removed inline <style> tag, CSS is now in WelcomeBoard.module.css */}
+      <style
+        dangerouslySetInnerHTML={{
+          __html: `
+        @keyframes rotateCircles {
+          0% { transform: rotate(0deg); }
+          100% { transform: rotate(360deg); }
+        }
+        @keyframes brainFloat {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-18px); }
+        }
+        @keyframes dotFloat0 {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-12px); }
+        }
+        @keyframes dotFloat1 {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-7px); }
+        }
+        @keyframes dotFloat2 {
+          0% { transform: translateY(0); }
+          100% { transform: translateY(-16px); }
+        }
+        @keyframes labelFloat1 {
+          0% { transform: translate(-50%, -100%) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, -120%) scale(1.08); opacity: 0.92; }
+        }
+        @keyframes labelFloat2 {
+          0% { transform: translate(0, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(10px, -60%) scale(1.08); opacity: 0.92; }
+        }
+        @keyframes labelFloat3 {
+          0% { transform: translate(-50%, 0) scale(1); opacity: 1; }
+          100% { transform: translate(-50%, 20px) scale(1.08); opacity: 0.92; }
+        }
+        @keyframes labelFloat4 {
+          0% { transform: translate(0, -50%) scale(1); opacity: 1; }
+          100% { transform: translate(-10px, -40%) scale(1.08); opacity: 0.92; }
+        }
+        @media (max-width: 900px) {
+          .welcome-board {
+            flex-direction: column !important;
+            text-align: center !important;
+            min-height: 420px !important;
+            height: auto !important;
+          }
+          .welcome-board > div,
+          .welcome-board > div > div {
+            max-width: 100vw !important;
+            padding-left: 0 !important;
+            padding-right: 0 !important;
+            justify-content: center !important;
+            align-items: center !important;
+            text-align: center !important;
+          }
+        }
+      `,
+        }}
+      />
     </section>
   );
 }
