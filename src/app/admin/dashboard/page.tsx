@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import Image from 'next/image';
@@ -42,6 +42,7 @@ interface Consultant {
   category_ids?: number[] | string[];
   subcategory_ids?: number[] | string[];
   slots?: string[];
+  city?: string;
 }
 
 interface User {
@@ -53,7 +54,7 @@ interface User {
 }
 
 // Extend the form state to allow confirmPassword (not persisted to backend)
-type ConsultantForm = Partial<Consultant> & { confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
+type ConsultantForm = Partial<Consultant> & { city?: string; confirmPassword?: string; category_ids: string[]; subcategory_ids: string[] };
 
 // Add ConfirmModal component at the bottom of the file
 function ConfirmModal({ open, title, message, onConfirm, onCancel }: { open: boolean, title: string, message: string, onConfirm: () => void, onCancel: () => void }) {
@@ -802,6 +803,50 @@ export default function AdminDashboard() {
     setConfirmModal({ open: false, type: '', id: null, name: '' });
   }
 
+  // Replace allConsultants with consultants for city dropdown
+  const cities = useMemo(() => {
+    const citySet = new Set<string>();
+    consultants.forEach((c: any) => {
+      if (c.city && c.city.trim()) citySet.add(c.city.trim());
+    });
+    return Array.from(citySet).sort();
+  }, [consultants]);
+  console.log('All consultants:', consultants);
+  console.log('Cities for dropdown:', cities);
+
+  // Add this function inside your AdminDashboard component:
+  async function handleMapClick(e: google.maps.MapMouseEvent) {
+    const lat = e.latLng?.lat();
+    const lng = e.latLng?.lng();
+    setConsultantForm(f => ({ ...f, location_lat: String(lat), location_lng: String(lng) }));
+
+    // Reverse geocode to get city
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+      const response = await fetch(
+        `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`
+      );
+      const data = await response.json();
+      if (data.results && data.results.length > 0) {
+        // Try to find city in address components
+        let cityComponent = data.results[0].address_components.find((comp: any) =>
+          comp.types.includes('locality')
+        );
+        if (!cityComponent) {
+          // Fallback to administrative_area_level_2
+          cityComponent = data.results[0].address_components.find((comp: any) =>
+            comp.types.includes('administrative_area_level_2')
+          );
+        }
+        if (cityComponent) {
+          setConsultantForm(f => ({ ...f, city: cityComponent.long_name }));
+        }
+      }
+    } catch (err) {
+      console.error('Reverse geocoding failed:', err);
+    }
+  }
+
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -1143,6 +1188,23 @@ export default function AdminDashboard() {
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Speciality</label>
                     <input name="speciality" value={consultantForm.speciality || ''} onChange={handleConsultantFormChange} placeholder="Speciality" style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   </div>
+                  <div style={{ display: 'flex', gap: 16 }}>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>City</label>
+                      <input
+                        name="city"
+                        value={consultantForm.city || ''}
+                        onChange={handleConsultantFormChange}
+                        placeholder="City (e.g., Delhi)"
+                        required
+                        style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                      />
+                    </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Address</label>
+                      <input name="address" value={consultantForm.address || ''} onChange={handleConsultantFormChange} placeholder="Full Address (e.g., 123 Main St, Delhi, 110001)" style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                    </div>
+                  </div>
                   <div>
                     <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Description</label>
                     <textarea name="description" value={consultantForm.description || ''} onChange={handleConsultantFormChange} placeholder="Description" style={{ width: '100%', padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
@@ -1224,9 +1286,7 @@ export default function AdminDashboard() {
                             lng: consultantForm.location_lng ? parseFloat(consultantForm.location_lng) : defaultMapCenter.lng,
                           }}
                           zoom={consultantForm.location_lat && consultantForm.location_lng ? 13 : 5}
-                          onClick={e => {
-                            setConsultantForm(f => ({ ...f, location_lat: String(e.latLng?.lat() ?? ''), location_lng: String(e.latLng?.lng() ?? '') }));
-                          }}
+                          onClick={handleMapClick}
                         >
                           {consultantForm.location_lat && consultantForm.location_lng && (
                             <Marker

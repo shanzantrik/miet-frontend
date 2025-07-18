@@ -1,7 +1,26 @@
 'use client';
 
 import React, { useRef, useState, useEffect } from 'react';
-import { consultants, Consultant } from './consultantsData';
+import Link from 'next/link';
+
+type Consultant = {
+  id: number;
+  name: string;
+  email?: string;
+  city?: string;
+  address?: string;
+  location_lat?: string;
+  location_lng?: string;
+  expertise?: string;
+  speciality?: string;
+  mode?: string;
+  image?: string;
+  status?: string;
+  tagline?: string;
+  highlights?: string;
+  location?: string;
+  bio?: string;
+};
 
 function getVisibleCount(width: number) {
   if (width < 600) return 1;
@@ -12,6 +31,9 @@ function getVisibleCount(width: number) {
 }
 
 export default function FeaturedSection() {
+  const [consultants, setConsultants] = useState<Consultant[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [hovering, setHovering] = useState(false);
   const [visibleCount, setVisibleCount] = useState(3);
@@ -25,6 +47,23 @@ export default function FeaturedSection() {
   const sliderRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
 
+  // Fetch consultants from API
+  useEffect(() => {
+    fetch('http://localhost:4000/api/consultants/public')
+      .then(res => {
+        if (!res.ok) throw new Error('Failed to fetch consultants');
+        return res.json();
+      })
+      .then(data => {
+        setConsultants(data);
+        setLoading(false);
+      })
+      .catch(() => {
+        setError('Could not load consultants.');
+        setLoading(false);
+      });
+  }, []);
+
   // Responsive visibleCount
   useEffect(() => {
     setVisibleCount(getVisibleCount(window.innerWidth));
@@ -35,7 +74,7 @@ export default function FeaturedSection() {
 
   // Auto-scroll logic
   useEffect(() => {
-    if (!hovering) {
+    if (!hovering && consultants.length > 0) {
       intervalRef.current = setInterval(() => {
         setCurrent(c => (c + 1) % consultants.length);
       }, 3500);
@@ -45,7 +84,7 @@ export default function FeaturedSection() {
     return () => {
       if (intervalRef.current) clearInterval(intervalRef.current);
     };
-  }, [hovering]);
+  }, [hovering, consultants.length]);
 
   // Arrow navigation
   const goLeft = () => setCurrent(c => (c - 1 + consultants.length) % consultants.length);
@@ -55,10 +94,29 @@ export default function FeaturedSection() {
   const getVisibleConsultants = () => {
     const result = [];
     for (let i = 0; i < visibleCount; i++) {
+      if (consultants.length === 0) break;
       result.push(consultants[(current + i) % consultants.length]);
     }
     return result;
   };
+
+  if (loading) {
+    return (
+      <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
+        <div>Loading consultants...</div>
+      </section>
+    );
+  }
+
+  if (error) {
+    return (
+      <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
+        <div style={{ color: 'red' }}>{error}</div>
+      </section>
+    );
+  }
 
   return (
     <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
@@ -112,81 +170,94 @@ export default function FeaturedSection() {
         </button>
         {/* Slider Cards */}
         <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          {getVisibleConsultants().map(consultant => (
-            <div
-              key={consultant.id}
-              onClick={() => setBookingConsultant(consultant)}
-              tabIndex={0}
-              role="button"
-              aria-label={`Book appointment with ${consultant.name}`}
-              style={{
-                background: 'linear-gradient(120deg, #e6f0f7 60%, #f7fafc 100%)',
-                borderRadius: 18,
-                boxShadow: '0 4px 24px rgba(90,103,216,0.10)',
-                padding:
-                  visibleCount === 1 ? '28px 36px 22px 36px' :
-                  visibleCount === 2 ? '22px 28px 18px 28px' :
-                  visibleCount === 3 ? '18px 22px 14px 22px' :
-                  visibleCount === 4 ? '16px 18px 12px 18px' :
-                  '14px 14px 10px 14px',
-                minWidth:
-                  visibleCount === 1 ? 370 :
-                  visibleCount === 2 ? 320 :
-                  visibleCount === 3 ? 270 :
-                  visibleCount === 4 ? 220 :
-                  200,
-                maxWidth:
-                  visibleCount === 1 ? 400 :
-                  visibleCount === 2 ? 360 :
-                  visibleCount === 3 ? 310 :
-                  visibleCount === 4 ? 260 :
-                  240,
-                minHeight: 210,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                border: '2.5px solid #5a67d8',
-                transition: 'box-shadow 0.2s',
-                cursor: 'pointer',
-                outline: 'none',
-              }}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setBookingConsultant(consultant); }}
-            >
-              <div style={{ position: 'relative', marginBottom: 12 }}>
-                <img
-                  src={consultant.image}
-                  alt={consultant.name}
-                  style={{ width: visibleCount === 1 ? 74 : 54, height: visibleCount === 1 ? 74 : 54, borderRadius: '50%', objectFit: 'cover', border: '3px solid #5a67d8', boxShadow: '0 0 0 4px #fff' }}
-                />
-                {consultant.mode === 'Online' && (
-                  <span style={{
-                    position: 'absolute',
-                    bottom: 6,
-                    right: 6,
-                    width: 15,
-                    height: 15,
-                    borderRadius: '50%',
-                    background: 'radial-gradient(circle, #39e639 60%, #39e63988 100%)',
-                    boxShadow: '0 0 8px 2px #39e63988, 0 0 0 2px #fff',
-                    border: '2px solid #fff',
-                    display: 'block',
-                    zIndex: 2,
-                    animation: 'glow-green 1.2s infinite alternate',
-                  }} />
-                )}
+          {getVisibleConsultants().map(consultant => {
+            let imageUrl = '';
+            if (consultant.image && consultant.image.trim() !== '') {
+              imageUrl = consultant.image.startsWith('/')
+                ? `http://localhost:4000${consultant.image}`
+                : `http://localhost:4000/uploads/${consultant.image}`;
+            }
+            return (
+              <div
+                key={consultant.id}
+                onClick={() => setBookingConsultant(consultant)}
+                tabIndex={0}
+                role="button"
+                aria-label={`Book appointment with ${consultant.name}`}
+                style={{
+                  background: 'linear-gradient(120deg, #e6f0f7 60%, #f7fafc 100%)',
+                  borderRadius: 18,
+                  boxShadow: '0 4px 24px rgba(90,103,216,0.10)',
+                  padding:
+                    visibleCount === 1 ? '28px 36px 22px 36px' :
+                    visibleCount === 2 ? '22px 28px 18px 28px' :
+                    visibleCount === 3 ? '18px 22px 14px 22px' :
+                    visibleCount === 4 ? '16px 18px 12px 18px' :
+                    '14px 14px 10px 14px',
+                  minWidth:
+                    visibleCount === 1 ? 370 :
+                    visibleCount === 2 ? 320 :
+                    visibleCount === 3 ? 270 :
+                    visibleCount === 4 ? 220 :
+                    200,
+                  maxWidth:
+                    visibleCount === 1 ? 400 :
+                    visibleCount === 2 ? 360 :
+                    visibleCount === 3 ? 310 :
+                    visibleCount === 4 ? 260 :
+                    240,
+                  minHeight: 210,
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  position: 'relative',
+                  border: '2.5px solid #5a67d8',
+                  transition: 'box-shadow 0.2s',
+                  cursor: 'pointer',
+                  outline: 'none',
+                }}
+                onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setBookingConsultant(consultant); }}
+              >
+                <div style={{ position: 'relative', marginBottom: 12 }}>
+                  {imageUrl ? (
+                    <img
+                      src={imageUrl}
+                      alt={consultant.name}
+                      style={{ width: visibleCount === 1 ? 74 : 54, height: visibleCount === 1 ? 74 : 54, borderRadius: '50%', objectFit: 'cover', border: '3px solid #5a67d8', boxShadow: '0 0 0 4px #fff' }}
+                      onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
+                    />
+                  ) : (
+                    <div style={{ width: visibleCount === 1 ? 74 : 54, height: visibleCount === 1 ? 74 : 54, borderRadius: '50%', border: '3px solid #5a67d8', boxShadow: '0 0 0 4px #fff', background: '#f3f3f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, color: '#5a67d8' }}>{consultant.name?.charAt(0)}</div>
+                  )}
+                  {consultant.status === 'online' && (
+                    <span style={{
+                      position: 'absolute',
+                      bottom: 6,
+                      right: 6,
+                      width: 15,
+                      height: 15,
+                      borderRadius: '50%',
+                      background: 'radial-gradient(circle, #39e639 60%, #39e63988 100%)',
+                      boxShadow: '0 0 8px 2px #39e63988, 0 0 0 2px #fff',
+                      border: '2px solid #fff',
+                      display: 'block',
+                      zIndex: 2,
+                      animation: 'glow-green 1.2s infinite alternate',
+                    }} />
+                  )}
+                </div>
+                <div style={{ fontWeight: 700, color: '#22543d', fontSize: visibleCount === 1 ? 20 : 16, marginBottom: 2 }}>{consultant.name}</div>
+                <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 16 : 14, fontWeight: 600, marginBottom: 2 }}>{consultant.expertise || consultant.speciality}</div>
+                <div style={{ color: '#888', fontSize: visibleCount === 1 ? 15 : 13, marginBottom: 6 }}>{consultant.city} &middot; <span style={{ color: consultant.mode === 'Online' ? '#39e639' : '#22543d', fontWeight: 600 }}>{consultant.mode}</span></div>
+                <div style={{ color: '#444', fontSize: visibleCount === 1 ? 15 : 13, fontStyle: 'italic', marginBottom: 6 }}>{consultant.tagline}</div>
+                <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 14 : 12, marginBottom: 8 }}>{consultant.highlights}</div>
+                <div style={{ color: '#22543d', fontSize: visibleCount === 1 ? 14 : 12, background: '#e6f0f7', borderRadius: 8, padding: '6px 12px', marginTop: 4, fontWeight: 500, boxShadow: '0 1px 4px #5a67d822' }}>
+                  <span role="img" aria-label="star">⭐</span> Featured Consultant
+                </div>
               </div>
-              <div style={{ fontWeight: 700, color: '#22543d', fontSize: visibleCount === 1 ? 20 : 16, marginBottom: 2 }}>{consultant.name}</div>
-              <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 16 : 14, fontWeight: 600, marginBottom: 2 }}>{consultant.expertise}</div>
-              <div style={{ color: '#888', fontSize: visibleCount === 1 ? 15 : 13, marginBottom: 6 }}>{consultant.city} &middot; <span style={{ color: consultant.mode === 'Online' ? '#39e639' : '#22543d', fontWeight: 600 }}>{consultant.mode}</span></div>
-              <div style={{ color: '#444', fontSize: visibleCount === 1 ? 15 : 13, fontStyle: 'italic', marginBottom: 6 }}>{consultant.tagline}</div>
-              <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 14 : 12, marginBottom: 8 }}>{consultant.highlights}</div>
-              <div style={{ color: '#22543d', fontSize: visibleCount === 1 ? 14 : 12, background: '#e6f0f7', borderRadius: 8, padding: '6px 12px', marginTop: 4, fontWeight: 500, boxShadow: '0 1px 4px #5a67d822' }}>
-                <span role="img" aria-label="star">⭐</span> Featured Consultant
-              </div>
-            </div>
-          ))}
+            );
+          })}
         </div>
         {/* Right Arrow */}
         <button
@@ -257,10 +328,12 @@ export default function FeaturedSection() {
             <button onClick={() => setBookingConsultant(null)} aria-label="Close booking modal" style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 22, color: 'var(--accent)', cursor: 'pointer' }}>×</button>
             <h2 style={{ color: 'var(--text-accent-alt)', fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Book Appointment</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
-              <img src={bookingConsultant.image} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
+              {bookingConsultant.image && (
+                <img src={bookingConsultant.image.startsWith('/') ? `http://localhost:4000${bookingConsultant.image}` : `http://localhost:4000/uploads/${bookingConsultant.image}`} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
+              )}
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16 }}>{bookingConsultant.name}</div>
-                <div style={{ color: 'var(--accent)', fontSize: 14 }}>{bookingConsultant.expertise}</div>
+                <div style={{ color: 'var(--accent)', fontSize: 14 }}>{bookingConsultant.expertise || bookingConsultant.speciality}</div>
                 <div style={{ color: '#888', fontSize: 13 }}>{bookingConsultant.city} &middot; <span style={{ color: bookingConsultant.mode === 'Online' ? 'var(--accent)' : 'var(--text-accent-alt)', fontWeight: 600 }}>{bookingConsultant.mode}</span></div>
               </div>
             </div>

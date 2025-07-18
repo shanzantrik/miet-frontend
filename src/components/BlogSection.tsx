@@ -1,4 +1,5 @@
 import React from 'react';
+import styles from './BlogSection.module.css';
 
 const blogPosts = [
   {
@@ -70,10 +71,10 @@ export default function BlogSection() {
   // Duplicate posts for seamless loop
   const posts = [...blogPosts, ...blogPosts];
   return (
-    <section className="blog-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} aria-label="Blog and media">
+    <section className={styles.blogSection} style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', overflow: 'hidden', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center' }} aria-label="Blog and media">
       <h2 style={{ fontFamily: 'Righteous, cursive', color: 'var(--accent)', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Blog & Media</h2>
-      <div className="blog-marquee-outer" style={{ width: '100%', maxWidth: 1400, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', height: 370 }}>
-        <div className="blog-marquee" style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 32s linear infinite', willChange: 'transform' }}>
+      <div className={styles.blogMarqueeOuter} style={{ width: '100%', maxWidth: 1400, overflow: 'hidden', display: 'flex', alignItems: 'center', justifyContent: 'center', position: 'relative', height: 370 }}>
+        <div className={styles.blogMarquee} style={{ display: 'flex', gap: 24, alignItems: 'center', animation: 'marquee 32s linear infinite', willChange: 'transform' }}>
           {posts.map(post => (
             <div key={post.id + Math.random()} style={{ flex: '0 0 220px', width: 220, background: 'var(--muted)', borderRadius: 14, boxShadow: '0 2px 12px var(--accent-20)', display: 'flex', flexDirection: 'column', alignItems: 'stretch', transition: 'box-shadow 0.2s', cursor: 'pointer', minHeight: 340, justifyContent: 'flex-start' }}>
               <div style={{ width: '100%', height: 120, borderTopLeftRadius: 14, borderTopRightRadius: 14, overflow: 'hidden' }}>
@@ -90,34 +91,7 @@ export default function BlogSection() {
           ))}
         </div>
       </div>
-      <style>{`
-        .blog-marquee-outer { position: relative; }
-        .blog-marquee {
-          animation-play-state: running;
-        }
-        .blog-marquee-outer:hover .blog-marquee {
-          animation-play-state: paused !important;
-        }
-        @keyframes marquee {
-          0% { transform: translateX(0); }
-          100% { transform: translateX(-50%); }
-        }
-        .blog-section::-webkit-scrollbar { display: none; }
-        .blog-section { -ms-overflow-style: none; scrollbar-width: none; }
-        @media (max-width: 1400px) {
-          .blog-marquee-outer { max-width: 100vw; }
-        }
-        @media (max-width: 1200px) {
-          .blog-marquee-outer { height: 350px; }
-        }
-        @media (max-width: 900px) {
-          .blog-marquee-outer { height: 320px; }
-        }
-        @media (max-width: 600px) {
-          .blog-marquee-outer { height: 260px; }
-          .blog-marquee > div { width: 170px !important; min-height: 200px !important; }
-        }
-      `}</style>
+      {/* Removed inline <style> tag, all styles moved to BlogSection.module.css */}
     </section>
   );
 }
