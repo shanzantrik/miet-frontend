@@ -39,6 +39,7 @@ interface Consultant {
   bank_account?: string;
   bank_ifsc?: string;
   status?: 'online' | 'offline';
+  featured?: boolean;
   category_ids?: number[] | string[];
   subcategory_ids?: number[] | string[];
   slots?: string[];
@@ -89,6 +90,29 @@ interface ServiceType {
   created_at?: string;
 }
 
+// Product types and state (moved outside component for linter)
+export type ProductType = 'Course' | 'E-book' | 'App' | 'Gadget';
+export interface Product {
+  id?: number;
+  type: ProductType;
+  title?: string;
+  name?: string;
+  description: string;
+  price?: string;
+  video_url?: string;
+  video_file?: string;
+  thumbnail?: string;
+  author?: string;
+  pdf_file?: string;
+  download_link?: string;
+  icon?: string;
+  product_image?: string;
+  purchase_link?: string;
+  status: 'active' | 'inactive';
+  featured?: boolean;
+  created_at?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
   const [categories, setCategories] = useState<Category[]>([]);
@@ -100,7 +124,7 @@ export default function AdminDashboard() {
   const [subEditId, setSubEditId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products'>('dashboard');
   // Consultant state
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [consultantForm, setConsultantForm] = useState<ConsultantForm>({ category_ids: [], subcategory_ids: [] });
@@ -166,6 +190,16 @@ export default function AdminDashboard() {
   // Add these states at the top of your component
   const [serviceFormLoading, setServiceFormLoading] = useState(false);
   const [serviceFormMessage, setServiceFormMessage] = useState('');
+  // Product types and state
+  const [products, setProducts] = useState<Product[]>([]);
+  const [productForm, setProductForm] = useState<Partial<Product>>({ type: 'Course', status: 'active', featured: false });
+  const [productEditId, setProductEditId] = useState<number | null>(null);
+  const [showProductModal, setShowProductModal] = useState(false);
+  const [showProductProfileModal, setShowProductProfileModal] = useState(false);
+  // Delete modal state
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteConsultantId, setDeleteConsultantId] = useState<number | null>(null);
+  const [deleteConsultantName, setDeleteConsultantName] = useState<string>('');
 
   // Auth check
   useEffect(() => {
@@ -386,6 +420,7 @@ export default function AdminDashboard() {
     { key: 'consultants', label: 'Consultants', icon: <FaUserMd size={20} /> },
     { key: 'users', label: 'Users', icon: <FaUserCircle size={20} /> },
     { key: 'services', label: 'Services', icon: <FaTags size={20} /> },
+    { key: 'products', label: 'Products', icon: <FaList size={20} /> },
   ];
 
   // Helper to save slots to backend
@@ -412,36 +447,52 @@ export default function AdminDashboard() {
   }
 
   // Consultant CRUD
-  async function handleConsultantSubmit(e: React.FormEvent) {
-    e.preventDefault();
-    const token = localStorage.getItem("admin_jwt");
-    const method = consultantEditId ? "PUT" : "POST";
-    const url = consultantEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`;
-    // Convert category_ids and subcategory_ids to number[] before submitting
-    const payload = {
-      ...consultantForm,
-      category_ids: Array.isArray(consultantForm.category_ids) ? consultantForm.category_ids.map(Number) : [],
-      subcategory_ids: Array.isArray(consultantForm.subcategory_ids) ? consultantForm.subcategory_ids.map(Number) : [],
-    };
-    const res = await fetch(url, {
-      method,
-      headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-      body: JSON.stringify(payload),
-    });
-    if (res.ok) {
-      let consultantId = consultantEditId;
-      if (!consultantEditId) {
-        const data = await res.json();
-        consultantId = data.id;
+  async function handleConsultantSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = consultantEditId ? "PUT" : "POST";
+      const url = consultantEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`;
+      
+      // Convert category_ids and subcategory_ids to number[] before submitting
+      const payload = {
+        ...consultantForm,
+        category_ids: Array.isArray(consultantForm.category_ids) ? consultantForm.category_ids.map(Number) : [],
+        subcategory_ids: Array.isArray(consultantForm.subcategory_ids) ? consultantForm.subcategory_ids.map(Number) : [],
+      };
+      
+      console.log('Submitting consultant:', { method, url, payload });
+      
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(payload),
+      });
+      
+      if (res.ok) {
+        let consultantId = consultantEditId;
+        if (!consultantEditId) {
+          const data = await res.json();
+          consultantId = data.id;
+        }
+        if (consultantId) {
+          await saveConsultantSlots(consultantId, consultantSlots);
+        }
+        setConsultantForm({ category_ids: [], subcategory_ids: [] });
+        setConsultantEditId(null);
+        setConsultantSlots([]);
+        setConsultantFormLoaded(false);
+        fetchConsultants();
+        console.log('Consultant saved successfully');
+      } else {
+        const errorData = await res.text();
+        console.error('Failed to save consultant:', res.status, errorData);
+        alert(`Failed to save consultant: ${res.status} ${errorData}`);
       }
-      if (consultantId) {
-        await saveConsultantSlots(consultantId, consultantSlots);
-      }
-      setConsultantForm({ category_ids: [], subcategory_ids: [] });
-      setConsultantEditId(null);
-      setConsultantSlots([]);
-      setConsultantFormLoaded(false);
-      fetchConsultants();
+    } catch (error) {
+      console.error('Error saving consultant:', error);
+      alert('Error saving consultant. Please try again.');
     }
   }
   async function handleConsultantEdit(c: Consultant) {
@@ -464,16 +515,26 @@ export default function AdminDashboard() {
       setConsultantFormLoaded(true);
     }
   }
+  // Show delete confirmation modal
+  function showDeleteConsultantModal(id: number, name: string) {
+    setDeleteConsultantId(id);
+    setDeleteConsultantName(name);
+    setShowDeleteModal(true);
+  }
   // Refactor delete handlers to use modal
-  async function handleConsultantDelete(id?: number, name?: string) {
-    if (typeof id !== 'number') return;
-    if (!confirm("Delete this consultant?")) return;
+  async function handleConsultantDelete() {
+    if (!deleteConsultantId) return;
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${id}`, {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${deleteConsultantId}`, {
       method: "DELETE",
       headers: { Authorization: `Bearer ${token}` },
     });
-    if (res.ok) fetchConsultants();
+    if (res.ok) {
+      fetchConsultants();
+      setShowDeleteModal(false);
+      setDeleteConsultantId(null);
+      setDeleteConsultantName('');
+    }
   }
   async function handleConsultantProfile(id?: number) {
     if (typeof id !== 'number') return;
@@ -534,6 +595,16 @@ export default function AdminDashboard() {
       });
     } else {
       alert('Geolocation not supported.');
+    }
+  }
+
+  function handleMapClick(event: google.maps.MapMouseEvent) {
+    if (event.latLng) {
+      setConsultantForm(f => ({ 
+        ...f, 
+        location_lat: String(event.latLng!.lat()), 
+        location_lng: String(event.latLng!.lng()) 
+      }));
     }
   }
 
@@ -848,6 +919,21 @@ export default function AdminDashboard() {
     }
   };
 
+  // Fetch products on mount and after adding
+  useEffect(() => {
+    async function fetchProducts() {
+      try {
+        const res = await fetch('/api/products');
+        if (!res.ok) throw new Error('Failed to fetch products');
+        const data = await res.json();
+        setProducts(data);
+      } catch (err) {
+        console.error('Error fetching products:', err);
+      }
+    }
+    fetchProducts();
+  }, []);
+
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
       {/* Header */}
@@ -1117,18 +1203,14 @@ export default function AdminDashboard() {
                       <td style={{ padding: 10 }}>
                         <button onClick={() => { handleConsultantProfile(c.id); setShowConsultantProfileModal(true); }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>View</button>
                         <button onClick={() => handleConsultantEdit(c)} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                        <button onClick={() => handleConsultantDelete(c.id, c.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        <button onClick={() => showDeleteConsultantModal(c.id!, c.name)} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                       </td>
                     </tr>
                   ))}
                 </tbody>
               </table>
-              {/* Create Consultant Button */}
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: 12, width: '100%' }}>
-                <button type="button" onClick={() => { setConsultantForm({ category_ids: [], subcategory_ids: [] }); setConsultantEditId(null); setConsultantSlots([]); }} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 18px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}>Create Consultant</button>
-              </div>
               {/* Booking Slots List (create & edit mode, only show once, above submit/cancel buttons) */}
-              <div style={{ margin: '18px 0', width: '100%' }}>
+              <div style={{ margin: '32px 0', width: '100%', display: 'flex', justifyContent: 'center', flexDirection: 'column', alignItems: 'center' }}>
                 <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>Consultation Booking Slots</label>
                 {consultantSlots.length === 0 && <div style={{ color: '#a0aec0' }}>No slots added.</div>}
                 {consultantSlots.map((slot, idx) => (
@@ -1144,8 +1226,10 @@ export default function AdminDashboard() {
                   Add, edit, or remove available consultation slots for this consultant.
                 </div>
               </div>
+              {/* Create Consultant Heading */}
+              <h2 style={{ fontSize: 32, fontWeight: 700, color: '#22543d', marginBottom: 24, marginTop: 24, width: '100%', textAlign: 'center' }}>Create Consultant</h2>
               {/* Consultant Form */}
-              <form onSubmit={handleConsultantSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 32, alignItems: 'flex-start' }}>
+              <form id="consultant-form" onSubmit={handleConsultantSubmit} style={{ display: 'flex', flexWrap: 'wrap', gap: 32, background: '#fff', borderRadius: 16, boxShadow: '0 2px 12px #e2e8f0', padding: 32, marginBottom: 32, alignItems: 'flex-start' }}>
                 <div style={{ flex: '1 1 320px', minWidth: 280, display: 'flex', flexDirection: 'column', gap: 18 }}>
                   <div style={{ display: 'flex', gap: 16 }}>
                     <div style={{ flex: 1 }}>
@@ -1238,6 +1322,19 @@ export default function AdminDashboard() {
                         <span style={{ color: consultantForm.status === 'online' ? '#38a169' : '#e53e3e', fontWeight: 600 }}>{consultantForm.status === 'online' ? 'Online' : 'Offline'}</span>
                       </label>
                     </div>
+                    <div style={{ flex: 1 }}>
+                      <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4 }}>Featured</label>
+                      <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
+                        <input
+                          type="checkbox"
+                          name="featured"
+                          checked={consultantForm.featured || false}
+                          onChange={e => setConsultantForm(f => ({ ...f, featured: e.target.checked }))}
+                          style={{ width: 32, height: 18 }}
+                        />
+                        <span style={{ color: consultantForm.featured ? '#38a169' : '#e53e3e', fontWeight: 600 }}>{consultantForm.featured ? 'Featured' : 'Not Featured'}</span>
+                      </label>
+                    </div>
                   </div>
                   <div style={{ display: 'flex', gap: 16 }}>
                     <div style={{ flex: 1 }}>
@@ -1270,6 +1367,56 @@ export default function AdminDashboard() {
                             <option key={sub.id} value={sub.id}>{sub.name}</option>
                           ))}
                       </select>
+                    </div>
+                  </div>
+                  {/* Appointment Calendar Section */}
+                  <div style={{ width: '100%', marginTop: 16 }}>
+                    <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 8, display: 'block' }}>Appointment Calendar</label>
+                    <div style={{ background: '#f7fafc', padding: 16, borderRadius: 8, border: '1px solid #e2e8f0' }}>
+                      <div style={{ marginBottom: 12 }}>
+                        <label style={{ fontWeight: 600, color: '#22543d', marginBottom: 4, display: 'block' }}>Available Time Slots</label>
+                        {consultantSlots.length === 0 && <div style={{ color: '#a0aec0', fontSize: 14 }}>No slots added yet.</div>}
+                        {consultantSlots.map((slot, idx) => (
+                          <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, padding: 8, background: '#fff', borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                            <input 
+                              type="date" 
+                              value={slot.date} 
+                              onChange={e => handleSlotChange(idx, 'date', e.target.value)} 
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 14 }} 
+                            />
+                            <input 
+                              type="time" 
+                              value={slot.time} 
+                              onChange={e => handleSlotChange(idx, 'time', e.target.value)} 
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 14 }} 
+                            />
+                            <input 
+                              type="time" 
+                              value={slot.endTime || ''} 
+                              onChange={e => handleSlotChange(idx, 'endTime', e.target.value)} 
+                              placeholder="End time (optional)"
+                              style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: 14 }} 
+                            />
+                            <button 
+                              type="button" 
+                              onClick={() => handleRemoveSlot(idx)} 
+                              style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 4, padding: '6px 12px', fontWeight: 600, fontSize: 12, cursor: 'pointer' }}
+                            >
+                              Remove
+                            </button>
+                          </div>
+                        ))}
+                        <button 
+                          type="button" 
+                          onClick={handleAddSlot} 
+                          style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '8px 16px', fontWeight: 700, fontSize: 14, cursor: 'pointer', marginTop: 8 }}
+                        >
+                          Add Time Slot
+                        </button>
+                      </div>
+                      <div style={{ fontSize: 13, color: '#5a67d8', marginTop: 8 }}>
+                        Add available time slots for appointments. You can set start and end times for each date.
+                      </div>
                     </div>
                   </div>
                 </div>
@@ -1327,8 +1474,8 @@ export default function AdminDashboard() {
                   </div>
                 </div>
               </form>
-              <div style={{ display: 'flex', gap: 12, marginTop: 12 }}>
-                <button type="submit" form="consultant-form" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
+              <div style={{ display: 'flex', gap: 12, marginTop: 12, justifyContent: 'center' }}>
+                <button type="button" onClick={() => handleConsultantSubmit()} style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>{consultantEditId ? 'Update' : 'Add'} Consultant</button>
                 {consultantEditId && <button type="button" onClick={handleConsultantFormCancel} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '12px 24px', fontWeight: 700, fontSize: 17, cursor: 'pointer' }}>Cancel</button>}
               </div>
               {/* Consultant Profile View */}
@@ -1373,6 +1520,42 @@ export default function AdminDashboard() {
                     </div>
                     <div style={{ marginBottom: 8 }}><b>Aadhar:</b> {consultantProfile.aadhar}</div>
                     <div style={{ marginBottom: 8 }}><b>Bank:</b> {consultantProfile.bank_account} / {consultantProfile.bank_ifsc}</div>
+                  </div>
+                </div>
+              )}
+              {/* Delete Confirmation Modal */}
+              {showDeleteModal && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: 'rgba(0,0,0,0.35)',
+                  zIndex: 1000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                }}>
+                  <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 12px #e2e8f0', padding: 32, minWidth: 340, maxWidth: 480, width: '100%', position: 'relative' }}>
+                    <h3 style={{ fontSize: 22, fontWeight: 700, color: '#22543d', marginBottom: 16 }}>Delete Consultant</h3>
+                    <p style={{ color: '#4a5568', marginBottom: 24, fontSize: 16 }}>
+                      Are you sure you want to delete <strong>{deleteConsultantName}</strong>? This action cannot be undone.
+                    </p>
+                    <div style={{ display: 'flex', gap: 12, justifyContent: 'flex-end' }}>
+                      <button 
+                        onClick={() => { setShowDeleteModal(false); setDeleteConsultantId(null); setDeleteConsultantName(''); }} 
+                        style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '10px 20px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+                      >
+                        Cancel
+                      </button>
+                      <button 
+                        onClick={handleConsultantDelete} 
+                        style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 20px', fontWeight: 700, fontSize: 15, cursor: 'pointer' }}
+                      >
+                        Delete
+                      </button>
+                    </div>
                   </div>
                 </div>
               )}
@@ -1682,18 +1865,242 @@ export default function AdminDashboard() {
               )}
             </section>
           )}
+          {/* Products CRUD */}
+          {activeMenu === 'products' && (
+            <section>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Products</h2>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 18 }}>
+                <select
+                  value={productForm.type}
+                  onChange={e => setProductForm(f => ({ ...f, type: e.target.value as ProductType }))}
+                  style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 140 }}
+                >
+                  <option value="Course">Course</option>
+                  <option value="E-book">E-book</option>
+                  <option value="App">App</option>
+                  <option value="Gadget">Gadget</option>
+                </select>
+                <button
+                  style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}
+                                          onClick={() => { setProductForm({ type: 'Course', status: 'active', featured: false }); setProductEditId(null); setShowProductModal(true); }}
+                >
+                  + Add Product
+                </button>
+              </div>
+              {/* Product Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', marginBottom: 24 }}>
+                <thead>
+                  <tr style={{ background: '#e2e8f0' }}>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Type</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Title/Name</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Description</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Status</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {products
+                    .filter(p => !productForm.type || p.type === productForm.type)
+                    .map((p, idx) => (
+                      <tr key={p.id ?? idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                        <td style={{ padding: 10 }}>{p.type}</td>
+                        <td style={{ padding: 10 }}>{p.title || p.name}</td>
+                        <td style={{ padding: 10, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.description}</td>
+                        <td style={{ padding: 10 }}>{p.status}</td>
+                        <td style={{ padding: 10 }}>
+                          <button onClick={() => { setProductForm(p); setProductEditId(p.id ?? null); setShowProductModal(true); }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                          <button onClick={() => setProducts(products => products.filter((_, i) => i !== idx))} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                        </td>
+                      </tr>
+                    ))}
+                </tbody>
+              </table>
+              {/* Product Modal */}
+              {showProductModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setShowProductModal(false); }}>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 340, maxWidth: 480, boxShadow: '0 4px 32px rgba(90,103,216,0.13)', position: 'relative' }}>
+                    <button onClick={() => setShowProductModal(false)} aria-label="Close product modal" style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 22, color: '#5a67d8', cursor: 'pointer' }}>×</button>
+                    <h2 style={{ color: '#22543d', fontWeight: 700, marginBottom: 18 }}>{productEditId ? 'Edit' : 'Add'} Product</h2>
+                    <form
+                      onSubmit={async (e) => {
+                        e.preventDefault();
+                        try {
+                          const formData = new FormData();
+                          // Common fields
+                          formData.append('type', productForm.type || 'Course');
+                          formData.append('status', productForm.status || 'active');
+                          formData.append('featured', productForm.featured ? 'true' : 'false');
+                          // Dynamic fields by type
+                          if (productForm.type === 'Course') {
+                            formData.append('title', productForm.title || '');
+                            formData.append('description', productForm.description || '');
+                            formData.append('price', productForm.price || '');
+                            formData.append('video_url', productForm.video_url || '');
+                            if (productForm.thumbnail) formData.append('thumbnail', productForm.thumbnail);
+                          } else if (productForm.type === 'E-book') {
+                            formData.append('title', productForm.title || '');
+                            formData.append('description', productForm.description || '');
+                            formData.append('author', productForm.author || '');
+                            if (productForm.pdf_file) formData.append('pdf_file', productForm.pdf_file);
+                            if (productForm.thumbnail) formData.append('thumbnail', productForm.thumbnail);
+                          } else if (productForm.type === 'App') {
+                            formData.append('name', productForm.name || '');
+                            formData.append('description', productForm.description || '');
+                            formData.append('download_link', productForm.download_link || '');
+                            if (productForm.icon) formData.append('icon', productForm.icon);
+                          } else if (productForm.type === 'Gadget') {
+                            formData.append('name', productForm.name || '');
+                            formData.append('description', productForm.description || '');
+                            formData.append('price', productForm.price || '');
+                            if (productForm.product_image) formData.append('product_image', productForm.product_image);
+                            formData.append('purchase_link', productForm.purchase_link || '');
+                          }
+                          const response = await fetch('/api/products', {
+                            method: 'POST',
+                            body: formData,
+                          });
+                          if (!response.ok) {
+                            const error = await response.json();
+                            alert(error.message || 'Failed to add product');
+                            return;
+                          }
+                          // Re-fetch products after successful add
+                          const res = await fetch('/api/products');
+                          const data = await res.json();
+                          setProducts(data);
+                          setProductForm({ type: 'Course', status: 'active', featured: false });
+                          setProductEditId(null);
+                          setShowProductModal(false);
+                        } catch (error) {
+                          console.error('Error submitting product:', error);
+                          alert('Error: Failed to submit product. Please try again.');
+                        }
+                      }}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+                    >
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Product Type</label>
+                      <select
+                        value={productForm.type}
+                        onChange={e => setProductForm(f => ({ ...f, type: e.target.value as ProductType }))}
+                        style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                        required
+                      >
+                        <option value="Course">Course</option>
+                        <option value="E-book">E-book</option>
+                        <option value="App">App</option>
+                        <option value="Gadget">Gadget</option>
+                      </select>
+                      {/* Dynamic fields by type */}
+                      {productForm.type === 'Course' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Title</label>
+                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
+                          <input type="number" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Video URL</label>
+                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, thumbnail: URL.createObjectURL(file), thumbnailFile: file }));
+                          }} />
+                          {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+                        </>
+                      )}
+                      {productForm.type === 'E-book' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Title</label>
+                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Author</label>
+                          <input type="text" value={productForm.author || ''} onChange={e => setProductForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>PDF File</label>
+                          <input type="file" accept="application/pdf" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, pdf_file: file.name, pdfFile: file }));
+                          }} />
+                          {productForm.pdf_file && <span style={{ color: '#5a67d8', fontWeight: 600 }}>{productForm.pdf_file}</span>}
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, thumbnail: URL.createObjectURL(file), thumbnailFile: file }));
+                          }} />
+                          {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+                        </>
+                      )}
+                      {productForm.type === 'App' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
+                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Download Link</label>
+                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Icon</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, icon: URL.createObjectURL(file), iconFile: file }));
+                          }} />
+                          {productForm.icon && <img src={productForm.icon} alt="Icon" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+                        </>
+                      )}
+                      {productForm.type === 'Gadget' && (
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
+                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
+                          <input type="number" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Product Image</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, product_image: URL.createObjectURL(file), productImageFile: file }));
+                          }} />
+                          {productForm.product_image && <img src={productForm.product_image} alt="Product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Purchase Link</label>
+                          <input type="text" value={productForm.purchase_link || ''} onChange={e => setProductForm(f => ({ ...f, purchase_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                        </>
+                      )}
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
+                      <select value={productForm.status} onChange={e => setProductForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                      </select>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                        <input 
+                          type="checkbox" 
+                          id="featured" 
+                          checked={productForm.featured || false} 
+                          onChange={e => setProductForm(f => ({ ...f, featured: e.target.checked }))}
+                          style={{ width: 16, height: 16 }}
+                        />
+                        <label htmlFor="featured" style={{ fontWeight: 600, color: productForm.featured ? '#22c55e' : '#ef4444', cursor: 'pointer' }}>
+                          {productForm.featured ? 'Featured' : 'Not Featured'}
+                        </label>
+                      </div>
+                      <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 12 }}>{productEditId ? 'Update' : 'Add'} Product</button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
         </main>
       </div>
       {/* Footer */}
       <Footer />
       {/* Confirm Modal */}
-      <ConfirmModal
+      {/* <ConfirmModal
         open={confirmModal.open}
         title={`Delete ${confirmModal.type.charAt(0).toUpperCase() + confirmModal.type.slice(1)}`}
         message={`Are you sure you want to delete ${confirmModal.name || confirmModal.type}? This action cannot be undone.`}
         onConfirm={confirmDelete}
         onCancel={() => setConfirmModal({ open: false, type: '', id: null, name: '' })}
-      />
+      /> */}
     </div>
   );
 }

@@ -1,6 +1,8 @@
 import React from 'react';
 import styles from './WelcomeBoard.module.css';
 
+
+
 export default function WelcomeBoard() {
   // Use public/brain-miet.svg as the center icon, floating, with animated concentric circles and 4 floating labels
   return (

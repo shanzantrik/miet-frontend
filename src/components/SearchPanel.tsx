@@ -7,18 +7,22 @@ type Consultant = {
   name: string;
   city?: string;
   expertise?: string;
+  speciality?: string;
   mode?: string;
+  status?: string;
   image?: string;
   location?: string;
   lat?: number;
   lng?: number;
   email?: string;
   phone?: string;
+  category_ids?: number[] | string[];
+  description?: string; // Added for InfoWindow
 };
 
-const MODES = ['All', 'Online', 'At Home'];
+const MODES = ['All', 'Online', 'Offline'];
 const PAGE_SIZE = 5;
-const defaultCenter = { lat: 28.6139, lng: 77.2090 };
+const defaultCenter = { lat: 23.5937, lng: 78.9629 }; // Center of India
 
 // Add the haversine function back above the SearchPanel component
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -39,7 +43,6 @@ export default function SearchPanel() {
   const [search, setSearch] = useState('');
   const [searchPlaceholder, setSearchPlaceholder] = useState('Search Special Education and Mental Health Professionals, Services, Schools, etc.');
   const [mode, setMode] = useState('All');
-  const [page, setPage] = useState(1);
   const [selectedConsultant, setSelectedConsultant] = useState<Consultant | null>(null);
   const [nearby, setNearby] = useState(false);
   const [city, setCity] = useState('Delhi');
@@ -97,7 +100,9 @@ export default function SearchPanel() {
             lat = parseFloat(latStr);
             lng = parseFloat(lngStr);
           }
-          return { ...c, lat: lat ?? undefined, lng: lng ?? undefined };
+          const consultant = { ...c, lat: lat ?? undefined, lng: lng ?? undefined };
+          console.log('Consultant data:', consultant); // Debug individual consultant
+          return consultant;
         });
         setConsultants(parsed);
       } catch (e) {
@@ -115,7 +120,16 @@ export default function SearchPanel() {
       c.name.toLowerCase().includes(search.toLowerCase()) ||
       c.expertise?.toLowerCase().includes(search.toLowerCase()) ||
       c.city?.toLowerCase().includes(search.toLowerCase());
-    const matchesMode = mode === 'All' || c.mode === mode;
+    
+    // Filter by mode - check both mode and status fields
+    let matchesMode = true;
+    if (mode === 'Online') {
+      matchesMode = (c.mode === 'Online' || c.status === 'online');
+    } else if (mode === 'Offline') {
+      matchesMode = (c.mode === 'Offline' || c.status === 'offline');
+    }
+    // 'All' mode shows all consultants
+    
     return matchesSearch && matchesMode;
   });
 
@@ -128,21 +142,18 @@ export default function SearchPanel() {
           setUserLocation(loc);
           setMapCenter(loc);
           setNearby(true);
-          setMode('All');
-          setPage(1);
+          setMode('All'); // Reset to 'All' when using nearby
         },
         () => {
           alert('Could not get your location. Showing default nearby results.');
           setNearby(true);
-          setMode('All');
-          setPage(1);
+          setMode('All'); // Reset to 'All' when using nearby
         }
       );
     } else {
       alert('Geolocation not supported.');
       setNearby(true);
-      setMode('All');
-      setPage(1);
+      setMode('All'); // Reset to 'All' when using nearby
     }
   };
 
@@ -150,18 +161,14 @@ export default function SearchPanel() {
   if (nearby) {
     const center = userLocation || defaultCenter;
     filteredConsultants = [...filteredConsultants].sort((a, b) =>
-      haversine(center.lat, center.lng, a.lat, a.lng) -
-      haversine(center.lat, center.lng, b.lat, b.lng)
+      haversine(center.lat || 0, center.lng || 0, a.lat || 0, a.lng || 0) -
+      haversine(center.lat || 0, center.lng || 0, b.lat || 0, b.lng || 0)
     );
   }
 
-  // Pagination
-  const totalPages = Math.ceil(filteredConsultants.length / PAGE_SIZE);
-  const paginated = filteredConsultants.slice((page - 1) * PAGE_SIZE, page * PAGE_SIZE);
-
-  // On mount or when paginated changes, fetch addresses for those with lat/lng
+  // On mount or when filtered consultants change, fetch addresses for those with lat/lng
   useEffect(() => {
-    paginated.forEach(c => {
+    filteredConsultants.forEach(c => {
       if (c.location && !geoAddresses[c.id]) {
         const locParts = c.location.split(',');
         if (locParts.length === 2) {
@@ -172,14 +179,14 @@ export default function SearchPanel() {
       }
     });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [paginated]);
+  }, [filteredConsultants]);
 
   // Sync map height to left section
   useEffect(() => {
     if (leftRef.current) {
       setMapHeight(leftRef.current.offsetHeight);
     }
-  }, [search, mode, page, filteredConsultants.length, nearby]);
+  }, [search, mode, filteredConsultants.length, nearby]);
 
   // Reverse geocode city name when userLocation changes
   useEffect(() => {
@@ -192,7 +199,7 @@ export default function SearchPanel() {
           const res = await fetch(url);
           const data = await res.json();
           if (data.status === 'OK') {
-            const addressComponents: AddressComponent[] = data.results[0].address_components;
+            const addressComponents: any[] = data.results[0].address_components;
             const cityComponent = addressComponents.find((comp) =>
               comp.types.includes('locality') || comp.types.includes('administrative_area_level_2')
             );
@@ -241,7 +248,6 @@ export default function SearchPanel() {
           const transcript = event.results[0][0].transcript;
           setSearch(transcript);
           setSearchPlaceholder(transcript);
-          setPage(1);
         }
         setListening(false);
       };
@@ -264,7 +270,6 @@ export default function SearchPanel() {
   // Handle search submit
   const handleSearch = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setPage(1);
   };
 
   return (
@@ -304,10 +309,8 @@ export default function SearchPanel() {
           <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
             <button type="button" onClick={handleNearby} style={{ background: nearby ? 'var(--accent)' : 'var(--muted)', color: nearby ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Nearby</button>
             {MODES.map(m => (
-              <button key={m} type="button" onClick={() => { setMode(m); setNearby(false); setPage(1); }} style={{ background: mode === m && !nearby ? 'var(--accent)' : 'var(--muted)', color: mode === m && !nearby ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>{m}</button>
+              <button key={m} type="button" onClick={() => { setMode(m); setNearby(false); }} style={{ background: mode === m && !nearby ? 'var(--accent)' : 'var(--muted)', color: mode === m && !nearby ? '#fff' : 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>{m}</button>
             ))}
-            <button type="button" style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Resources</button>
-            <button type="button" style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 8, padding: '0.7rem 1.5rem', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>Explore All</button>
           </div>
         </form>
         <div style={{ fontSize: 16, color: 'var(--text-secondary)', margin: '8px 0 0 2px', fontWeight: 500 }}>
@@ -316,18 +319,45 @@ export default function SearchPanel() {
             {cityLoading ? '...' : city}
           </span>
         </div>
-        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 14, height: 400 }}>
-          {paginated.map(c => {
+        <div style={{ marginTop: 12, display: 'flex', flexDirection: 'column', gap: 14, height: 400, overflowY: 'auto' }}>
+          {filteredConsultants.map(c => {
             // Determine the correct image URL
             let imageUrl = c.image;
             if (imageUrl && imageUrl.startsWith('/')) {
               imageUrl = `http://localhost:4000${imageUrl}`;
             }
             return (
-              <div key={c.id} style={{ display: 'flex', alignItems: 'center', gap: 14, background: 'var(--muted)', borderRadius: 10, padding: '10px 14px' }}>
+              <div 
+                key={c.id} 
+                style={{ 
+                  display: 'flex', 
+                  alignItems: 'center', 
+                  gap: 14, 
+                  background: 'var(--muted)', 
+                  borderRadius: 10, 
+                  padding: '10px 14px',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s ease',
+                  border: selectedConsultant?.id === c.id ? '2px solid var(--accent)' : '2px solid transparent'
+                }}
+                onClick={() => {
+                  if (c.lat && c.lng) {
+                    setMapCenter({ lat: c.lat, lng: c.lng });
+                    setSelectedConsultant(c);
+                  }
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(0,0,0,0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
                 <div style={{ position: 'relative', width: 48, height: 48, display: 'inline-block' }}>
                   <img src={imageUrl || '/brain-miet.png'} alt={c.name} style={{ width: 48, height: 48, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }} onError={e => { e.currentTarget.onerror = null; e.currentTarget.src = '/brain-miet.png'; }} />
-                  {c.mode === 'Online' && (
+                  {(c.mode === 'Online' || c.status === 'online') && (
                     <span style={{
                       position: 'absolute',
                       bottom: 2,
@@ -348,7 +378,14 @@ export default function SearchPanel() {
                   <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 17 }}>{c.name}</div>
                   <div style={{ color: 'var(--text-accent)', fontSize: 15 }}>{c.expertise}</div>
                   <div style={{ color: 'var(--text-secondary)', fontSize: 14 }}>
-                    {c.city || "Not specified"} &middot; <span style={{ color: c.mode === 'Online' ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{c.mode}</span>
+                    {c.city || "Not specified"} &middot; <span style={{ color: (c.mode === 'Online' || c.status === 'online') ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{(() => {
+                      if (c.mode) return c.mode;
+                      if (c.status === 'online') return 'Online';
+                      if (c.status === 'offline') return 'Offline';
+                      if (c.speciality) return c.speciality;
+                      if (c.expertise) return c.expertise;
+                      return 'Consultant';
+                    })()}</span>
                   </div>
                   {c.location && (() => {
                     const locParts = c.location.split(',');
@@ -365,21 +402,28 @@ export default function SearchPanel() {
                   {c.email && <div style={{ color: '#666', fontSize: 13, marginTop: 2 }}>✉️ {c.email}</div>}
                   {c.phone && <div style={{ color: '#666', fontSize: 13, marginTop: 2 }}>📞 {c.phone}</div>}
                 </div>
-                <button onClick={() => setBookingConsultant(c)} style={{ background: 'var(--accent)', color: '#fff', border: 'none', borderRadius: 8, padding: '0.6rem 1.2rem', fontWeight: 600, fontSize: 15, cursor: 'pointer' }}>Book</button>
+                <button 
+                  onClick={(e) => {
+                    e.stopPropagation(); // Prevent triggering the card click
+                    setBookingConsultant(c);
+                  }} 
+                  style={{ 
+                    background: 'var(--accent)', 
+                    color: '#fff', 
+                    border: 'none', 
+                    borderRadius: 8, 
+                    padding: '0.6rem 1.2rem', 
+                    fontWeight: 600, 
+                    fontSize: 15, 
+                    cursor: 'pointer' 
+                  }}
+                >
+                  Book
+                </button>
               </div>
             );
           })}
         </div>
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div style={{ display: 'flex', gap: 8, marginTop: 18, justifyContent: 'center' }}>
-            <button onClick={() => setPage(p => Math.max(1, p - 1))} disabled={page === 1} style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 600, fontSize: 16, cursor: page === 1 ? 'not-allowed' : 'pointer', opacity: page === 1 ? 0.5 : 1 }}>Prev</button>
-            {[...Array(totalPages)].map((_, i) => (
-              <button key={i} onClick={() => setPage(i + 1)} style={{ background: page === i + 1 ? 'var(--accent)' : 'var(--muted)', color: page === i + 1 ? 'var(--text-accent-alt)' : 'var(--text-secondary)', border: '1.5px solid var(--border)', borderRadius: 6, padding: '6px 12px', fontWeight: 600, fontSize: 16, cursor: 'pointer' }}>{i + 1}</button>
-            ))}
-            <button onClick={() => setPage(p => Math.min(totalPages, p + 1))} disabled={page === totalPages} style={{ background: 'var(--muted)', color: 'var(--text-secondary)', border: 'none', borderRadius: 6, padding: '6px 16px', fontWeight: 600, fontSize: 16, cursor: page === totalPages ? 'not-allowed' : 'pointer', opacity: page === totalPages ? 0.5 : 1 }}>Next</button>
-          </div>
-        )}
       </div>
       {/* Right: Google Map */}
       <div style={{ flex: 1.5, minWidth: 320, maxWidth: 540, height: mapHeight, background: 'var(--card)', borderRadius: 16, overflow: 'hidden', boxShadow: '0 2px 8px rgba(90,103,216,0.08)', transition: 'height 0.2s' }}>
@@ -387,7 +431,7 @@ export default function SearchPanel() {
           <GoogleMap
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={mapCenter}
-            zoom={11}
+            zoom={nearby ? 11 : 5} // Zoom out to show India when not in nearby mode
           >
             {filteredConsultants.map(c => {
               let imageUrl = c.image;
@@ -416,19 +460,148 @@ export default function SearchPanel() {
                 />
               );
             })}
-            {selectedConsultant && (
+            {selectedConsultant && selectedConsultant.lat && selectedConsultant.lng && (
               <InfoWindow
                 position={{ lat: selectedConsultant.lat, lng: selectedConsultant.lng }}
                 onCloseClick={() => setSelectedConsultant(null)}
               >
-                <div style={{ minWidth: 180, maxWidth: 240, padding: 4 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    <img src={selectedConsultant.image} alt={selectedConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--border)' }} />
-                    <div>
-                      <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16 }}>{selectedConsultant.name}</div>
-                      <div style={{ color: 'var(--text-accent)', fontSize: 14 }}>{selectedConsultant.expertise}</div>
-                      <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>{selectedConsultant.city} &middot; <span style={{ color: selectedConsultant.mode === 'Online' ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{selectedConsultant.mode}</span></div>
+                <div style={{ minWidth: 280, maxWidth: 320, padding: 8, position: 'relative' }}>
+                  {/* Close button */}
+                  <button 
+                    onClick={() => setSelectedConsultant(null)}
+                    style={{ 
+                      position: 'absolute', 
+                      top: 4, 
+                      right: 4, 
+                      background: 'rgba(0,0,0,0.6)', 
+                      color: '#fff', 
+                      border: 'none', 
+                      borderRadius: '50%', 
+                      width: 24, 
+                      height: 24, 
+                      fontSize: 14, 
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      zIndex: 10
+                    }}
+                    aria-label="Close consultant details"
+                  >
+                    ×
+                  </button>
+                  
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                      <div style={{ position: 'relative', width: 60, height: 60 }}>
+                        <img 
+                          src={(() => {
+                            let imageUrl = selectedConsultant.image;
+                            if (imageUrl && imageUrl.startsWith('/')) {
+                              imageUrl = `http://localhost:4000${imageUrl}`;
+                            }
+                            return imageUrl || '/brain-miet.png';
+                          })()} 
+                          alt={selectedConsultant.name} 
+                          style={{ 
+                            width: 60, 
+                            height: 60, 
+                            borderRadius: '50%', 
+                            objectFit: 'cover', 
+                            border: '2px solid var(--border)' 
+                          }} 
+                          onError={e => { 
+                            e.currentTarget.onerror = null; 
+                            e.currentTarget.src = '/brain-miet.png'; 
+                          }} 
+                        />
+                        {(selectedConsultant.mode === 'Online' || selectedConsultant.status === 'online') && (
+                          <span style={{
+                            position: 'absolute',
+                            bottom: 2,
+                            right: 2,
+                            width: 16,
+                            height: 16,
+                            borderRadius: '50%',
+                            background: 'radial-gradient(circle, #39e639 60%, #39e63988 100%)',
+                            boxShadow: '0 0 8px 2px #39e63988, 0 0 0 2px #fff',
+                            border: '2px solid #fff',
+                            display: 'block',
+                            zIndex: 2,
+                            animation: 'glow-green 1.2s infinite alternate',
+                          }} />
+                        )}
+                      </div>
+                      <div style={{ flex: 1 }}>
+                        <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 18, marginBottom: 2 }}>{selectedConsultant.name}</div>
+                        <div style={{ color: 'var(--text-accent)', fontSize: 14, marginBottom: 2 }}>{selectedConsultant.expertise}</div>
+                        <div style={{ color: 'var(--text-secondary)', fontSize: 13 }}>
+                          {selectedConsultant.city} &middot; <span style={{ color: (selectedConsultant.mode === 'Online' || selectedConsultant.status === 'online') ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{(() => {
+                            if (selectedConsultant.mode) return selectedConsultant.mode;
+                            if (selectedConsultant.status === 'online') return 'Online';
+                            if (selectedConsultant.status === 'offline') return 'Offline';
+                            if (selectedConsultant.speciality) return selectedConsultant.speciality;
+                            if (selectedConsultant.expertise) return selectedConsultant.expertise;
+                            return 'Consultant';
+                          })()}</span>
+                        </div>
+                      </div>
                     </div>
+                    
+                    {selectedConsultant.description && (
+                      <div style={{ color: 'var(--text-secondary)', fontSize: 13, lineHeight: 1.4, marginTop: 4 }}>
+                        {selectedConsultant.description}
+                      </div>
+                    )}
+                    
+                    {selectedConsultant.email && (
+                      <div style={{ color: '#666', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>✉️</span> {selectedConsultant.email}
+                      </div>
+                    )}
+                    
+                    {selectedConsultant.phone && (
+                      <div style={{ color: '#666', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>📞</span> {selectedConsultant.phone}
+                      </div>
+                    )}
+                    
+                    {selectedConsultant.location && (() => {
+                      const locParts = selectedConsultant.location.split(',');
+                      if (locParts.length === 2) {
+                        const lat = locParts[0].trim();
+                        const lng = locParts[1].trim();
+                        if (geoAddresses[selectedConsultant.id]) {
+                          return <div style={{ color: '#888', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                            <span>📍</span> {geoAddresses[selectedConsultant.id]}
+                          </div>;
+                        }
+                        return <div style={{ color: '#888', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                          <span>📍</span> Lat: {lat}, Lng: {lng}
+                        </div>;
+                      }
+                      return <div style={{ color: '#888', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
+                        <span>📍</span> {selectedConsultant.location}
+                      </div>;
+                    })()}
+                    
+                    <button 
+                      onClick={() => setBookingConsultant(selectedConsultant)}
+                      style={{ 
+                        background: 'var(--accent)', 
+                        color: '#fff', 
+                        border: 'none', 
+                        borderRadius: 6, 
+                        padding: '8px 16px', 
+                        fontWeight: 600, 
+                        fontSize: 14, 
+                        cursor: 'pointer',
+                        marginTop: 8,
+                        width: '100%'
+                      }}
+                    >
+                      Book Appointment
+                    </button>
                   </div>
                 </div>
               </InfoWindow>

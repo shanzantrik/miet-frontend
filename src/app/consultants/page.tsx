@@ -48,9 +48,31 @@ export default function ConsultantsPage() {
       if (!res.ok) throw new Error("Failed to fetch consultants");
       const data = await res.json();
       console.log('API response for consultants:', data); // Debug backend data
+      console.log('Total consultants from API:', data.length);
       
-      setAllConsultants(data);
-      setConsultants(data);
+      // Check for duplicates in the raw data
+      const duplicateIds = data.reduce((acc: number[], consultant: Consultant, index: number) => {
+        const firstIndex = data.findIndex((c: Consultant) => c.id === consultant.id);
+        if (firstIndex !== index) {
+          acc.push(consultant.id);
+        }
+        return acc;
+      }, []);
+      
+      if (duplicateIds.length > 0) {
+        console.log('Found duplicate IDs in API response:', duplicateIds);
+      }
+      
+      // Remove duplicates by ID (keep only the first occurrence)
+      const uniqueConsultants = Array.from(
+        new Map(data.map((c: Consultant) => [c.id, c])).values()
+      ) as Consultant[];
+      
+      console.log('Unique consultants after deduplication:', uniqueConsultants.length);
+      console.log('Removed duplicates:', data.length - uniqueConsultants.length);
+      
+      setAllConsultants(uniqueConsultants);
+      setConsultants(uniqueConsultants);
     } catch (err) {
       console.error('Error fetching consultants:', err);
       setError("Could not load consultants.");
@@ -353,11 +375,11 @@ export default function ConsultantsPage() {
                 marginRight: "auto",
               }}
             >
-            {paginated.map((consultant) => {
+            {paginated.map((consultant, index) => {
               console.log('Consultant image:', consultant.image);
               return (
                 <Link
-                  key={consultant.id}
+                  key={`${consultant.id}-${consultant.name}-${index}`}
                   href={`/consultants/${consultant.id}`}
                   style={{
                     display: "flex",
