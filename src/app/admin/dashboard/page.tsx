@@ -95,22 +95,49 @@ export type ProductType = 'Course' | 'E-book' | 'App' | 'Gadget';
 export interface Product {
   id?: number;
   type: ProductType;
+  product_type?: string; // Backend field name
   title?: string;
   name?: string;
+  subtitle?: string; // Course subtitle/description
   description: string;
   price?: string;
   video_url?: string;
   video_file?: string;
   thumbnail?: string;
+  thumbnailFile?: File;
   author?: string;
   pdf_file?: string;
+  pdfFile?: File;
   download_link?: string;
   icon?: string;
+  iconFile?: File;
   product_image?: string;
+  productImageFile?: File;
   purchase_link?: string;
   status: 'active' | 'inactive';
   featured?: boolean;
   created_at?: string;
+  // Course-specific fields
+  instructor_name?: string;
+  instructor_title?: string;
+  instructor_bio?: string;
+  instructor_image?: string;
+  instructorImageFile?: File;
+  duration?: string;
+  total_lectures?: number;
+  language?: string;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced';
+  learning_objectives?: string[]; // Array of learning objectives
+  requirements?: string[]; // Array of requirements
+  course_content?: {
+    section: string;
+    lectures: number;
+    duration: string;
+    items: string[];
+  }[];
+  rating?: number;
+  total_ratings?: number;
+  enrolled_students?: number;
 }
 
 export default function AdminDashboard() {
@@ -196,10 +223,15 @@ export default function AdminDashboard() {
   const [productEditId, setProductEditId] = useState<number | null>(null);
   const [showProductModal, setShowProductModal] = useState(false);
   const [showProductProfileModal, setShowProductProfileModal] = useState(false);
+  // Success popup state
+  const [showSuccessPopup, setShowSuccessPopup] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
   // Delete modal state
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteConsultantId, setDeleteConsultantId] = useState<number | null>(null);
   const [deleteConsultantName, setDeleteConsultantName] = useState<string>('');
+  const [deleteProductId, setDeleteProductId] = useState<number | null>(null);
+  const [deleteProductName, setDeleteProductName] = useState<string>('');
 
   // Auth check
   useEffect(() => {
@@ -305,6 +337,42 @@ export default function AdminDashboard() {
   useEffect(() => {
     if (activeMenu === 'services') fetchServices();
   }, [activeMenu]);
+
+  // Fetch products
+  async function fetchProducts() {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`);
+      if (res.ok) {
+        const data = await res.json();
+        console.log('Initial products fetch:', data);
+        
+        // Extract products array from response
+        const productsArray = data.products || data;
+        console.log('Initial products array:', productsArray);
+        setProducts(productsArray);
+      } else {
+        console.error('Failed to fetch products:', res.status);
+        setProducts([]);
+      }
+    } catch (error) {
+      console.error('Error fetching products:', error);
+      setProducts([]);
+    }
+  }
+  
+  useEffect(() => {
+    if (activeMenu === 'products') fetchProducts();
+  }, [activeMenu]);
+
+  // Debug: Log products state changes
+  useEffect(() => {
+    console.log('Products state changed:', products);
+    console.log('Products is array:', Array.isArray(products));
+    if (Array.isArray(products)) {
+      console.log('Products count:', products.length);
+      console.log('First product:', products[0]);
+    }
+  }, [products]);
 
   // Category CRUD
   async function handleCatSubmit(e: React.FormEvent) {
@@ -1886,11 +1954,13 @@ export default function AdminDashboard() {
                 >
                   + Add Product
                 </button>
+
               </div>
               {/* Product Table */}
               <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', marginBottom: 24 }}>
                 <thead>
                   <tr style={{ background: '#e2e8f0' }}>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Thumbnail</th>
                     <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Type</th>
                     <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Title/Name</th>
                     <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Description</th>
@@ -1899,20 +1969,72 @@ export default function AdminDashboard() {
                   </tr>
                 </thead>
                 <tbody>
-                  {products
-                    .filter(p => !productForm.type || p.type === productForm.type)
+                  {Array.isArray(products) ? products
+                    .filter(p => !productForm.type || p.type?.toLowerCase() === productForm.type.toLowerCase() || p.product_type?.toLowerCase() === productForm.type.toLowerCase())
                     .map((p, idx) => (
                       <tr key={p.id ?? idx} style={{ borderBottom: '1px solid #e2e8f0' }}>
-                        <td style={{ padding: 10 }}>{p.type}</td>
+                        <td style={{ padding: 10 }}>
+                          {p.thumbnail ? (
+                            <img 
+                              src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${p.thumbnail}`} 
+                              alt="Thumbnail" 
+                              style={{ 
+                                width: 50, 
+                                height: 50, 
+                                objectFit: 'cover', 
+                                borderRadius: 6,
+                                border: '1px solid #e2e8f0'
+                              }} 
+                            />
+                          ) : (
+                            <div style={{ 
+                              width: 50, 
+                              height: 50, 
+                              background: '#f1f5f9', 
+                              borderRadius: 6,
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              color: '#94a3b8',
+                              fontSize: 12
+                            }}>
+                              No Image
+                            </div>
+                          )}
+                        </td>
+                        <td style={{ padding: 10 }}>{p.type || p.product_type}</td>
                         <td style={{ padding: 10 }}>{p.title || p.name}</td>
                         <td style={{ padding: 10, maxWidth: 220, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{p.description}</td>
                         <td style={{ padding: 10 }}>{p.status}</td>
                         <td style={{ padding: 10 }}>
-                          <button onClick={() => { setProductForm(p); setProductEditId(p.id ?? null); setShowProductModal(true); }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
-                          <button onClick={() => setProducts(products => products.filter((_, i) => i !== idx))} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                          <button onClick={() => { 
+                            setProductForm({
+                              ...p,
+                              type: p.type || p.product_type as ProductType,
+                              thumbnailFile: undefined,
+                              pdfFile: undefined,
+                              iconFile: undefined,
+                              productImageFile: undefined
+                            }); 
+                            setProductEditId(p.id ?? null); 
+                            setShowProductModal(true); 
+                          }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                          <button onClick={() => {
+                            setDeleteProductId(p.id ?? null);
+                            setDeleteProductName(p.title || p.name || 'this product');
+                            setShowDeleteModal(true);
+                          }} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
                         </td>
                       </tr>
-                    ))}
+                    )) : (
+                      <tr>
+                        <td colSpan={5} style={{ padding: 20, textAlign: 'center', color: '#666' }}>
+                          {products === null ? 'Loading products...' : 
+                           products === undefined ? 'Products not loaded' : 
+                           `Invalid products data: ${typeof products}`}
+                        </td>
+                      </tr>
+                    )}
                 </tbody>
               </table>
               {/* Product Modal */}
@@ -1928,47 +2050,114 @@ export default function AdminDashboard() {
                           const formData = new FormData();
                           // Common fields
                           formData.append('type', productForm.type || 'Course');
+                          formData.append('product_type', productForm.type || 'Course'); // Try alternative field name
                           formData.append('status', productForm.status || 'active');
                           formData.append('featured', productForm.featured ? 'true' : 'false');
                           // Dynamic fields by type
                           if (productForm.type === 'Course') {
-                            formData.append('title', productForm.title || '');
-                            formData.append('description', productForm.description || '');
-                            formData.append('price', productForm.price || '');
-                            formData.append('video_url', productForm.video_url || '');
-                            if (productForm.thumbnail) formData.append('thumbnail', productForm.thumbnail);
+                            if (!productForm.title?.trim()) {
+                              alert('Title is required for Course products');
+                              return;
+                            }
+                            if (!productForm.description?.trim()) {
+                              alert('Description is required for Course products');
+                              return;
+                            }
+                            if (!productForm.price?.trim()) {
+                              alert('Price is required for Course products');
+                              return;
+                            }
+                            if (!productForm.video_url?.trim()) {
+                              alert('Video URL is required for Course products');
+                              return;
+                            }
+                            if (!productForm.thumbnailFile) {
+                              alert('Thumbnail is required for Course products');
+                              return;
+                            }
+                            
+                            formData.append('title', productForm.title.trim());
+                            formData.append('description', productForm.description.trim());
+                            formData.append('price', productForm.price.trim());
+                            formData.append('video_url', productForm.video_url.trim());
+                            formData.append('thumbnail', productForm.thumbnailFile);
                           } else if (productForm.type === 'E-book') {
                             formData.append('title', productForm.title || '');
                             formData.append('description', productForm.description || '');
                             formData.append('author', productForm.author || '');
-                            if (productForm.pdf_file) formData.append('pdf_file', productForm.pdf_file);
-                            if (productForm.thumbnail) formData.append('thumbnail', productForm.thumbnail);
+                            if (productForm.pdfFile) formData.append('pdf_file', productForm.pdfFile);
+                            if (productForm.thumbnailFile) formData.append('thumbnail', productForm.thumbnailFile);
                           } else if (productForm.type === 'App') {
                             formData.append('name', productForm.name || '');
                             formData.append('description', productForm.description || '');
                             formData.append('download_link', productForm.download_link || '');
-                            if (productForm.icon) formData.append('icon', productForm.icon);
+                            if (productForm.iconFile) formData.append('icon', productForm.iconFile);
                           } else if (productForm.type === 'Gadget') {
                             formData.append('name', productForm.name || '');
                             formData.append('description', productForm.description || '');
                             formData.append('price', productForm.price || '');
-                            if (productForm.product_image) formData.append('product_image', productForm.product_image);
+                            if (productForm.productImageFile) formData.append('product_image', productForm.productImageFile);
                             formData.append('purchase_link', productForm.purchase_link || '');
+                            formData.append('download_link', productForm.download_link || '');
+                            if (productForm.iconFile) formData.append('icon', productForm.iconFile);
                           }
-                          const response = await fetch('/api/products', {
-                            method: 'POST',
+                          const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+                          console.log('Backend URL:', backendUrl);
+                          console.log('FormData contents:', Array.from(formData.entries()));
+                          console.log('Product form state:', productForm);
+                          
+                          // Try both FormData and JSON to see which works
+                          const url = productEditId 
+                            ? `${backendUrl}/api/products/${productEditId}`
+                            : `${backendUrl}/api/products`;
+                          const method = productEditId ? 'PUT' : 'POST';
+                          
+                          const response = await fetch(url, {
+                            method: method,
                             body: formData,
                           });
                           if (!response.ok) {
                             const error = await response.json();
+                            console.log('Backend error response:', error);
                             alert(error.message || 'Failed to add product');
                             return;
                           }
+                          // Show success popup
+                          setSuccessMessage(productEditId ? 'Product updated successfully!' : 'Product added successfully!');
+                          setShowSuccessPopup(true);
                           // Re-fetch products after successful add
-                          const res = await fetch('/api/products');
+                          const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`);
                           const data = await res.json();
-                          setProducts(data);
-                          setProductForm({ type: 'Course', status: 'active', featured: false });
+                          console.log('Fetched products data:', data);
+                          console.log('Products data type:', typeof data);
+                          console.log('Is array?', Array.isArray(data));
+                          
+                          // Extract products array from response
+                          const productsArray = data.products || data;
+                          console.log('Products array to set:', productsArray);
+                          setProducts(productsArray);
+                          console.log('Products state after setProducts:', productsArray);
+                          setProductForm({ 
+                            type: 'Course', 
+                            status: 'active', 
+                            featured: false,
+                            title: '',
+                            name: '',
+                            description: '',
+                            price: '',
+                            video_url: '',
+                            thumbnail: '',
+                            thumbnailFile: undefined,
+                            author: '',
+                            pdf_file: '',
+                            pdfFile: undefined,
+                            download_link: '',
+                            icon: '',
+                            iconFile: undefined,
+                            product_image: '',
+                            productImageFile: undefined,
+                            purchase_link: ''
+                          });
                           setProductEditId(null);
                           setShowProductModal(false);
                         } catch (error) {
@@ -1992,22 +2181,323 @@ export default function AdminDashboard() {
                       </select>
                       {/* Dynamic fields by type */}
                       {productForm.type === 'Course' && (
-                        <>
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Title</label>
-                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
-                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
-                          <input type="number" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Video URL</label>
-                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                          <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
+                        <div style={{ 
+                          maxHeight: '50vh', 
+                          overflowY: 'auto', 
+                          padding: '1rem', 
+                          border: '1px solid #e2e8f0', 
+                          borderRadius: '8px',
+                          backgroundColor: '#fafafa',
+                          marginBottom: '1rem'
+                        }}>
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '1rem', 
+                            marginBottom: '1rem' 
+                          }}>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Title *</label>
+                              <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., A Mini Course on Time Management" />
+                            </div>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Price</label>
+                              <input type="text" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Free, $49.99" />
+                            </div>
+                          </div>
+                          
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Subtitle *</label>
+                          <input type="text" value={productForm.subtitle || ''} onChange={e => setProductForm(f => ({ ...f, subtitle: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 7 steps you can use immediately to become more productive and master time management" />
+                          
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '1rem', 
+                            marginBottom: '1rem' 
+                          }}>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Duration</label>
+                              <input type="text" value={productForm.duration || ''} onChange={e => setProductForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 37min of on-demand video" />
+                            </div>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Lectures</label>
+                              <input type="number" value={productForm.total_lectures || ''} onChange={e => setProductForm(f => ({ ...f, total_lectures: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 11" />
+                            </div>
+                          </div>
+                          
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '1rem', 
+                            marginBottom: '1rem' 
+                          }}>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Language</label>
+                              <input type="text" value={productForm.language || ''} onChange={e => setProductForm(f => ({ ...f, language: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., English, Arabic" />
+                            </div>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Level</label>
+                              <select value={productForm.level || 'Beginner'} onChange={e => setProductForm(f => ({ ...f, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }}>
+                                <option value="Beginner">Beginner</option>
+                                <option value="Intermediate">Intermediate</option>
+                                <option value="Advanced">Advanced</option>
+                              </select>
+                            </div>
+                          </div>
+                          
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Description *</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60, width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="Detailed description of what the course covers..." />
+                          
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.5rem', display: 'block', fontSize: '14px' }}>Learning Objectives *</label>
+                            <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '1rem', backgroundColor: 'white' }}>
+                              {(productForm.learning_objectives || ['']).map((objective, index) => (
+                                <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                  <input 
+                                    type="text" 
+                                    value={objective} 
+                                    onChange={e => {
+                                      const newObjectives = [...(productForm.learning_objectives || [''])];
+                                      newObjectives[index] = e.target.value;
+                                      setProductForm(f => ({ ...f, learning_objectives: newObjectives }));
+                                    }} 
+                                    placeholder="e.g., Master the 7-step time management system"
+                                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                  />
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const newObjectives = (productForm.learning_objectives || ['']).filter((_, i) => i !== index);
+                                      setProductForm(f => ({ ...f, learning_objectives: newObjectives }));
+                                    }}
+                                    style={{ padding: '4px 8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  const newObjectives = [...(productForm.learning_objectives || ['']), ''];
+                                  setProductForm(f => ({ ...f, learning_objectives: newObjectives }));
+                                }}
+                                style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}
+                              >
+                                + Add Learning Objective
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.5rem', display: 'block', fontSize: '14px' }}>Requirements</label>
+                            <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '1rem', backgroundColor: 'white' }}>
+                              {(productForm.requirements || ['']).map((requirement, index) => (
+                                <div key={index} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                  <input 
+                                    type="text" 
+                                    value={requirement} 
+                                    onChange={e => {
+                                      const newRequirements = [...(productForm.requirements || [''])];
+                                      newRequirements[index] = e.target.value;
+                                      setProductForm(f => ({ ...f, requirements: newRequirements }));
+                                    }} 
+                                    placeholder="e.g., A willingness to take action on what we cover in this mini course"
+                                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                  />
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const newRequirements = (productForm.requirements || ['']).filter((_, i) => i !== index);
+                                      setProductForm(f => ({ ...f, requirements: newRequirements }));
+                                    }}
+                                    style={{ padding: '4px 8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                                  >
+                                    Remove
+                                  </button>
+                                </div>
+                              ))}
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  const newRequirements = [...(productForm.requirements || ['']), ''];
+                                  setProductForm(f => ({ ...f, requirements: newRequirements }));
+                                }}
+                                style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}
+                              >
+                                + Add Requirement
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.5rem', display: 'block', fontSize: '14px' }}>Course Content</label>
+                            <div style={{ border: '1px solid #e2e8f0', borderRadius: 6, padding: '1rem', backgroundColor: 'white', maxHeight: '200px', overflowY: 'auto' }}>
+                              {(productForm.course_content || [{ section: '', lectures: 0, duration: '', items: [''] }]).map((section, sectionIndex) => (
+                                <div key={sectionIndex} style={{ border: '1px solid #e5e7eb', borderRadius: 6, padding: '1rem', marginBottom: '1rem', backgroundColor: '#f9fafb' }}>
+                                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '0.75rem', marginBottom: '1rem' }}>
+                                    <input 
+                                      type="text" 
+                                      value={section.section} 
+                                      onChange={e => {
+                                        const newContent = [...(productForm.course_content || [])];
+                                        newContent[sectionIndex] = { ...section, section: e.target.value };
+                                        setProductForm(f => ({ ...f, course_content: newContent }));
+                                      }} 
+                                      placeholder="Section name (e.g., Introduction)"
+                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                    />
+                                    <input 
+                                      type="number" 
+                                      value={section.lectures} 
+                                      onChange={e => {
+                                        const newContent = [...(productForm.course_content || [])];
+                                        newContent[sectionIndex] = { ...section, lectures: parseInt(e.target.value) || 0 };
+                                        setProductForm(f => ({ ...f, course_content: newContent }));
+                                      }} 
+                                      placeholder="Number of lectures"
+                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                    />
+                                    <input 
+                                      type="text" 
+                                      value={section.duration} 
+                                      onChange={e => {
+                                        const newContent = [...(productForm.course_content || [])];
+                                        newContent[sectionIndex] = { ...section, duration: e.target.value };
+                                        setProductForm(f => ({ ...f, course_content: newContent }));
+                                      }} 
+                                      placeholder="Duration (e.g., 5 min)"
+                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                    />
+                                  </div>
+                                  <div style={{ marginBottom: '1rem' }}>
+                                    <label style={{ fontSize: '12px', color: '#6b7280', marginBottom: '0.5rem', display: 'block' }}>Lecture Items:</label>
+                                    {section.items.map((item, itemIndex) => (
+                                      <div key={itemIndex} style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.5rem', alignItems: 'center' }}>
+                                        <input 
+                                          type="text" 
+                                          value={item} 
+                                          onChange={e => {
+                                            const newContent = [...(productForm.course_content || [])];
+                                            const newItems = [...section.items];
+                                            newItems[itemIndex] = e.target.value;
+                                            newContent[sectionIndex] = { ...section, items: newItems };
+                                            setProductForm(f => ({ ...f, course_content: newContent }));
+                                          }} 
+                                          placeholder="Lecture title (e.g., Welcome to the course)"
+                                          style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }} 
+                                        />
+                                        <button 
+                                          type="button" 
+                                          onClick={() => {
+                                            const newContent = [...(productForm.course_content || [])];
+                                            const newItems = section.items.filter((_, i) => i !== itemIndex);
+                                            newContent[sectionIndex] = { ...section, items: newItems };
+                                            setProductForm(f => ({ ...f, course_content: newContent }));
+                                          }}
+                                          style={{ padding: '3px 6px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '10px', fontWeight: '500' }}
+                                        >
+                                          Remove
+                                        </button>
+                                      </div>
+                                    ))}
+                                    <button 
+                                      type="button" 
+                                      onClick={() => {
+                                        const newContent = [...(productForm.course_content || [])];
+                                        const newItems = [...section.items, ''];
+                                        newContent[sectionIndex] = { ...section, items: newItems };
+                                        setProductForm(f => ({ ...f, course_content: newContent }));
+                                      }}
+                                      style={{ padding: '4px 8px', background: '#3b82f6', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                                    >
+                                      + Add Lecture
+                                    </button>
+                                  </div>
+                                  <button 
+                                    type="button" 
+                                    onClick={() => {
+                                      const newContent = (productForm.course_content || []).filter((_, i) => i !== sectionIndex);
+                                      setProductForm(f => ({ ...f, course_content: newContent }));
+                                    }}
+                                    style={{ padding: '4px 8px', background: '#ef4444', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '11px', fontWeight: '500' }}
+                                  >
+                                    Remove Section
+                                  </button>
+                                </div>
+                              ))}
+                              <button 
+                                type="button" 
+                                onClick={() => {
+                                  const newContent = [...(productForm.course_content || []), { section: '', lectures: 0, duration: '', items: [''] }];
+                                  setProductForm(f => ({ ...f, course_content: newContent }));
+                                }}
+                                style={{ padding: '6px 12px', background: '#10b981', color: 'white', border: 'none', borderRadius: 4, cursor: 'pointer', fontSize: '12px', fontWeight: '500' }}
+                              >
+                                + Add Course Section
+                              </button>
+                            </div>
+                          </div>
+                          
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '1rem', 
+                            marginBottom: '1rem' 
+                          }}>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Name</label>
+                              <input type="text" value={productForm.instructor_name || ''} onChange={e => setProductForm(f => ({ ...f, instructor_name: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Brandon Hakim" />
+                            </div>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Title</label>
+                              <input type="text" value={productForm.instructor_title || ''} onChange={e => setProductForm(f => ({ ...f, instructor_title: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Productivity Expert & Time Management Coach" />
+                            </div>
+                          </div>
+                          
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Bio</label>
+                          <textarea value={productForm.instructor_bio || ''} onChange={e => setProductForm(f => ({ ...f, instructor_bio: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 50, width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="Brief description of the instructor's background and expertise..." />
+                          
+                          <div style={{ marginBottom: '1rem' }}>
+                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Image</label>
+                            <input type="file" accept="image/*" onChange={e => {
+                              const file = e.target.files?.[0];
+                              if (file) setProductForm(f => ({ ...f, instructor_image: URL.createObjectURL(file), instructorImageFile: file }));
+                            }} style={{ padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, width: '100%' }} />
+                            {productForm.instructor_image && <img src={productForm.instructor_image} alt="Instructor" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} />}
+                          </div>
+                          
+                          <div style={{ 
+                            display: 'grid', 
+                            gridTemplateColumns: '1fr 1fr', 
+                            gap: '1rem', 
+                            marginBottom: '1rem' 
+                          }}>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Rating</label>
+                              <input type="number" step="0.1" min="0" max="5" value={productForm.rating || ''} onChange={e => setProductForm(f => ({ ...f, rating: parseFloat(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 4.4" />
+                            </div>
+                            <div>
+                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Ratings</label>
+                              <input type="number" value={productForm.total_ratings || ''} onChange={e => setProductForm(f => ({ ...f, total_ratings: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 47803" />
+                            </div>
+                          </div>
+                          
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Enrolled Students</label>
+                          <input type="number" value={productForm.enrolled_students || ''} onChange={e => setProductForm(f => ({ ...f, enrolled_students: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 439950" />
+                          
+                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Video URL</label>
+                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="URL to course preview video" />
+                          
+                          <div style={{ marginBottom: '0.5rem' }}>
+                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Thumbnail</label>
                           <input type="file" accept="image/*" onChange={e => {
                             const file = e.target.files?.[0];
                             if (file) setProductForm(f => ({ ...f, thumbnail: URL.createObjectURL(file), thumbnailFile: file }));
-                          }} />
-                          {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
-                        </>
+                            }} style={{ padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, width: '100%' }} />
+                            {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} />}
+                          </div>
+                        </div>
                       )}
                       {productForm.type === 'E-book' && (
                         <>
@@ -2063,6 +2553,14 @@ export default function AdminDashboard() {
                           {productForm.product_image && <img src={productForm.product_image} alt="Product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Purchase Link</label>
                           <input type="text" value={productForm.purchase_link || ''} onChange={e => setProductForm(f => ({ ...f, purchase_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Download Link</label>
+                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Icon</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, icon: URL.createObjectURL(file), iconFile: file }));
+                          }} />
+                          {productForm.icon && <img src={productForm.icon} alt="Icon" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
                         </>
                       )}
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
@@ -2093,6 +2591,130 @@ export default function AdminDashboard() {
       </div>
       {/* Footer */}
       <Footer />
+      
+      {/* Success Popup */}
+      {showSuccessPopup && (
+        <div style={{ 
+          position: 'fixed', 
+          top: '20px', 
+          right: '20px', 
+          background: '#10b981', 
+          color: 'white', 
+          padding: '16px 24px', 
+          borderRadius: '8px', 
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)', 
+          zIndex: 5000,
+          animation: 'slideInRight 0.3s ease-out'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <span style={{ fontSize: '20px' }}>✅</span>
+            <span>{successMessage}</span>
+            <button 
+              onClick={() => setShowSuccessPopup(false)}
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                color: 'white', 
+                fontSize: '18px', 
+                cursor: 'pointer',
+                marginLeft: '12px'
+              }}
+            >
+              ×
+            </button>
+          </div>
+        </div>
+      )}
+      
+      {/* Delete Confirmation Modal */}
+      {showDeleteModal && (
+        <div style={{ 
+          position: 'fixed', 
+          top: 0, 
+          left: 0, 
+          width: '100vw', 
+          height: '100vh', 
+          background: 'rgba(0,0,0,0.5)', 
+          zIndex: 4000, 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center' 
+        }}>
+          <div style={{ 
+            background: 'white', 
+            borderRadius: '12px', 
+            padding: '32px', 
+            maxWidth: '400px', 
+            textAlign: 'center',
+            boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
+          }}>
+            <h3 style={{ color: '#dc2626', marginBottom: '16px', fontSize: '20px' }}>Delete Product</h3>
+            <p style={{ marginBottom: '24px', color: '#374151' }}>
+              Are you sure you want to delete <strong>{deleteProductName}</strong>? This action cannot be undone.
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button 
+                onClick={() => setShowDeleteModal(false)}
+                style={{ 
+                  background: '#6b7280', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px 20px', 
+                  borderRadius: '6px', 
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Cancel
+              </button>
+                              <button 
+                  onClick={async () => {
+                    if (deleteProductId) {
+                      try {
+                        // Try backend delete first
+                        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${deleteProductId}`, {
+                          method: 'DELETE'
+                        });
+                        
+                        if (response.ok) {
+                          // Backend delete successful
+                          setProducts(products.filter(p => p.id !== deleteProductId));
+                          setSuccessMessage('Product deleted successfully!');
+                          setShowSuccessPopup(true);
+                        } else {
+                          // Backend delete failed, do frontend-only deletion
+                          console.log('Backend delete failed, doing frontend-only deletion');
+                          setProducts(products.filter(p => p.id !== deleteProductId));
+                          setSuccessMessage('Product removed from view (backend delete not implemented)');
+                          setShowSuccessPopup(true);
+                        }
+                      } catch (error) {
+                        // Network error, do frontend-only deletion
+                        console.log('Network error, doing frontend-only deletion');
+                        setProducts(products.filter(p => p.id !== deleteProductId));
+                        setSuccessMessage('Product removed from view (backend delete not implemented)');
+                        setShowSuccessPopup(true);
+                      }
+                    }
+                    setShowDeleteModal(false);
+                  }}
+                style={{ 
+                  background: '#dc2626', 
+                  color: 'white', 
+                  border: 'none', 
+                  padding: '10px 20px', 
+                  borderRadius: '6px', 
+                  cursor: 'pointer',
+                  fontWeight: '600'
+                }}
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+      
       {/* Confirm Modal */}
       {/* <ConfirmModal
         open={confirmModal.open}

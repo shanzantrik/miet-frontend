@@ -13,6 +13,7 @@ export default function Footer() {
             <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Services</a>
             <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Consultants</a>
             <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Marketplace</a>
+            <a href="/courses" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Courses</a>
             <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Contact</a>
           </div>
           <div style={{ marginBottom: 12 }}>

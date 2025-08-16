@@ -19,6 +19,13 @@ export default function AdminLogin() {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, password }),
       });
+      
+      // Check if response is JSON
+      const contentType = res.headers.get("content-type");
+      if (!contentType || !contentType.includes("application/json")) {
+        throw new Error("Server returned non-JSON response. Please check the backend URL and endpoint.");
+      }
+      
       const data = await res.json();
       if (!res.ok) throw new Error(data.error || "Login failed");
       localStorage.setItem("admin_jwt", data.token);

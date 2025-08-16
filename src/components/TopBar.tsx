@@ -158,6 +158,7 @@ export default function TopBar() {
             <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Services</Link>
             <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
             <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
+            <Link href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Courses</Link>
             {/* Resources with submenu - removed for now */}
             {/* <div style={{ position: 'relative', margin: 0 }} onMouseOver={() => setShowResources(true)} onMouseOut={() => setShowResources(false)}>
               <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
@@ -203,6 +204,7 @@ export default function TopBar() {
               <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Services</Link>
               <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
               <a href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
+              <a href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Courses</a>
               {/* Resources submenu - removed for now */}
               {/* <div style={{ marginBottom: 8 }}>
                 <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 4 }}>Resources</div>
