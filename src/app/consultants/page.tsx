@@ -101,9 +101,29 @@ export default function ConsultantsPage() {
     }
     
     if (mode) {
-      filteredConsultants = filteredConsultants.filter((c) => 
-        c.mode && c.mode.toLowerCase().includes(mode.toLowerCase())
-      );
+      filteredConsultants = filteredConsultants.filter((c) => {
+        // Check if the consultant matches the selected mode
+        const consultantMode = c.mode && c.mode.trim();
+        const consultantStatus = c.status && c.status.trim();
+        
+        // For Online/Offline filtering, check both mode and status fields
+        if (mode === 'Online') {
+          return consultantMode?.toLowerCase().includes('online') || 
+                 consultantStatus?.toLowerCase().includes('online') ||
+                 consultantMode?.toLowerCase().includes('live') ||
+                 consultantStatus?.toLowerCase().includes('live');
+        }
+        
+        if (mode === 'Offline') {
+          return consultantMode?.toLowerCase().includes('offline') || 
+                 consultantStatus?.toLowerCase().includes('offline') ||
+                 consultantMode?.toLowerCase().includes('in-person') ||
+                 consultantStatus?.toLowerCase().includes('in-person');
+        }
+        
+        // For other modes, use the original logic
+        return consultantMode && consultantMode.toLowerCase().includes(mode.toLowerCase());
+      });
     }
     
     if (search) {
@@ -147,8 +167,40 @@ export default function ConsultantsPage() {
   }, [allConsultants]);
 
   const modes = useMemo(() => {
-    console.log('All consultants for modes:', allConsultants.map(c => ({ name: c.name, mode: c.mode })));
-    const modeSet = new Set(allConsultants.map(c => c.mode).filter(Boolean));
+    console.log('All consultants for modes:', allConsultants.map(c => ({ name: c.name, mode: c.mode, status: c.status })));
+    
+    // Create a set with explicit Online/Offline options plus any other modes from data
+    const modeSet = new Set<string>();
+    
+    // Add explicit Online/Offline options (only these capitalized versions)
+    modeSet.add('Online');
+    modeSet.add('Offline');
+    
+    // Add any other modes from the data (excluding online/offline variations)
+    allConsultants.forEach(c => {
+      if (c.mode && c.mode.trim()) {
+        const modeValue = c.mode.trim();
+        // Only add if it's not an online/offline variation
+        if (!modeValue.toLowerCase().includes('online') && 
+            !modeValue.toLowerCase().includes('offline') &&
+            !modeValue.toLowerCase().includes('live') &&
+            !modeValue.toLowerCase().includes('in-person')) {
+          modeSet.add(modeValue);
+        }
+      }
+      // Also check status field for other modes (excluding online/offline variations)
+      if (c.status && c.status.trim()) {
+        const statusValue = c.status.trim();
+        // Only add if it's not an online/offline variation
+        if (!statusValue.toLowerCase().includes('online') && 
+            !statusValue.toLowerCase().includes('offline') &&
+            !statusValue.toLowerCase().includes('live') &&
+            !statusValue.toLowerCase().includes('in-person')) {
+          modeSet.add(statusValue);
+        }
+      }
+    });
+    
     return Array.from(modeSet).sort();
   }, [allConsultants]);
 
@@ -363,7 +415,7 @@ export default function ConsultantsPage() {
             <div
               style={{
                 display: "grid",
-                gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 220px))",
                 gap: 16,
                 width: "100%",
                 margin: "24px 0",
@@ -373,6 +425,7 @@ export default function ConsultantsPage() {
                 maxWidth: "1200px",
                 marginLeft: "auto",
                 marginRight: "auto",
+                justifyContent: "center",
               }}
             >
             {paginated.map((consultant, index) => {

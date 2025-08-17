@@ -1,9 +1,10 @@
 'use client';
 import React, { useState } from 'react';
-import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes } from 'react-icons/fa';
+import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes, FaShoppingCart } from 'react-icons/fa';
 import { FcGoogle } from 'react-icons/fc';
 import Link from 'next/link';
 import Image from 'next/image';
+import { useCart } from './CartContext';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
   <span style={{ fontSize: 18, marginRight: 4 }}>{code === 'en' ? '🇬🇧' : '🇮🇳'}</span>
@@ -19,6 +20,9 @@ export default function TopBar() {
   // Modal state
   const [showLogin, setShowLogin] = useState(false);
   const [showSignup, setShowSignup] = useState(false);
+
+  // Cart functionality
+  const { itemCount } = useCart();
 
   // Responsive: detect small screens
   const [isMobile, setIsMobile] = React.useState(false);
@@ -181,7 +185,30 @@ export default function TopBar() {
         )}
         {/* Login/Signup and Social */}
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginLeft: 16 }}>
-          <div style={{ display: 'flex', gap: 8 }}>
+          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+            {/* Cart Icon */}
+            <Link href="/cart" style={{ position: 'relative', textDecoration: 'none', color: highContrast ? '#fff' : '#5a67d8' }}>
+              <FaShoppingCart style={{ fontSize: '20px', cursor: 'pointer' }} />
+              {itemCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
+                  background: '#ef4444',
+                  color: 'white',
+                  borderRadius: '50%',
+                  width: '20px',
+                  height: '20px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  fontSize: '12px',
+                  fontWeight: '600'
+                }}>
+                  {itemCount}
+                </span>
+              )}
+            </Link>
             <button style={{ background: '#5a67d8', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowLogin(true)}>Login</button>
             <button style={{ background: '#22543d', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowSignup(true)}>Sign Up</button>
           </div>
@@ -205,6 +232,11 @@ export default function TopBar() {
               <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
               <a href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
               <a href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Courses</a>
+              {/* Cart in mobile menu */}
+              <Link href="/cart" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: '18', marginBottom: '8', display: 'flex', alignItems: 'center' }}>
+                <FaShoppingCart style={{ marginRight: '8' }} />
+                Cart {itemCount > 0 && `(${itemCount})`}
+              </Link>
               {/* Resources submenu - removed for now */}
               {/* <div style={{ marginBottom: 8 }}>
                 <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 4 }}>Resources</div>

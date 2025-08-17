@@ -1,12 +1,14 @@
 'use client';
 import React, { useState, useEffect } from 'react';
-import { FaPlay, FaCheck, FaStar, FaVideo, FaGlobe, FaChevronDown, FaChevronRight, FaSpinner } from 'react-icons/fa';
+import { FaPlay, FaCheck, FaStar, FaVideo, FaGlobe, FaChevronDown, FaChevronRight, FaSpinner, FaUser, FaClock, FaBook, FaGraduationCap } from 'react-icons/fa';
 import TopBar from '../../../components/TopBar';
 import Footer from '../../../components/Footer';
+import Link from 'next/link';
 
 interface Course {
   id: string | number;
-  title: string;
+  title?: string;
+  name?: string;
   subtitle?: string;
   description: string;
   rating?: number;
@@ -14,9 +16,13 @@ interface Course {
   enrolled_students?: number;
   duration?: string;
   instructor_name?: string;
+  instructor_title?: string;
+  instructor_bio?: string;
+  instructor_image?: string;
   price?: string | number;
   thumbnail?: string;
-  type: string;
+  type?: string;
+  product_type?: string;
   status: string;
   featured?: boolean;
   created_at?: string;
@@ -28,7 +34,14 @@ interface Course {
     duration: string;
     items: string[];
   }[];
+  total_lectures?: number;
+  language?: string;
+  level?: 'Beginner' | 'Intermediate' | 'Advanced';
+  video_url?: string;
+  author?: string;
 }
+
+
 
 export default function CourseDetailPage({ params }: { params: { id: string } }) {
   const [course, setCourse] = useState<Course | null>(null);
@@ -41,6 +54,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     'requirements': false,
     'description': false
   });
+  const [showAddToCartSuccess, setShowAddToCartSuccess] = useState(false);
 
   useEffect(() => {
     fetchCourseData();
@@ -90,61 +104,111 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     }));
   };
 
-  const renderStars = (rating: number) => {
-    const stars = [];
-    for (let i = 1; i <= 5; i++) {
-      stars.push(
-        <FaStar
-          key={i}
-          style={{
-            color: i <= rating ? '#fbbf24' : '#d1d5db',
-            fontSize: '16px'
-          }}
-        />
-      );
+  // Helper functions
+  const getCourseDisplayName = (course: Course) => {
+    return course.title || course.name || 'Untitled Course';
+  };
+
+  const getCourseImage = (course: Course) => {
+    if (course.thumbnail) {
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${course.thumbnail}`;
     }
-    return stars;
+    return '/intro.webp'; // Default image
   };
 
   const getPriceDisplay = (price: string | number | undefined) => {
     if (!price || price === '0' || price === 0) return 'Free';
+    if (typeof price === 'string' && price.toLowerCase() === 'free') return 'Free';
     
-    // Convert to string if it's a number
-    const priceStr = String(price);
+    // Convert to string and remove any existing currency symbols
+    let cleanPrice = String(price).replace(/[$€£₹]/g, '').trim();
     
-    if (priceStr.startsWith('$')) return priceStr;
-    if (priceStr.toLowerCase() === 'free') return 'Free';
+    // If it's a valid number, format it
+    if (cleanPrice && !isNaN(Number(cleanPrice))) {
+      return `₹${cleanPrice}`;
+    }
     
-    // If it's a number or doesn't start with $, add $ prefix
-    return `$${priceStr}`;
+    // Fallback to original price with ₹ symbol
+    return `₹${price}`;
+  };
+
+  const renderStars = (rating: number) => {
+    const stars = [];
+    const fullStars = Math.floor(rating);
+    const hasHalfStar = rating % 1 !== 0;
+    
+    for (let i = 0; i < fullStars; i++) {
+      stars.push(
+        <FaStar key={i} style={{ color: '#fbbf24', fontSize: '14px' }} />
+      );
+    }
+    
+    if (hasHalfStar) {
+      stars.push(
+        <FaStar key="half" style={{ color: '#fbbf24', fontSize: '14px' }} />
+      );
+    }
+    
+    const emptyStars = 5 - Math.ceil(rating);
+    for (let i = 0; i < emptyStars; i++) {
+      stars.push(
+        <FaStar key={`empty-${i}`} style={{ color: '#d1d5db', fontSize: '14px' }} />
+      );
+    }
+    
+    return stars;
   };
 
   const getDefaultImage = (course: Course) => {
-    if (course.thumbnail) {
-      // Use the same pattern as marketplace for image URLs
-      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${course.thumbnail}`;
+    if (course.instructor_image) {
+      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${course.instructor_image}`;
     }
-    // Return default image based on course type or use a generic one
-    return '/intro.webp';
+    return '/founder.webp'; // Default instructor image
+  };
+
+  const addToCart = () => {
+    if (!course) return;
+    
+    const cartItem = {
+      id: course.id,
+      title: course.title,
+      name: course.name,
+      description: course.description,
+      price: course.price,
+      thumbnail: course.thumbnail,
+      type: course.type,
+      product_type: course.product_type,
+      quantity: 1
+    };
+    
+    const existingCart = localStorage.getItem('cart');
+    let cart = existingCart ? JSON.parse(existingCart) : [];
+    
+    const existingItemIndex = cart.findIndex((item: any) => item.id === course.id);
+    
+    if (existingItemIndex >= 0) {
+      cart[existingItemIndex].quantity += 1;
+    } else {
+      cart.push(cartItem);
+    }
+    
+    localStorage.setItem('cart', JSON.stringify(cart));
+    
+    setShowAddToCartSuccess(true);
+    setTimeout(() => setShowAddToCartSuccess(false), 3000);
   };
 
   if (loading) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <TopBar />
-        <main style={{ flex: 1, padding: '2rem 2vw', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <FaSpinner style={{ fontSize: '3rem', color: '#3b82f6', animation: 'spin 1s linear infinite' }} />
-            <p style={{ marginTop: '1rem', fontSize: '1.125rem', color: '#6b7280' }}>Loading course...</p>
+            <FaSpinner style={{ fontSize: '48px', color: '#8b5cf6', animation: 'spin 1s linear infinite' }} />
+            <p style={{ marginTop: '1rem', fontSize: '18px', color: '#6b7280' }}>Loading course...</p>
           </div>
         </main>
         <Footer />
-        <style jsx>{`
-          @keyframes spin {
-            from { transform: rotate(0deg); }
-            to { transform: rotate(360deg); }
-          }
-        `}</style>
       </div>
     );
   }
@@ -153,11 +217,11 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     return (
       <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <TopBar />
-        <main style={{ flex: 1, padding: '2rem 2vw', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
-            <p style={{ fontSize: '1.125rem', color: '#ef4444', marginBottom: '1rem' }}>Error: {error || 'Course not found'}</p>
+            <p style={{ fontSize: '18px', color: '#ef4444', marginBottom: '1rem' }}>Error: {error || 'Course not found'}</p>
             <button 
-              onClick={() => window.history.back()}
+              onClick={fetchCourseData}
               style={{
                 padding: '0.75rem 1.5rem',
                 background: '#3b82f6',
@@ -168,7 +232,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                 fontSize: '1rem'
               }}
             >
-              Go Back
+              Try Again
             </button>
           </div>
         </main>
@@ -182,166 +246,99 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
       <TopBar />
       
       <main style={{ flex: 1, padding: '2rem 2vw', width: '100%' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '3rem', maxWidth: '1400px', margin: '0 auto' }}>
+          
+          {/* Left Column - Course Content */}
+          <div>
         {/* Course Header */}
-        <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '2rem', marginBottom: '3rem' }}>
-          {/* Video Player */}
-          <div style={{ background: '#8b5cf6', borderRadius: '12px', padding: '2rem', position: 'relative', minHeight: '400px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-            <div style={{ textAlign: 'center' }}>
-              <div style={{ 
-                width: '120px', 
-                height: '120px', 
-                background: '#fbbf24', 
-                borderRadius: '50%', 
-                margin: '0 auto 1rem',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center'
-              }}>
-                <div style={{
-                  width: '80px',
-                  height: '80px',
-                  background: '#60a5fa',
-                  borderRadius: '50%',
-                  position: 'relative'
-                }}>
-                  <FaPlay 
-                    style={{
-                      position: 'absolute',
-                      top: '50%',
-                      left: '50%',
-                      transform: 'translate(-50%, -50%)',
-                      color: 'white',
-                      fontSize: '24px'
-                    }}
-                  />
-                </div>
-              </div>
+            <div style={{ marginBottom: '2rem' }}>
+              <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '1rem', lineHeight: '1.2' }}>
+                {getCourseDisplayName(course)}
+              </h1>
               
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                  <FaCheck style={{ color: 'white', fontSize: '16px' }} />
-                  <FaCheck style={{ color: 'white', fontSize: '16px' }} />
-                  <FaCheck style={{ color: 'white', fontSize: '16px' }} />
-                </div>
-                <div style={{ 
-                  width: '60px', 
-                  height: '60px', 
-                  border: '2px dashed white', 
-                  borderRadius: '8px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <FaCheck style={{ color: 'white', fontSize: '20px' }} />
-                </div>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.25rem' }}>
-                  <div style={{ width: '20px', height: '2px', background: 'white' }}></div>
-                  <div style={{ width: '20px', height: '2px', background: 'white' }}></div>
-                  <div style={{ width: '20px', height: '2px', background: 'white' }}></div>
-                </div>
-              </div>
-              
-              <p style={{ color: 'white', fontSize: '16px', fontWeight: '600' }}>
-                Preview this course
+              {course.subtitle && (
+                <p style={{ fontSize: '18px', color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                  {course.subtitle}
+                </p>
+              )}
+
+              <p style={{ fontSize: '16px', color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.5' }}>
+                {course.description}
               </p>
-            </div>
-          </div>
 
-          {/* Course Details */}
-          <div style={{ padding: '1rem 0' }}>
-            <h1 style={{ fontSize: '28px', fontWeight: '700', color: '#1f2937', marginBottom: '0.5rem', lineHeight: '1.2' }}>
-              {course.title}
-            </h1>
-            
-            <p style={{ fontSize: '16px', color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.5' }}>
-              {course.subtitle || course.description}
-            </p>
-
-            <div style={{ 
-              display: 'inline-block', 
-              background: '#f97316', 
-              color: 'white', 
-              padding: '0.25rem 0.75rem', 
-              borderRadius: '20px', 
-              fontSize: '14px', 
-              fontWeight: '600',
-              marginBottom: '1rem'
-            }}>
-              {getPriceDisplay(course.price)}
             </div>
 
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-              <span style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
-                {course.rating || 'N/A'}
-              </span>
-              <div style={{ display: 'flex', gap: '2px' }}>
-                {renderStars(course.rating || 0)}
+            {/* Course Stats */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '2rem', marginBottom: '2rem', padding: '1.5rem', background: '#f9fafb', borderRadius: '12px' }}>
+              {course.rating && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaStar style={{ color: '#fbbf24', fontSize: '20px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                      {course.rating}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      {course.total_ratings || 0} ratings
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {course.total_lectures && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaBook style={{ color: '#8b5cf6', fontSize: '20px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                      {course.total_lectures}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      Lectures
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {course.duration && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaClock style={{ color: '#10b981', fontSize: '20px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                      {course.duration}
+                    </div>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      Duration
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {course.level && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaGraduationCap style={{ color: '#f59e0b', fontSize: '20px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                      {course.level}
               </div>
-              <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                ({course.total_ratings || 0} ratings)
-              </span>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      Level
             </div>
-
-            <p style={{ fontSize: '16px', color: '#1f2937', marginBottom: '1rem' }}>
-              {course.enrolled_students || 0} students
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
-              <FaVideo style={{ color: '#6b7280' }} />
-              <span style={{ fontSize: '16px', color: '#1f2937' }}>
-                {course.duration || 'N/A'} of on-demand video
-              </span>
-            </div>
-
-            <p style={{ fontSize: '16px', color: '#1f2937', marginBottom: '1rem' }}>
-              Created by{' '}
-              <span style={{ color: '#3b82f6', cursor: 'pointer' }}>
-                {course.instructor_name || 'Unknown Instructor'}
-              </span>
-              ,{' '}
-              <span style={{ color: '#3b82f6', cursor: 'pointer' }}>
-                Insider School
-              </span>
-            </p>
-
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.5rem' }}>
-              <FaGlobe style={{ color: '#6b7280' }} />
-              <span style={{ fontSize: '16px', color: '#1f2937' }}>
-                English English [Auto], Arabic [Auto],{' '}
-                <span style={{ color: '#3b82f6', cursor: 'pointer' }}>
-                  23 more
-                </span>
-              </span>
-            </div>
-
-            <div style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem' }}>
-              {getPriceDisplay(course.price)}
-            </div>
-
-            <button style={{
-              width: '100%',
-              padding: '1rem',
-              border: '2px solid #8b5cf6',
-              borderRadius: '8px',
-              background: 'white',
-              color: '#8b5cf6',
-              fontSize: '18px',
-              fontWeight: '700',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = '#8b5cf6';
-              e.currentTarget.style.color = 'white';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'white';
-              e.currentTarget.style.color = '#8b5cf6';
-            }}>
-              Enroll now
-            </button>
           </div>
+            </div>
+              )}
+
+              {course.language && (
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <FaGlobe style={{ color: '#3b82f6', fontSize: '20px' }} />
+                  <div>
+                    <div style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937' }}>
+                      {course.language}
+              </div>
+                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                      Language
+            </div>
+            </div>
+            </div>
+              )}
         </div>
 
         {/* Navigation Tabs */}
@@ -350,8 +347,8 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
             {[
               { id: 'what-you-learn', label: 'What you\'ll learn' },
               { id: 'course-content', label: 'Course content' },
-              { id: 'reviews', label: 'Reviews' },
-              { id: 'instructors', label: 'Instructors' }
+                  { id: 'requirements', label: 'Requirements' },
+                  { id: 'description', label: 'Description' }
             ].map((tab) => (
               <button
                 key={tab.id}
@@ -474,93 +471,12 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
             </div>
           )}
 
-          {activeTab === 'reviews' && (
-            <div>
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem' }}>
-                Reviews
-              </h3>
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-                {[
-                  { rating: 5, comment: 'Excellent course! The 7-step system is practical and easy to implement.', author: 'Sarah Johnson', date: '2 weeks ago' },
-                  { rating: 4, comment: 'Great content, helped me organize my day better.', author: 'Mike Chen', date: '1 month ago' }
-                ].map((review, index) => (
-                  <div key={index} style={{ padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '8px' }}>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.5rem' }}>
-                      {renderStars(review.rating)}
-                      <span style={{ fontSize: '14px', color: '#6b7280' }}>
-                        {review.author} • {review.date}
-                      </span>
-                    </div>
-                    <p style={{ fontSize: '16px', color: '#374151', lineHeight: '1.5' }}>
-                      {review.comment}
-                    </p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-
-          {activeTab === 'instructors' && (
-            <div>
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem' }}>
-                Instructors
-              </h3>
-              <div style={{ display: 'flex', gap: '2rem', alignItems: 'flex-start' }}>
-                <img 
-                  src={getDefaultImage(course)} 
-                  alt={course.instructor_name || 'Instructor'}
-                  style={{ 
-                    width: '120px', 
-                    height: '120px', 
-                    borderRadius: '50%', 
-                    objectFit: 'cover' 
-                  }} 
-                />
+              {activeTab === 'requirements' && (
                 <div>
-                  <h4 style={{ fontSize: '20px', fontWeight: '700', color: '#1f2937', marginBottom: '0.5rem' }}>
-                    {course.instructor_name || 'Unknown Instructor'}
-                  </h4>
-                  <p style={{ fontSize: '16px', color: '#6b7280', marginBottom: '1rem' }}>
-                    Productivity Expert & Time Management Coach
-                  </p>
-                  <p style={{ fontSize: '16px', color: '#374151', lineHeight: '1.6' }}>
-                    {course.instructor_name ? `This course is taught by ${course.instructor_name}, a productivity expert and time management coach.` : 'This course is taught by an expert in productivity and time management.'}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Collapsible Sections */}
-        <div style={{ marginTop: '1.5rem' }}>
-          {/* Requirements Section */}
-          <div style={{ marginBottom: '2rem' }}>
-            <button
-              onClick={() => toggleSection('requirements')}
-              style={{
-                width: '100%',
-                padding: '1rem 0',
-                background: 'none',
-                border: 'none',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
+                  <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem' }}>
                 Requirements
               </h3>
-              {expandedSections.requirements ? (
-                <FaChevronDown style={{ color: '#6b7280' }} />
-              ) : (
-                <FaChevronRight style={{ color: '#6b7280' }} />
-              )}
-            </button>
-            {expandedSections.requirements && (
-              <div style={{ padding: '1rem 0' }}>
+                  <div>
                 {course.requirements && course.requirements.length > 0 ? (
                   <ul style={{ margin: 0, paddingLeft: '1.5rem' }}>
                     {course.requirements.map((requirement, index) => (
@@ -574,40 +490,215 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                     No specific requirements listed for this course.
                   </p>
                 )}
+                  </div>
+                </div>
+              )}
+
+              {activeTab === 'description' && (
+                <div>
+                  <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', marginBottom: '1.5rem' }}>
+                    Description
+                  </h3>
+                  <p style={{ fontSize: '16px', color: '#374151', lineHeight: '1.6', margin: 0 }}>
+                    {course.description}
+                  </p>
               </div>
             )}
+            </div>
           </div>
 
-          {/* Description Section */}
-          <div>
-            <button
-              onClick={() => toggleSection('description')}
+          {/* Right Column - Course Card */}
+          <div style={{ position: 'sticky', top: '2rem', height: 'fit-content' }}>
+            <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
+              
+              {/* Course Thumbnail */}
+              <div style={{ position: 'relative' }}>
+                <img 
+                  src={getCourseImage(course)} 
+                  alt={getCourseDisplayName(course)}
               style={{
                 width: '100%',
-                padding: '1rem 0',
-                background: 'none',
-                border: 'none',
-                borderBottom: '1px solid #e5e7eb',
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                cursor: 'pointer'
-              }}
-            >
-              <h3 style={{ fontSize: '24px', fontWeight: '700', color: '#1f2937', margin: 0 }}>
-                Description
+                    height: '200px', 
+                    objectFit: 'cover' 
+                  }} 
+                />
+                
+                {/* Price Badge */}
+                <div style={{
+                  position: 'absolute',
+                  top: '1rem',
+                  right: '1rem',
+                  background: getPriceDisplay(course.price) === 'Free' ? '#10b981' : '#8b5cf6',
+                  color: 'white',
+                  padding: '0.5rem 1rem',
+                  borderRadius: '20px',
+                  fontSize: '14px',
+                  fontWeight: '600'
+                }}>
+                  {getPriceDisplay(course.price)}
+                </div>
+
+                {/* Featured Badge */}
+                {course.featured && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    left: '1rem',
+                    background: '#f59e0b',
+                    color: 'white',
+                    padding: '0.25rem 0.75rem',
+                    borderRadius: '20px',
+                    fontSize: '12px',
+                    fontWeight: '600'
+                  }}>
+                    Featured
+                  </div>
+                )}
+              </div>
+
+              {/* Course Info */}
+              <div style={{ padding: '1.5rem' }}>
+                <h3 style={{ 
+                  fontSize: '1.25rem', 
+                  fontWeight: '700', 
+                  color: '#1f2937', 
+                  marginBottom: '0.5rem',
+                  lineHeight: '1.3'
+                }}>
+                  {getCourseDisplayName(course)}
               </h3>
-              {expandedSections.description ? (
-                <FaChevronDown style={{ color: '#6b7280' }} />
-              ) : (
-                <FaChevronRight style={{ color: '#6b7280' }} />
-              )}
-            </button>
-            {expandedSections.description && (
-              <div style={{ padding: '1rem 0' }}>
-                <p style={{ fontSize: '16px', color: '#374151', lineHeight: '1.6', margin: 0 }}>
-                  {course.description}
+                
+                <p style={{ 
+                  fontSize: '0.875rem', 
+                  color: '#6b7280', 
+                  marginBottom: '1rem',
+                  lineHeight: '1.5'
+                }}>
+                  {course.subtitle || course.description.substring(0, 120) + '...'}
                 </p>
+                
+                {course.rating && (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+                    <span style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
+                      {course.rating}
+                    </span>
+                    <div style={{ display: 'flex', gap: '1px' }}>
+                      {renderStars(course.rating)}
+                    </div>
+                    {course.total_ratings && (
+                      <span style={{ fontSize: '0.875rem', color: '#6b7280' }}>
+                        ({course.total_ratings.toLocaleString()})
+                      </span>
+                    )}
+                  </div>
+                )}
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
+                  {course.duration && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <FaVideo />
+                      {course.duration}
+                    </div>
+                  )}
+                  {course.total_lectures && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
+                      <FaBook />
+                      {course.total_lectures} lectures
+                    </div>
+                  )}
+                </div>
+                
+                <div style={{ 
+                  fontSize: '0.875rem', 
+                  color: '#6b7280',
+                  borderTop: '1px solid #f3f4f6',
+                  paddingTop: '1rem'
+                }}>
+                  Created by <span style={{ color: '#3b82f6' }}>{course.instructor_name || course.author || 'Unknown Instructor'}</span>
+                </div>
+              </div>
+
+              {/* Buy Now Button */}
+              <div style={{ padding: '0 1.5rem 1.5rem' }}>
+                <Link 
+                  href="http://localhost:3000/marketplace/course"
+                  style={{
+                    width: '100%',
+                    padding: '1rem',
+                    border: '2px solid #8b5cf6',
+                    borderRadius: '8px',
+                    background: 'white',
+                    color: '#8b5cf6',
+                    fontSize: '18px',
+                    fontWeight: '700',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s',
+                    textDecoration: 'none',
+                    display: 'block',
+                    textAlign: 'center'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#8b5cf6';
+                    e.currentTarget.style.color = 'white';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'white';
+                    e.currentTarget.style.color = '#8b5cf6';
+                  }}>
+                  Buy Now
+                </Link>
+                
+                {/* Success Message */}
+                {showAddToCartSuccess && (
+                  <div style={{
+                    marginTop: '1rem',
+                    padding: '0.75rem',
+                    background: '#10b981',
+                    color: 'white',
+                    borderRadius: '6px',
+                    fontSize: '14px',
+                    textAlign: 'center',
+                    fontWeight: '500'
+                  }}>
+                    ✅ Added to cart! <a href="/cart" style={{ color: 'white', textDecoration: 'underline', marginLeft: '0.5rem' }}>View Cart</a>
+                  </div>
+                )}
+              </div>
+            </div>
+
+            {/* Instructor Info */}
+            {(course.instructor_name || course.author) && (
+              <div style={{ marginTop: '1.5rem', padding: '1.5rem', border: '1px solid #e5e7eb', borderRadius: '12px', background: '#f9fafb' }}>
+                <h4 style={{ fontSize: '18px', fontWeight: '600', color: '#1f2937', marginBottom: '1rem' }}>
+                  About the Instructor
+                </h4>
+                <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
+                  <img 
+                    src={getDefaultImage(course)} 
+                    alt={course.instructor_name || course.author || 'Instructor'}
+                    style={{ 
+                      width: '60px', 
+                      height: '60px', 
+                      borderRadius: '50%', 
+                      objectFit: 'cover' 
+                    }} 
+                  />
+                  <div>
+                    <h5 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '0.25rem' }}>
+                      {course.instructor_name || course.author}
+                    </h5>
+                    {course.instructor_title && (
+                      <p style={{ fontSize: '14px', color: '#6b7280', marginBottom: '0.5rem' }}>
+                        {course.instructor_title}
+                      </p>
+                    )}
+                    {course.instructor_bio && (
+                      <p style={{ fontSize: '14px', color: '#374151', lineHeight: '1.5' }}>
+                        {course.instructor_bio}
+                      </p>
+                    )}
+                  </div>
+                </div>
               </div>
             )}
           </div>

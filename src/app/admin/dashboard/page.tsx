@@ -98,46 +98,31 @@ export interface Product {
   product_type?: string; // Backend field name
   title?: string;
   name?: string;
-  subtitle?: string; // Course subtitle/description
   description: string;
   price?: string;
-  video_url?: string;
-  video_file?: string;
   thumbnail?: string;
-  thumbnailFile?: File;
-  author?: string;
-  pdf_file?: string;
-  pdfFile?: File;
-  download_link?: string;
-  icon?: string;
-  iconFile?: File;
-  product_image?: string;
-  productImageFile?: File;
-  purchase_link?: string;
   status: 'active' | 'inactive';
   featured?: boolean;
+  video_url?: string;
+  pdf_url?: string;
+  icon_url?: string;
+  product_image?: string;
+  thumbnailFile?: File;
+  pdfFile?: File;
+  iconFile?: File;
+  productImageFile?: File;
+}
+
+interface Blog {
+  id?: number;
+  title: string;
+  description: string;
+  category: 'Therapy' | 'Mental Health' | 'Education' | 'Support' | 'Technology';
+  thumbnail: string;
+  author: string;
+  status: 'active' | 'inactive' | 'published' | 'draft' | 'pending' | 'archived' | 'live' | 'scheduled' | 'private' | 'public' | 'review' | 'approved' | 'rejected' | 'trash' | 'deleted';
   created_at?: string;
-  // Course-specific fields
-  instructor_name?: string;
-  instructor_title?: string;
-  instructor_bio?: string;
-  instructor_image?: string;
-  instructorImageFile?: File;
-  duration?: string;
-  total_lectures?: number;
-  language?: string;
-  level?: 'Beginner' | 'Intermediate' | 'Advanced';
-  learning_objectives?: string[]; // Array of learning objectives
-  requirements?: string[]; // Array of requirements
-  course_content?: {
-    section: string;
-    lectures: number;
-    duration: string;
-    items: string[];
-  }[];
-  rating?: number;
-  total_ratings?: number;
-  enrolled_students?: number;
+  updated_at?: string;
 }
 
 export default function AdminDashboard() {
@@ -151,7 +136,7 @@ export default function AdminDashboard() {
   const [subEditId, setSubEditId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs'>('dashboard');
   // Consultant state
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [consultantForm, setConsultantForm] = useState<ConsultantForm>({ category_ids: [], subcategory_ids: [] });
@@ -232,6 +217,21 @@ export default function AdminDashboard() {
   const [deleteConsultantName, setDeleteConsultantName] = useState<string>('');
   const [deleteProductId, setDeleteProductId] = useState<number | null>(null);
   const [deleteProductName, setDeleteProductName] = useState<string>('');
+  
+  // Blog state
+  const [blogs, setBlogs] = useState<Blog[]>([]);
+  const [blogForm, setBlogForm] = useState<Partial<Blog>>({ 
+    title: '', 
+    description: '', 
+    category: 'Therapy', 
+    thumbnail: '', 
+    author: '', 
+    status: 'active' 
+  });
+  const [blogEditId, setBlogEditId] = useState<number | null>(null);
+  const [showBlogModal, setShowBlogModal] = useState(false);
+  const [deleteBlogId, setDeleteBlogId] = useState<number | null>(null);
+  const [deleteBlogName, setDeleteBlogName] = useState<string>('');
 
   // Auth check
   useEffect(() => {
@@ -489,6 +489,7 @@ export default function AdminDashboard() {
     { key: 'users', label: 'Users', icon: <FaUserCircle size={20} /> },
     { key: 'services', label: 'Services', icon: <FaTags size={20} /> },
     { key: 'products', label: 'Products', icon: <FaList size={20} /> },
+    { key: 'blogs', label: 'Blogs & Media', icon: <FaList size={20} /> },
   ];
 
   // Helper to save slots to backend
@@ -989,18 +990,95 @@ export default function AdminDashboard() {
 
   // Fetch products on mount and after adding
   useEffect(() => {
-    async function fetchProducts() {
-      try {
-        const res = await fetch('/api/products');
-        if (!res.ok) throw new Error('Failed to fetch products');
+    if (activeMenu === 'products') fetchProducts();
+  }, [activeMenu]);
+
+  // Fetch blogs on mount and after adding
+  useEffect(() => {
+    if (activeMenu === 'blogs') fetchBlogs();
+  }, [activeMenu]);
+
+  // Blog CRUD
+  async function fetchBlogs() {
+    try {
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs`);
+      if (res.ok) {
         const data = await res.json();
-        setProducts(data);
-      } catch (err) {
-        console.error('Error fetching products:', err);
+        console.log('Blogs fetched:', data);
+        const blogsArray = data.blogs || data;
+        setBlogs(blogsArray);
+      } else {
+        console.error('Failed to fetch blogs:', res.status);
+        setBlogs([]);
       }
+    } catch (error) {
+      console.error('Error fetching blogs:', error);
+      setBlogs([]);
     }
-    fetchProducts();
-  }, []);
+  }
+
+  async function handleBlogSubmit(e?: React.FormEvent) {
+    if (e) e.preventDefault();
+    
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = blogEditId ? "PUT" : "POST";
+      const url = blogEditId 
+        ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs/${blogEditId}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs`;
+      
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(blogForm),
+      });
+      
+      if (res.ok) {
+        setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' });
+        setBlogEditId(null);
+        setShowBlogModal(false);
+        fetchBlogs();
+        alert(blogEditId ? 'Blog updated successfully!' : 'Blog added successfully!');
+      } else {
+        const errorData = await res.text();
+        alert(`Failed to save blog: ${res.status} ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error saving blog:', error);
+      alert('Error saving blog. Please try again.');
+    }
+  }
+
+  async function handleBlogEdit(blog: Blog) {
+    setBlogEditId(blog.id ?? null);
+    setBlogForm(blog);
+    setShowBlogModal(true);
+  }
+
+  async function handleBlogDelete() {
+    if (!deleteBlogId) return;
+    
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs/${deleteBlogId}`, {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      
+      if (res.ok) {
+        setBlogs(blogs.filter(b => b.id !== deleteBlogId));
+        setDeleteBlogId(null);
+        setDeleteBlogName('');
+        setShowDeleteModal(false);
+        alert('Blog deleted successfully!');
+      } else {
+        alert('Failed to delete blog');
+      }
+    } catch (error) {
+      console.error('Error deleting blog:', error);
+      alert('Error deleting blog');
+    }
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
@@ -2587,6 +2665,166 @@ export default function AdminDashboard() {
               )}
             </section>
           )}
+          {/* Blogs CRUD */}
+          {activeMenu === 'blogs' && (
+            <section>
+              <h2 style={{ fontSize: 24, fontWeight: 700, color: '#22543d', marginBottom: 18 }}>Manage Blogs</h2>
+              <div style={{ display: 'flex', gap: 16, alignItems: 'center', marginBottom: 18 }}>
+                <select
+                  value={blogForm.category}
+                  onChange={e => setBlogForm(f => ({ ...f, category: e.target.value as 'Therapy' | 'Mental Health' | 'Education' | 'Support' | 'Technology' }))}
+                  style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minWidth: 140 }}
+                >
+                  <option value="Therapy">Therapy</option>
+                  <option value="Mental Health">Mental Health</option>
+                  <option value="Education">Education</option>
+                  <option value="Support">Support</option>
+                  <option value="Technology">Technology</option>
+                </select>
+                <button
+                  style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}
+                                          onClick={() => { setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' }); setBlogEditId(null); setShowBlogModal(true); }}
+                >
+                  + Add Blog
+                </button>
+
+              </div>
+              {/* Blog Table */}
+              <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', marginBottom: 24 }}>
+                <thead>
+                  <tr style={{ background: '#e2e8f0' }}>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Thumbnail</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Category</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Title</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Author</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Status</th>
+                    <th style={{ padding: 10, textAlign: 'left', color: '#22543d' }}>Actions</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {blogs.map(blog => (
+                    <tr key={blog.id ?? blog.title} style={{ borderBottom: '1px solid #e2e8f0' }}>
+                      <td style={{ padding: 10 }}>
+                        {blog.thumbnail ? (
+                          <img 
+                            src={`${process.env.NEXT_PUBLIC_BACKEND_URL}${blog.thumbnail}`} 
+                            alt="Thumbnail" 
+                            style={{ 
+                              width: 50, 
+                              height: 50, 
+                              objectFit: 'cover', 
+                              borderRadius: 6,
+                              border: '1px solid #e2e8f0'
+                            }} 
+                          />
+                        ) : (
+                          <div style={{ 
+                            width: 50, 
+                            height: 50, 
+                            background: '#f1f5f9', 
+                            borderRadius: 6,
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            color: '#94a3b8',
+                            fontSize: 12
+                          }}>
+                            No Image
+                          </div>
+                        )}
+                      </td>
+                      <td style={{ padding: 10 }}>{blog.category}</td>
+                      <td style={{ padding: 10 }}>{blog.title}</td>
+                      <td style={{ padding: 10 }}>{blog.author}</td>
+                      <td style={{ padding: 10 }}>{blog.status}</td>
+                      <td style={{ padding: 10 }}>
+                        <button onClick={() => { 
+                          setBlogForm(blog);
+                          setBlogEditId(blog.id ?? null);
+                          setShowBlogModal(true);
+                        }} style={{ background: '#e2e8f0', color: '#22543d', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, marginRight: 8, cursor: 'pointer' }}>Edit</button>
+                        <button onClick={() => {
+                          setDeleteBlogId(blog.id ?? null);
+                          setDeleteBlogName(blog.title || 'this blog');
+                          setShowDeleteModal(true);
+                        }} style={{ background: '#e53e3e', color: '#fff', border: 'none', borderRadius: 6, padding: '6px 14px', fontWeight: 600, cursor: 'pointer' }}>Delete</button>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+              {/* Blog Modal */}
+              {showBlogModal && (
+                <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setShowBlogModal(false); }}>
+                  <div style={{ background: '#fff', borderRadius: 14, padding: 32, minWidth: 340, maxWidth: 480, boxShadow: '0 4px 32px rgba(90,103,216,0.13)', position: 'relative' }}>
+                    <button onClick={() => setShowBlogModal(false)} aria-label="Close blog modal" style={{ position: 'absolute', top: 12, right: 12, background: 'none', border: 'none', fontSize: 22, color: '#5a67d8', cursor: 'pointer' }}>×</button>
+                    <h2 style={{ color: '#22543d', fontWeight: 700, marginBottom: 18 }}>{blogEditId ? 'Edit' : 'Add'} Blog</h2>
+                    <form
+                      onSubmit={handleBlogSubmit}
+                      style={{ display: 'flex', flexDirection: 'column', gap: 14 }}
+                    >
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Category</label>
+                      <select
+                        value={blogForm.category}
+                        onChange={e => setBlogForm(f => ({ ...f, category: e.target.value as 'Therapy' | 'Mental Health' | 'Education' | 'Support' | 'Technology' }))}
+                        style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
+                        required
+                      >
+                        <option value="Therapy">Therapy</option>
+                        <option value="Mental Health">Mental Health</option>
+                        <option value="Education">Education</option>
+                        <option value="Support">Support</option>
+                        <option value="Technology">Technology</option>
+                      </select>
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Title</label>
+                      <input type="text" value={blogForm.title || ''} onChange={e => setBlogForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
+                      <textarea value={blogForm.description || ''} onChange={e => setBlogForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Author</label>
+                      <input type="text" value={blogForm.author || ''} onChange={e => setBlogForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
+                      <input 
+                        type="text" 
+                        value={blogForm.thumbnail || ''} 
+                        onChange={e => setBlogForm(f => ({ ...f, thumbnail: e.target.value }))} 
+                        placeholder="Enter thumbnail URL"
+                        style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} 
+                      />
+                      {blogForm.thumbnail && (
+                        <img 
+                          src={blogForm.thumbnail} 
+                          alt="Thumbnail" 
+                          style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} 
+                          onError={(e) => {
+                            e.currentTarget.style.display = 'none';
+                          }}
+                        />
+                      )}
+                      <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
+                      <select value={blogForm.status} onChange={e => setBlogForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' | 'published' | 'draft' | 'pending' | 'archived' | 'live' | 'scheduled' | 'private' | 'public' | 'review' | 'approved' | 'rejected' | 'trash' | 'deleted' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                        <option value="published">Published</option>
+                        <option value="draft">Draft</option>
+                        <option value="pending">Pending</option>
+                        <option value="archived">Archived</option>
+                        <option value="live">Live</option>
+                        <option value="scheduled">Scheduled</option>
+                        <option value="private">Private</option>
+                        <option value="public">Public</option>
+                        <option value="review">Review</option>
+                        <option value="approved">Approved</option>
+                        <option value="rejected">Rejected</option>
+                        <option value="trash">Trash</option>
+                        <option value="deleted">Deleted</option>
+                      </select>
+                      <button type="submit" style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '12px 32px', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 12 }}>{blogEditId ? 'Update' : 'Add'} Blog</button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
         </main>
       </div>
       {/* Footer */}
@@ -2648,9 +2886,11 @@ export default function AdminDashboard() {
             textAlign: 'center',
             boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
           }}>
-            <h3 style={{ color: '#dc2626', marginBottom: '16px', fontSize: '20px' }}>Delete Product</h3>
+            <h3 style={{ color: '#dc2626', marginBottom: '16px', fontSize: '20px' }}>
+              Delete {deleteBlogId ? 'Blog' : 'Product'}
+            </h3>
             <p style={{ marginBottom: '24px', color: '#374151' }}>
-              Are you sure you want to delete <strong>{deleteProductName}</strong>? This action cannot be undone.
+              Are you sure you want to delete <strong>{deleteBlogId ? deleteBlogName : deleteProductName}</strong>? This action cannot be undone.
             </p>
             <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
               <button 
@@ -2667,37 +2907,41 @@ export default function AdminDashboard() {
               >
                 Cancel
               </button>
-                              <button 
-                  onClick={async () => {
-                    if (deleteProductId) {
-                      try {
-                        // Try backend delete first
-                        const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${deleteProductId}`, {
-                          method: 'DELETE'
-                        });
-                        
-                        if (response.ok) {
-                          // Backend delete successful
-                          setProducts(products.filter(p => p.id !== deleteProductId));
-                          setSuccessMessage('Product deleted successfully!');
-                          setShowSuccessPopup(true);
-                        } else {
-                          // Backend delete failed, do frontend-only deletion
-                          console.log('Backend delete failed, doing frontend-only deletion');
-                          setProducts(products.filter(p => p.id !== deleteProductId));
-                          setSuccessMessage('Product removed from view (backend delete not implemented)');
-                          setShowSuccessPopup(true);
-                        }
-                      } catch (error) {
-                        // Network error, do frontend-only deletion
-                        console.log('Network error, doing frontend-only deletion');
+              <button 
+                onClick={async () => {
+                  if (deleteBlogId) {
+                    // Handle blog deletion
+                    await handleBlogDelete();
+                  } else if (deleteProductId) {
+                    // Handle product deletion
+                    try {
+                      // Try backend delete first
+                      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products/${deleteProductId}`, {
+                        method: 'DELETE'
+                      });
+                      
+                      if (response.ok) {
+                        // Backend delete successful
+                        setProducts(products.filter(p => p.id !== deleteProductId));
+                        setSuccessMessage('Product deleted successfully!');
+                        setShowSuccessPopup(true);
+                      } else {
+                        // Backend delete failed, do frontend-only deletion
+                        console.log('Backend delete failed, doing frontend-only deletion');
                         setProducts(products.filter(p => p.id !== deleteProductId));
                         setSuccessMessage('Product removed from view (backend delete not implemented)');
                         setShowSuccessPopup(true);
                       }
+                    } catch (error) {
+                      // Network error, do frontend-only deletion
+                      console.log('Network error, doing frontend-only deletion');
+                      setProducts(products.filter(p => p.id !== deleteProductId));
+                      setSuccessMessage('Product removed from view (backend delete not implemented)');
+                      setShowSuccessPopup(true);
                     }
-                    setShowDeleteModal(false);
-                  }}
+                  }
+                  setShowDeleteModal(false);
+                }}
                 style={{ 
                   background: '#dc2626', 
                   color: 'white', 
