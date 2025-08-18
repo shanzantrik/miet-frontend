@@ -5,6 +5,7 @@ import Footer from "@/components/Footer";
 import Image from 'next/image';
 import { FaThLarge, FaList, FaTags, FaUserCircle, FaSignOutAlt, FaChevronLeft, FaChevronRight, FaUserMd, FaChevronDown } from "react-icons/fa";
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
+import { getApiUrl } from "@/utils/api";
 
 interface Category {
   id: number;
@@ -182,7 +183,7 @@ export default function AdminDashboard() {
   async function fetchCategories() {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`, {
+      const res = await fetch(getApiUrl("api/categories"), {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch categories");
@@ -196,7 +197,7 @@ export default function AdminDashboard() {
   async function fetchSubcategories() {
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`, {
+      const res = await fetch(getApiUrl("api/subcategories"), {
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
       if (!res.ok) throw new Error("Failed to fetch subcategories");
@@ -210,7 +211,7 @@ export default function AdminDashboard() {
 
   async function fetchConsultants() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants`, {
+    const res = await fetch(getApiUrl("api/consultants"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -218,7 +219,7 @@ export default function AdminDashboard() {
       // For each consultant, fetch their slots from the backend
       const consultantsWithSlots = await Promise.all(
         consultants.map(async (c: Consultant) => {
-          const slotRes = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${c.id}/availability`, {
+          const slotRes = await fetch(getApiUrl(`api/consultants/${c.id}/availability`), {
             headers: { Authorization: `Bearer ${token}` },
           });
           if (slotRes.ok) {
@@ -239,7 +240,7 @@ export default function AdminDashboard() {
   // Fetch users
   async function fetchUsers() {
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/users`, {
+    const res = await fetch(getApiUrl("api/users"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) setUsers(await res.json());
@@ -251,7 +252,7 @@ export default function AdminDashboard() {
   // Fetch services
   async function fetchServices() {
     const token = localStorage.getItem('admin_jwt');
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/services`, {
+    const res = await fetch(getApiUrl("api/services"), {
       headers: { Authorization: `Bearer ${token}` },
     });
     if (res.ok) {
@@ -268,7 +269,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = catEditId ? "PUT" : "POST";
-      const url = catEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${catEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories`;
+      const url = catEditId ? getApiUrl(`api/categories/${catEditId}`) : getApiUrl("api/categories");
       const res = await fetch(url, {
         method,
         headers: {
@@ -295,7 +296,7 @@ export default function AdminDashboard() {
     if (!confirm("Delete this category?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/categories/${id}`, {
+      const res = await fetch(getApiUrl(`api/categories/${id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
@@ -314,7 +315,7 @@ export default function AdminDashboard() {
     setLoading(true);
     try {
       const method = subEditId ? "PUT" : "POST";
-      const url = subEditId ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${subEditId}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories`;
+      const url = subEditId ? getApiUrl(`api/subcategories/${subEditId}`) : getApiUrl("api/subcategories");
       const res = await fetch(url, {
         method,
         headers: {
@@ -343,7 +344,7 @@ export default function AdminDashboard() {
     if (!confirm("Delete this subcategory?")) return;
     setLoading(true);
     try {
-      const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/subcategories/${id}`, {
+      const res = await fetch(getApiUrl(`api/subcategories/${id}`), {
         method: "DELETE",
         headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
       });
@@ -382,17 +383,17 @@ export default function AdminDashboard() {
   async function saveConsultantSlots(consultantId: number, slots: { date: string; time: string; endTime?: string }[]) {
     // First, fetch existing slots and delete them all (for update)
     const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, { headers: { Authorization: `Bearer ${token}` } });
+    const res = await fetch(getApiUrl(`api/consultants/${consultantId}/availability`), { headers: { Authorization: `Bearer ${token}` } });
     if (res.ok) {
       const existing = await res.json();
       for (const slot of existing) {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability/${slot.id}`, { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
+        await fetch(getApiUrl(`api/consultants/${consultantId}/availability/${slot.id}`), { method: 'DELETE', headers: { Authorization: `Bearer ${token}` } });
       }
     }
     // Add new slots
     for (const slot of slots) {
       if (slot.date && slot.time) {
-        await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/${consultantId}/availability`, {
+        await fetch(getApiUrl(`api/consultants/${consultantId}/availability`), {
           method: 'POST',
           headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
           body: JSON.stringify({ date: slot.date, start_time: slot.time, end_time: slot.endTime || '' })
