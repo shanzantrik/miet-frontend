@@ -110,15 +110,15 @@ export default function TopBar() {
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
       {/* Utility Row */}
-        <div style={{
-          display: 'flex',
-          justifyContent: 'space-between',
-          alignItems: 'center',
-          fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
-          padding: '0.5rem 2vw',
-          background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-          borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
-        }}>
+              <div className="utility-row" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
+        padding: '0.5rem 2vw',
+        background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+      }}>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <Link href="/" aria-label="Home" style={{
               color: highContrast ? '#fff' : '#667eea',
@@ -171,7 +171,7 @@ export default function TopBar() {
           </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {/* Accessibility Controls */}
-          <div style={{
+          <div className="accessibility-controls" style={{
             display: 'flex',
             gap: '0.5rem',
             alignItems: 'center',
@@ -410,13 +410,39 @@ export default function TopBar() {
           </button>
         </div>
       </div>
-      {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px 2vw', background: highContrast ? '#222' : '#fff', position: 'relative' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
+      <div className="main-row" style={{
+        display: 'flex',
+        justifyContent: 'space-between',
+        alignItems: 'center',
+        padding: 'clamp(8px, 2vw, 10px) clamp(1rem, 3vw, 2vw)',
+        background: highContrast ? '#222' : '#fff',
+        position: 'relative',
+        flexWrap: 'wrap',
+        gap: 'clamp(0.5rem, 2vw, 1rem)'
+      }}>
+        <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 16px)' }}>
           <Link href="/">
-            <Image src="/miet-main.webp" alt="MieT Logo" width={56} height={56} style={{ borderRadius: 12, background: '#f7fafc' }} priority />
+            <Image
+              src="/miet-main.webp"
+              alt="MieT Logo"
+              width={44}
+              height={44}
+              style={{
+                borderRadius: 12,
+                background: '#f7fafc',
+                width: 'clamp(44px, 12vw, 56px)',
+                height: 'clamp(44px, 12vw, 56px)'
+              }}
+              priority
+            />
           </Link>
-          <span style={{ fontFamily: 'Righteous, cursive', fontSize: 28, color: '#5a67d8', fontWeight: 700 }}>MieT</span>
+          <span style={{
+            fontFamily: 'Righteous, cursive',
+            fontSize: 'clamp(22px, 5vw, 28px)',
+            color: '#5a67d8',
+            fontWeight: 700
+          }}>MieT</span>
         </div>
         {/* Main Navigation (desktop) */}
         {!isMobile && (
@@ -598,20 +624,28 @@ export default function TopBar() {
           </button>
         )}
         {/* Login/Signup and Cart */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: '2rem' }}>
+        <div className="login-section" style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 'clamp(0.5rem, 2vw, 1.5rem)',
+          marginLeft: 'clamp(1rem, 3vw, 2rem)',
+          flexWrap: 'wrap'
+        }}>
             {/* Cart Icon */}
           <Link href="/cart" style={{
             position: 'relative',
             textDecoration: 'none',
             color: highContrast ? '#fff' : '#667eea',
-            padding: '0.75rem',
+            padding: 'clamp(0.5rem, 2vw, 0.75rem)',
             borderRadius: '12px',
             background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
             border: '1px solid transparent',
             transition: 'all 0.3s ease',
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'center'
+            justifyContent: 'center',
+            minWidth: 'clamp(40px, 10vw, 48px)',
+            minHeight: 'clamp(40px, 10vw, 48px)'
           }}
           onMouseEnter={(e) => {
             e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
@@ -658,12 +692,14 @@ export default function TopBar() {
               color: '#fff',
               borderRadius: '12px',
               border: 'none',
-              padding: '0.75rem 1.5rem',
+              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
               fontWeight: '600',
               cursor: 'pointer',
-              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
               transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+              minWidth: 'clamp(80px, 20vw, 100px)',
+              minHeight: 'clamp(36px, 8vw, 44px)'
             }}
             onClick={() => setShowLogin(true)}
             onMouseEnter={(e) => {
@@ -685,12 +721,14 @@ export default function TopBar() {
               color: '#fff',
               borderRadius: '12px',
               border: 'none',
-              padding: '0.75rem 1.5rem',
+              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
               fontWeight: '600',
               cursor: 'pointer',
-              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
               transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)'
+              boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)',
+              minWidth: 'clamp(80px, 20vw, 100px)',
+              minHeight: 'clamp(36px, 8vw, 44px)'
             }}
             onClick={() => setShowSignup(true)}
             onMouseEnter={(e) => {
@@ -778,6 +816,43 @@ export default function TopBar() {
           </form>
         </Modal>
       </div>
+      {/* Responsive styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @media (max-width: 768px) {
+            .topbar-root {
+              min-height: 70px !important;
+            }
+
+            .topbar-root .main-row {
+              flex-direction: column !important;
+              align-items: stretch !important;
+              gap: 1rem !important;
+            }
+
+            .topbar-root .login-section {
+              justify-content: center !important;
+              gap: 1rem !important;
+            }
+
+            .topbar-root .logo-section {
+              justify-content: center !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .topbar-root .utility-row {
+              flex-direction: column !important;
+              gap: 0.5rem !important;
+              padding: 0.5rem 1rem !important;
+            }
+
+            .topbar-root .accessibility-controls {
+              justify-content: center !important;
+            }
+          }
+        `
+      }} />
     </header>
   );
 }

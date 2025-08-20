@@ -275,7 +275,7 @@ export default function SearchPanel() {
   return (
     <section className="search-map-panel" style={{
       background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #3730a3 50%, #4338ca 75%, #6366f1 100%)',
-      padding: '4rem 0',
+      padding: 'clamp(2rem, 8vw, 4rem) 0',
       width: '100vw',
       maxWidth: '100vw',
       display: 'flex',
@@ -311,29 +311,31 @@ export default function SearchPanel() {
       {/* Section Title */}
       <div style={{
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: 'clamp(1.5rem, 6vw, 3rem)',
         zIndex: 2,
         position: 'relative'
       }}>
         <h2 style={{
           fontFamily: 'Righteous, cursive',
-          fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+          fontSize: 'clamp(2rem, 6vw, 4rem)',
           fontWeight: '700',
           color: '#ffffff',
-          marginBottom: '1rem',
+          marginBottom: 'clamp(0.5rem, 2vw, 1rem)',
           textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          letterSpacing: '2px'
+          letterSpacing: 'clamp(1px, 1vw, 2px)',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Find Your Perfect Consultant
         </h2>
         <p style={{
-          fontSize: 'clamp(1.1rem, 2.5vw, 1.5rem)',
+          fontSize: 'clamp(1rem, 3vw, 1.5rem)',
           color: 'rgba(255,255,255,0.9)',
-          maxWidth: '600px',
+          maxWidth: 'clamp(300px, 80vw, 600px)',
           margin: '0 auto',
           lineHeight: '1.6',
           fontWeight: '400',
-          textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+          textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Discover specialized professionals for Special Education, Mental Health, and Counselling services
         </p>
@@ -344,25 +346,25 @@ export default function SearchPanel() {
         display: 'flex',
         flexDirection: 'row',
         alignItems: 'flex-start',
-        gap: '3rem',
+        gap: 'clamp(1rem, 4vw, 3rem)',
         justifyContent: 'center',
         flexWrap: 'wrap',
         width: '100%',
         maxWidth: '1400px',
-        padding: '0 2rem',
+        padding: '0 clamp(1rem, 4vw, 2rem)',
         zIndex: 2,
         position: 'relative'
       }}>
         {/* Left: Search and Consultant List */}
         <div ref={leftRef} style={{
           flex: '2.5',
-          minWidth: '380',
-          maxWidth: '800',
+          minWidth: 'clamp(300px, 90vw, 380px)',
+          maxWidth: '800px',
           display: 'flex',
           flexDirection: 'column',
           gap: '1.5rem',
           background: 'rgba(255,255,255,0.95)',
-          padding: '2rem',
+          padding: 'clamp(1rem, 4vw, 2rem)',
           borderRadius: '20px',
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
           backdropFilter: 'blur(10px)'
@@ -376,10 +378,10 @@ export default function SearchPanel() {
               placeholder={searchPlaceholder}
               style={{
                 width: '100%',
-                padding: '1.2rem 3.5rem 1.2rem 1.5rem',
+                padding: 'clamp(1rem, 3vw, 1.2rem) clamp(2.5rem, 6vw, 3.5rem) clamp(1rem, 3vw, 1.2rem) clamp(1rem, 3vw, 1.5rem)',
                 borderRadius: '15px',
                 border: '2px solid rgba(99, 102, 241, 0.3)',
-                fontSize: '1.1rem',
+                fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
                 background: 'rgba(255,255,255,0.9)',
                 transition: 'all 0.3s ease',
                 boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
@@ -427,7 +429,12 @@ export default function SearchPanel() {
               <FaMicrophone />
             </button>
           </div>
-          <div style={{ display: 'flex', gap: '0.8rem', flexWrap: 'wrap' }}>
+          <div style={{
+            display: 'flex',
+            gap: '0.8rem',
+            flexWrap: 'wrap',
+            justifyContent: 'center'
+          }}>
             <button
               type="button"
               onClick={handleNearby}
@@ -436,9 +443,9 @@ export default function SearchPanel() {
                 color: nearby ? '#fff' : '#6366f1',
                 border: nearby ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
                 borderRadius: '12px',
-                padding: '0.8rem 1.5rem',
+                padding: 'clamp(0.6rem, 2vw, 0.8rem) clamp(1rem, 3vw, 1.5rem)',
                 fontWeight: '600',
-                fontSize: '0.95rem',
+                fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)',
                 cursor: 'pointer',
                 transition: 'all 0.3s ease',
                 boxShadow: nearby ? '0 4px 15px rgba(99, 102, 241, 0.3)' : 'none'
@@ -468,9 +475,9 @@ export default function SearchPanel() {
                   color: mode === m && !nearby ? '#fff' : '#6366f1',
                   border: mode === m && !nearby ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
                   borderRadius: '12px',
-                  padding: '0.8rem 1.5rem',
+                  padding: 'clamp(0.6rem, 2vw, 0.8rem) clamp(1rem, 3vw, 1.5rem)',
                   fontWeight: '600',
-                  fontSize: '0.95rem',
+                  fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   boxShadow: mode === m && !nearby ? '0 4px 15px rgba(99, 102, 241, 0.3)' : 'none'
@@ -525,16 +532,18 @@ export default function SearchPanel() {
                 key={c.id}
                 style={{
                   display: 'flex',
+                  flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 16,
+                  gap: 'clamp(12px, 3vw, 16px)',
                   background: 'rgba(255, 255, 255, 0.95)',
                   borderRadius: 16,
-                  padding: '16px 20px',
+                  padding: 'clamp(16px, 4vw, 20px)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   border: selectedConsultant?.id === c.id ? '2px solid #667eea' : '2px solid rgba(99, 102, 241, 0.1)',
                   boxShadow: selectedConsultant?.id === c.id ? '0 8px 25px rgba(99, 102, 241, 0.2)' : '0 4px 15px rgba(0, 0, 0, 0.08)',
-                  backdropFilter: 'blur(10px)'
+                  backdropFilter: 'blur(10px)',
+                  textAlign: 'center'
                 }}
                 onClick={() => {
                   if (c.lat && c.lng) {
@@ -553,13 +562,13 @@ export default function SearchPanel() {
                   e.currentTarget.style.borderColor = selectedConsultant?.id === c.id ? '#667eea' : 'rgba(99, 102, 241, 0.1)';
                 }}
               >
-                <div className="consultant-image" style={{ position: 'relative', width: 64, height: 64, display: 'inline-block' }}>
+                <div className="consultant-image" style={{ position: 'relative', width: 'clamp(60px, 15vw, 80px)', height: 'clamp(60px, 15vw, 80px)', display: 'inline-block' }}>
                   <img
                     src={imageUrl || '/brain-miet.png'}
                     alt={c.name}
                     style={{
-                      width: 64,
-                      height: 64,
+                      width: '100%',
+                      height: '100%',
                       borderRadius: '50%',
                       objectFit: 'cover',
                       border: '3px solid rgba(99, 102, 241, 0.2)',
@@ -573,10 +582,10 @@ export default function SearchPanel() {
                   {(c.mode === 'Online' || c.status === 'online') && (
                     <span style={{
                       position: 'absolute',
-                      bottom: 4,
-                      right: 4,
-                      width: 18,
-                      height: 18,
+                      bottom: 'clamp(2px, 1vw, 4px)',
+                      right: 'clamp(2px, 1vw, 4px)',
+                      width: 'clamp(16px, 4vw, 18px)',
+                      height: 'clamp(16px, 4vw, 18px)',
                       borderRadius: '50%',
                       background: 'radial-gradient(circle, #10b981 60%, #10b98188 100%)',
                       boxShadow: '0 0 12px 3px #10b98188, 0 0 0 3px #fff',
@@ -587,7 +596,7 @@ export default function SearchPanel() {
                     }} />
                   )}
                 </div>
-                <div style={{ flex: 1, textAlign: 'left' }}>
+                <div style={{ flex: 1, textAlign: 'center', width: '100%' }}>
                   <div
                     className="consultant-name"
                     style={{
@@ -659,12 +668,14 @@ export default function SearchPanel() {
                     color: '#fff',
                     border: 'none',
                     borderRadius: 12,
-                    padding: '0.7rem 1.4rem',
+                    padding: 'clamp(0.7rem, 2vw, 1.4rem) clamp(1rem, 3vw, 1.4rem)',
                     fontWeight: 700,
-                    fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
                     cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+                    width: 'clamp(120px, 40vw, 150px)',
+                    minHeight: 'clamp(40px, 10vw, 44px)'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-2px)';
@@ -965,6 +976,38 @@ export default function SearchPanel() {
 
             .consultant-location {
               font-size: clamp(0.8rem, 0.9vw, 0.9rem) !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .search-map-panel h2 {
+              font-size: clamp(1.8rem, 5vw, 2.5rem) !important;
+            }
+
+            .search-map-panel p {
+              font-size: clamp(0.9rem, 2.5vw, 1.1rem) !important;
+            }
+
+            .consultant-card {
+              padding: clamp(10px, 3vw, 16px) clamp(12px, 4vw, 20px) !important;
+              gap: clamp(8px, 2vw, 16px) !important;
+            }
+
+            .consultant-image {
+              width: clamp(45px, 12vw, 64px) !important;
+              height: clamp(45px, 12vw, 64px) !important;
+            }
+
+            .consultant-name {
+              font-size: clamp(0.9rem, 2.5vw, 1.1rem) !important;
+            }
+
+            .consultant-expertise {
+              font-size: clamp(0.8rem, 2vw, 0.95rem) !important;
+            }
+
+            .consultant-location {
+              font-size: clamp(0.75rem, 2vw, 0.85rem) !important;
             }
           }
 

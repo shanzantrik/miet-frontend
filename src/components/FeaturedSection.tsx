@@ -134,7 +134,7 @@ export default function FeaturedSection() {
   return (
     <section className="featured-section" style={{
       background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-      padding: '4rem 0',
+      padding: 'clamp(2rem, 8vw, 4rem) 0',
       position: 'relative',
       overflow: 'hidden'
     }} aria-label="Featured consultants and about MIET">
@@ -165,28 +165,30 @@ export default function FeaturedSection() {
       {/* Section Title */}
       <div style={{
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: 'clamp(1.5rem, 6vw, 3rem)',
         zIndex: 2,
         position: 'relative'
       }}>
         <h2 style={{
           fontFamily: 'Righteous, cursive',
-          fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+          fontSize: 'clamp(2rem, 6vw, 3.5rem)',
           fontWeight: '700',
           color: '#1e1b4b',
-          marginBottom: '1rem',
+          marginBottom: 'clamp(0.5rem, 2vw, 1rem)',
           textShadow: '0 2px 10px rgba(0,0,0,0.1)',
-          letterSpacing: '1px'
+          letterSpacing: 'clamp(1px, 1vw, 1px)',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Featured Consultants & About MIET
         </h2>
         <p style={{
-          fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
+          fontSize: 'clamp(1rem, 3vw, 1.3rem)',
           color: '#4b5563',
-          maxWidth: '700px',
+          maxWidth: 'clamp(300px, 80vw, 700px)',
           margin: '0 auto',
           lineHeight: '1.6',
-          fontWeight: '400'
+          fontWeight: '400',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Discover our exceptional professionals and learn about our mission
         </p>
@@ -195,11 +197,11 @@ export default function FeaturedSection() {
       {/* Main Content Container */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))',
-        gap: '3rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(350px, 90vw, 600px), 1fr))',
+        gap: 'clamp(1.5rem, 4vw, 3rem)',
         maxWidth: '1400px',
         margin: '0 auto',
-        padding: '0 2rem',
+        padding: '0 clamp(1rem, 4vw, 2rem)',
         zIndex: 2,
         position: 'relative'
       }}>
@@ -208,7 +210,7 @@ export default function FeaturedSection() {
         <div style={{
           background: 'rgba(255,255,255,0.9)',
           borderRadius: '24px',
-          padding: '2rem',
+          padding: 'clamp(1.5rem, 4vw, 2rem)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.2)'
@@ -299,10 +301,10 @@ export default function FeaturedSection() {
                     background: 'linear-gradient(135deg, #fff 0%, #f8fafc 100%)',
                     borderRadius: '24px',
                     boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
-                    padding: '2.5rem',
+                    padding: 'clamp(1.5rem, 4vw, 2.5rem)',
                     width: '100%',
-                    maxWidth: '500px',
-                    minHeight: '400px',
+                    maxWidth: 'clamp(300px, 90vw, 500px)',
+                    minHeight: 'clamp(300px, 60vh, 400px)',
                     display: 'flex',
                     flexDirection: 'column',
                     alignItems: 'center',
@@ -545,7 +547,7 @@ export default function FeaturedSection() {
         <div style={{
           background: 'rgba(255,255,255,0.9)',
           borderRadius: '24px',
-          padding: '2.5rem',
+          padding: 'clamp(1.5rem, 4vw, 2.5rem)',
           boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
           backdropFilter: 'blur(10px)',
           border: '1px solid rgba(255,255,255,0.2)',
@@ -784,6 +786,49 @@ export default function FeaturedSection() {
 
             .featured-section .arrow-right {
               right: -1rem !important;
+              width: 40px !important;
+              height: 40px !important;
+              font-size: 16px !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .featured-section h2 {
+              font-size: clamp(1.8rem, 4vw, 2.5rem) !important;
+              padding: 0 1rem !important;
+            }
+
+            .featured-section p {
+              font-size: clamp(1rem, 2.5vw, 1.3rem) !important;
+              padding: 0 1rem !important;
+            }
+
+            .featured-section .consultant-card {
+              max-width: 95% !important;
+              padding: clamp(1.5rem, 4vw, 2.5rem) clamp(1rem, 3vw, 2rem) !important;
+              min-height: clamp(280px, 50vh, 400px) !important;
+            }
+
+            .featured-section .consultant-image {
+              width: clamp(80px, 20vw, 140px) !important;
+              height: clamp(80px, 20vw, 140px) !important;
+            }
+
+            .featured-section .consultant-name {
+              font-size: clamp(1.6rem, 3vw, 2.5rem) !important;
+            }
+
+            .featured-section .consultant-expertise {
+              font-size: clamp(1.1rem, 2.5vw, 1.6rem) !important;
+            }
+
+            .featured-section .consultant-description {
+              font-size: clamp(0.9rem, 2vw, 1.3rem) !important;
+            }
+
+            /* Adjust arrow positioning on medium screens */
+            .featured-section .arrow-left,
+            .featured-section .arrow-right {
               width: 40px !important;
               height: 40px !important;
               font-size: 16px !important;

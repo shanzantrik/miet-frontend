@@ -98,7 +98,7 @@ export default function MarketplaceSection() {
   return (
     <section className="marketplace-section" style={{
       background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #3730a3 50%, #4338ca 75%, #6366f1 100%)',
-      padding: '4rem 0',
+      padding: 'clamp(2rem, 8vw, 4rem) 0',
       textAlign: 'center',
       position: 'relative',
       overflow: 'hidden'
@@ -129,29 +129,31 @@ export default function MarketplaceSection() {
       {/* Section Title */}
       <div style={{
         textAlign: 'center',
-        marginBottom: '3rem',
+        marginBottom: 'clamp(1.5rem, 6vw, 3rem)',
         zIndex: 2,
         position: 'relative'
       }}>
         <h2 style={{
           fontFamily: 'Righteous, cursive',
-          fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+          fontSize: 'clamp(2rem, 6vw, 4rem)',
           fontWeight: '700',
           color: '#ffffff',
-          marginBottom: '1rem',
+          marginBottom: 'clamp(0.5rem, 2vw, 1rem)',
           textShadow: '0 4px 20px rgba(0,0,0,0.3)',
-          letterSpacing: '2px'
+          letterSpacing: 'clamp(1px, 1vw, 2px)',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Marketplace: Courses, Books, Apps, Gadgets
         </h2>
         <p style={{
-          fontSize: 'clamp(1.2rem, 2.5vw, 1.6rem)',
+          fontSize: 'clamp(1rem, 3vw, 1.6rem)',
           color: 'rgba(255,255,255,0.9)',
-          maxWidth: '800px',
+          maxWidth: 'clamp(300px, 80vw, 800px)',
           margin: '0 auto',
           lineHeight: '1.6',
           fontWeight: '400',
-          textShadow: '0 2px 10px rgba(0,0,0,0.2)'
+          textShadow: '0 2px 10px rgba(0,0,0,0.2)',
+          padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
           Discover amazing resources and tools for your journey
         </p>
@@ -161,10 +163,10 @@ export default function MarketplaceSection() {
       <div style={{
         display: 'flex',
         justifyContent: 'center',
-        gap: '1rem',
-        marginBottom: '3rem',
+        gap: 'clamp(0.5rem, 2vw, 1rem)',
+        marginBottom: 'clamp(1.5rem, 6vw, 3rem)',
         flexWrap: 'wrap',
-        padding: '0 2rem',
+        padding: '0 clamp(1rem, 4vw, 2rem)',
         zIndex: 2,
         position: 'relative'
       }}>
@@ -179,16 +181,16 @@ export default function MarketplaceSection() {
               color: selectedCategory === cat ? '#ffffff' : 'rgba(255,255,255,0.8)',
               border: selectedCategory === cat ? 'none' : '2px solid rgba(255,255,255,0.2)',
               borderRadius: '25px',
-              padding: '1rem 2rem',
+              padding: 'clamp(0.8rem, 2.5vw, 1rem) clamp(1.5rem, 3vw, 2rem)',
               fontWeight: '700',
-              fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
+              fontSize: 'clamp(0.9rem, 2.5vw, 1.1rem)',
               cursor: 'pointer',
               boxShadow: selectedCategory === cat
                 ? '0 8px 25px rgba(99, 102, 241, 0.4)'
                 : '0 4px 15px rgba(0,0,0,0.1)',
               transition: 'all 0.3s ease',
               backdropFilter: 'blur(10px)',
-              minWidth: '120px'
+              minWidth: 'clamp(100px, 20vw, 120px)'
             }}
             onMouseEnter={(e) => {
               if (selectedCategory !== cat) {
@@ -216,11 +218,11 @@ export default function MarketplaceSection() {
           {/* Products Grid - Responsive and evenly distributed */}
           <div style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
-            gap: '2rem',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(250px, 80vw, 280px), 1fr))',
+            gap: 'clamp(1rem, 4vw, 2rem)',
             maxWidth: '1400px',
-            margin: '0 auto 3rem auto',
-            padding: '0 2rem',
+            margin: '0 auto clamp(1.5rem, 6vw, 3rem) auto',
+            padding: '0 clamp(1rem, 4vw, 2rem)',
             zIndex: 2,
             position: 'relative'
           }}>
@@ -235,7 +237,7 @@ export default function MarketplaceSection() {
                   flexDirection: 'column',
                   alignItems: 'center',
                   justifyContent: 'flex-start',
-                  padding: '2rem',
+                  padding: 'clamp(1.5rem, 4vw, 2rem)',
                   position: 'relative',
                   backdropFilter: 'blur(10px)',
                   border: '1px solid rgba(255,255,255,0.2)',

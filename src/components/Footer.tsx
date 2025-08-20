@@ -1,4 +1,5 @@
 import React from 'react';
+import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGoogle } from 'react-icons/fa';
 
 export default function Footer() {
   return (
@@ -77,12 +78,12 @@ export default function Footer() {
                 marginTop: '1.5rem'
               }}>
                 {[
-                  { name: 'Facebook', icon: 'F', href: '#' },
-                  { name: 'Instagram', icon: 'I', href: '#' },
-                  { name: 'LinkedIn', icon: 'L', href: '#' },
-                  { name: 'YouTube', icon: 'Y', href: '#' },
-                  { name: 'Twitter', icon: 'T', href: '#' },
-                  { name: 'Google Review', icon: 'G', href: '#' }
+                  { name: 'Facebook', icon: <FaFacebookF />, href: '#' },
+                  { name: 'Instagram', icon: <FaInstagram />, href: '#' },
+                  { name: 'LinkedIn', icon: <FaLinkedinIn />, href: '#' },
+                  { name: 'YouTube', icon: <FaYoutube />, href: '#' },
+                  { name: 'Twitter', icon: <FaTwitter />, href: '#' },
+                  { name: 'Google Review', icon: <FaGoogle />, href: '#' }
                 ].map((social) => (
                   <a
                     key={social.name}
@@ -98,7 +99,6 @@ export default function Footer() {
                       alignItems: 'center',
                       justifyContent: 'center',
                       fontSize: '1.2rem',
-                      fontWeight: '600',
                       textDecoration: 'none',
                       transition: 'all 0.3s ease',
                       backdropFilter: 'blur(10px)',
