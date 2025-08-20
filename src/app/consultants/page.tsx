@@ -41,7 +41,7 @@ export default function ConsultantsPage() {
     setError("");
 
     try {
-      const url = "http://localhost:4000/api/consultants/public";
+      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`;
       console.log('Fetching all consultants with URL:', url);
 
       const res = await fetch(url);
@@ -523,8 +523,8 @@ export default function ConsultantsPage() {
                       <img
                         src={
                           consultant.image.startsWith('/')
-                            ? `http://localhost:4000${consultant.image}`
-                            : `http://localhost:4000/uploads/${consultant.image}`
+                                    ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${consultant.image}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${consultant.image}`
                         }
                         alt={consultant.name}
                         width={100}

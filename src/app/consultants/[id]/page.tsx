@@ -32,25 +32,25 @@ export default function ConsultantDetailPage() {
   useEffect(() => {
     const fetchConsultant = async () => {
       if (!params.id) return;
-      
+
       setLoading(true);
       setError("");
-      
+
       try {
         // Fetch all consultants and find the one we need
-        const res = await fetch("http://localhost:4000/api/consultants/public");
-        
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`);
+
         if (!res.ok) {
           throw new Error("Failed to fetch consultants");
         }
-        
+
         const allConsultants = await res.json();
         const consultant = allConsultants.find((c: any) => c.id === parseInt(params.id as string));
-        
+
         if (!consultant) {
           throw new Error("Consultant not found");
         }
-        
+
         setConsultant(consultant);
       } catch (err) {
         setError(err instanceof Error ? err.message : "Could not load consultant details.");
@@ -73,9 +73,9 @@ export default function ConsultantDetailPage() {
           justifyContent: "center",
           background: "var(--card)"
         }}>
-          <div style={{ 
-            color: "#5a67d8", 
-            fontWeight: 600, 
+          <div style={{
+            color: "#5a67d8",
+            fontWeight: 600,
             fontSize: 18,
             textAlign: "center"
           }}>
@@ -100,9 +100,9 @@ export default function ConsultantDetailPage() {
           background: "var(--card)",
           padding: "2rem"
         }}>
-          <div style={{ 
-            color: "#e53e3e", 
-            fontWeight: 600, 
+          <div style={{
+            color: "#e53e3e",
+            fontWeight: 600,
             fontSize: 18,
             textAlign: "center",
             marginBottom: "1rem"
@@ -176,8 +176,8 @@ export default function ConsultantDetailPage() {
                   <img
                     src={
                       consultant.image.startsWith('/')
-                        ? `http://localhost:4000${consultant.image}`
-                        : `http://localhost:4000/uploads/${consultant.image}`
+                                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${consultant.image}`
+        : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${consultant.image}`
                     }
                     alt={consultant.name}
                     style={{
@@ -188,9 +188,9 @@ export default function ConsultantDetailPage() {
                       border: "4px solid #5a67d8",
                       margin: "0 auto"
                     }}
-                    onError={e => { 
-                      e.currentTarget.onerror = null; 
-                      e.currentTarget.style.display = 'none'; 
+                    onError={e => {
+                      e.currentTarget.onerror = null;
+                      e.currentTarget.style.display = 'none';
                     }}
                   />
                 ) : (
@@ -222,7 +222,7 @@ export default function ConsultantDetailPage() {
               }}>
                 {consultant.name}
               </h1>
-              
+
               <div style={{
                 background: "#f0fdf4",
                 color: "#15803d",
@@ -375,7 +375,7 @@ export default function ConsultantDetailPage() {
                 }}>
                   Contact Information
                 </h3>
-                
+
                 <div style={{
                   display: "grid",
                   gap: "1rem"
@@ -391,10 +391,10 @@ export default function ConsultantDetailPage() {
                     }}>📧</span>
                     <div>
                       <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Email</div>
-                      <a 
+                      <a
                         href={`mailto:${consultant.email}`}
-                        style={{ 
-                          color: "#5a67d8", 
+                        style={{
+                          color: "#5a67d8",
                           textDecoration: "none",
                           fontSize: "14px"
                         }}
@@ -415,10 +415,10 @@ export default function ConsultantDetailPage() {
                     }}>📞</span>
                     <div>
                       <div style={{ fontWeight: 600, color: "var(--text-primary)" }}>Phone</div>
-                      <a 
+                      <a
                         href={`tel:${consultant.phone}`}
-                        style={{ 
-                          color: "#5a67d8", 
+                        style={{
+                          color: "#5a67d8",
                           textDecoration: "none",
                           fontSize: "14px"
                         }}
@@ -489,4 +489,4 @@ export default function ConsultantDetailPage() {
       <Footer />
     </>
   );
-} 
+}

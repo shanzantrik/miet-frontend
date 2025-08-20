@@ -89,7 +89,7 @@ export default function SearchPanel() {
     const fetchConsultants = async () => {
       setLoading(true);
       try {
-        const res = await fetch('http://localhost:4000/api/consultants/public');
+        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`);
         const data = await res.json();
         console.log('API response for consultants:', data); // Debug backend data
         // Parse lat/lng if present in location string
@@ -517,7 +517,7 @@ export default function SearchPanel() {
             // Determine the correct image URL
             let imageUrl = c.image;
             if (imageUrl && imageUrl.startsWith('/')) {
-              imageUrl = `http://localhost:4000${imageUrl}`;
+              imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
             }
             return (
               <div
@@ -705,7 +705,7 @@ export default function SearchPanel() {
             {filteredConsultants.map(c => {
               let imageUrl = c.image;
               if (imageUrl && imageUrl.startsWith('/')) {
-                imageUrl = `http://localhost:4000${imageUrl}`;
+                imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
               }
               let markerIcon = undefined;
               if (imageUrl && typeof window !== 'undefined' && window.google && window.google.maps) {
@@ -767,7 +767,7 @@ export default function SearchPanel() {
                           src={(() => {
                             let imageUrl = selectedConsultant.image;
                             if (imageUrl && imageUrl.startsWith('/')) {
-                              imageUrl = `http://localhost:4000${imageUrl}`;
+                              imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
                             }
                             return imageUrl || '/brain-miet.png';
                           })()}
@@ -1006,9 +1006,9 @@ export default function SearchPanel() {
       {bookingConsultant && (() => {
         // Determine the correct image URL for the modal
         let imageUrl = bookingConsultant.image;
-        if (imageUrl && imageUrl.startsWith('/')) {
-          imageUrl = `http://localhost:4000${imageUrl}`;
-        }
+                                    if (imageUrl && imageUrl.startsWith('/')) {
+                              imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
+                            }
         return (
           <div role="dialog" aria-modal="true" tabIndex={-1} style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setBookingConsultant(null); }}>
             <div style={{ background: 'var(--card)', borderRadius: 14, padding: 32, minWidth: 340, maxWidth: 420, boxShadow: '0 4px 32px rgba(90,103,216,0.13)', position: 'relative' }}>

@@ -109,7 +109,7 @@ export default function TopBar() {
   // Only one TopBar: no duplicate rendering
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
-              {/* Utility Row */}
+      {/* Utility Row */}
         <div style={{
           display: 'flex',
           justifyContent: 'space-between',
@@ -143,7 +143,7 @@ export default function TopBar() {
             </Link>
             <Link
               href="/sitemap"
-              aria-label="Sitemap"
+            aria-label="Sitemap"
               style={{
                 color: highContrast ? '#fff' : '#667eea',
                 textDecoration: 'none',
@@ -599,7 +599,7 @@ export default function TopBar() {
         )}
         {/* Login/Signup and Cart */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: '2rem' }}>
-          {/* Cart Icon */}
+            {/* Cart Icon */}
           <Link href="/cart" style={{
             position: 'relative',
             textDecoration: 'none',
@@ -628,28 +628,28 @@ export default function TopBar() {
               fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
               cursor: 'pointer'
             }} />
-            {itemCount > 0 && (
-              <span style={{
-                position: 'absolute',
-                top: '-8px',
-                right: '-8px',
+              {itemCount > 0 && (
+                <span style={{
+                  position: 'absolute',
+                  top: '-8px',
+                  right: '-8px',
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                color: 'white',
-                borderRadius: '50%',
+                  color: 'white',
+                  borderRadius: '50%',
                 width: '24px',
                 height: '24px',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
                 fontSize: 'clamp(0.7rem, 0.8vw, 0.8rem)',
                 fontWeight: '700',
                 boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
                 border: '2px solid #ffffff'
-              }}>
-                {itemCount}
-              </span>
-            )}
-          </Link>
+                }}>
+                  {itemCount}
+                </span>
+              )}
+            </Link>
 
           {/* Login Button */}
           <button

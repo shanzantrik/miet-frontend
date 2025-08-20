@@ -1026,7 +1026,7 @@ export default function AdminDashboard() {
     const data = { name: formName, email: formEmail };
     console.log('Form data to submit:', data);
     try {
-      const res = await fetch('http://localhost:4000/submit-form', {
+              const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/submit-form`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(data),

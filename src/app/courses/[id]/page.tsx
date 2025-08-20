@@ -64,20 +64,20 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     try {
       setLoading(true);
       setError(null);
-      
+
       // Fetch course data from backend using the same pattern as courses listing
       const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`);
-      
+
       if (response.ok) {
         const data = await response.json();
         const productsArray = data.products || data;
-        
+
         // Find the specific course by ID
-        const foundCourse = productsArray.find((product: any) => 
+        const foundCourse = productsArray.find((product: any) =>
           (product.id.toString() === params.id || product.id === parseInt(params.id)) &&
           (product.type === 'Course' || product.product_type === 'course')
         );
-        
+
         if (foundCourse) {
           console.log('✅ Course found:', foundCourse);
           setCourse(foundCourse);
@@ -88,7 +88,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
       } else {
         throw new Error(`Backend responded with status: ${response.status}`);
       }
-      
+
     } catch (err) {
       console.error('❌ Error fetching course:', err);
       setError('Failed to load course data');
@@ -119,15 +119,15 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
   const getPriceDisplay = (price: string | number | undefined) => {
     if (!price || price === '0' || price === 0) return 'Free';
     if (typeof price === 'string' && price.toLowerCase() === 'free') return 'Free';
-    
+
     // Convert to string and remove any existing currency symbols
     let cleanPrice = String(price).replace(/[$€£₹]/g, '').trim();
-    
+
     // If it's a valid number, format it
     if (cleanPrice && !isNaN(Number(cleanPrice))) {
       return `₹${cleanPrice}`;
     }
-    
+
     // Fallback to original price with ₹ symbol
     return `₹${price}`;
   };
@@ -136,26 +136,26 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
     const stars = [];
     const fullStars = Math.floor(rating);
     const hasHalfStar = rating % 1 !== 0;
-    
+
     for (let i = 0; i < fullStars; i++) {
       stars.push(
         <FaStar key={i} style={{ color: '#fbbf24', fontSize: '14px' }} />
       );
     }
-    
+
     if (hasHalfStar) {
       stars.push(
         <FaStar key="half" style={{ color: '#fbbf24', fontSize: '14px' }} />
       );
     }
-    
+
     const emptyStars = 5 - Math.ceil(rating);
     for (let i = 0; i < emptyStars; i++) {
       stars.push(
         <FaStar key={`empty-${i}`} style={{ color: '#d1d5db', fontSize: '14px' }} />
       );
     }
-    
+
     return stars;
   };
 
@@ -168,7 +168,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
 
   const addToCart = () => {
     if (!course) return;
-    
+
     const cartItem = {
       id: course.id,
       title: course.title,
@@ -180,20 +180,20 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
       product_type: course.product_type,
       quantity: 1
     };
-    
+
     const existingCart = localStorage.getItem('cart');
     let cart = existingCart ? JSON.parse(existingCart) : [];
-    
+
     const existingItemIndex = cart.findIndex((item: any) => item.id === course.id);
-    
+
     if (existingItemIndex >= 0) {
       cart[existingItemIndex].quantity += 1;
     } else {
       cart.push(cartItem);
     }
-    
+
     localStorage.setItem('cart', JSON.stringify(cart));
-    
+
     setShowAddToCartSuccess(true);
     setTimeout(() => setShowAddToCartSuccess(false), 3000);
   };
@@ -220,7 +220,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
         <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: '18px', color: '#ef4444', marginBottom: '1rem' }}>Error: {error || 'Course not found'}</p>
-            <button 
+            <button
               onClick={fetchCourseData}
               style={{
                 padding: '0.75rem 1.5rem',
@@ -244,10 +244,10 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
   return (
     <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
       <TopBar />
-      
+
       <main style={{ flex: 1, padding: '2rem 2vw', width: '100%' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 400px', gap: '3rem', maxWidth: '1400px', margin: '0 auto' }}>
-          
+
           {/* Left Column - Course Content */}
           <div>
         {/* Course Header */}
@@ -255,7 +255,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
               <h1 style={{ fontSize: '32px', fontWeight: '700', color: '#1f2937', marginBottom: '1rem', lineHeight: '1.2' }}>
                 {getCourseDisplayName(course)}
               </h1>
-              
+
               {course.subtitle && (
                 <p style={{ fontSize: '18px', color: '#4b5563', marginBottom: '1.5rem', lineHeight: '1.5' }}>
                   {course.subtitle}
@@ -439,7 +439,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                           <FaChevronRight style={{ color: '#6b7280' }} />
                         )}
                       </button>
-                      
+
                       {expandedSections[`course-content-${index}`] && (
                         <div style={{ padding: '0 1.5rem 1.5rem' }}>
                           {section.items && section.items.length > 0 ? (
@@ -510,19 +510,19 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
           {/* Right Column - Course Card */}
           <div style={{ position: 'sticky', top: '2rem', height: 'fit-content' }}>
             <div style={{ border: '1px solid #e5e7eb', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 4px 6px -1px rgba(0, 0, 0, 0.1)' }}>
-              
+
               {/* Course Thumbnail */}
               <div style={{ position: 'relative' }}>
-                <img 
-                  src={getCourseImage(course)} 
+                <img
+                  src={getCourseImage(course)}
                   alt={getCourseDisplayName(course)}
               style={{
                 width: '100%',
-                    height: '200px', 
-                    objectFit: 'cover' 
-                  }} 
+                    height: '200px',
+                    objectFit: 'cover'
+                  }}
                 />
-                
+
                 {/* Price Badge */}
                 <div style={{
                   position: 'absolute',
@@ -558,25 +558,25 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
 
               {/* Course Info */}
               <div style={{ padding: '1.5rem' }}>
-                <h3 style={{ 
-                  fontSize: '1.25rem', 
-                  fontWeight: '700', 
-                  color: '#1f2937', 
+                <h3 style={{
+                  fontSize: '1.25rem',
+                  fontWeight: '700',
+                  color: '#1f2937',
                   marginBottom: '0.5rem',
                   lineHeight: '1.3'
                 }}>
                   {getCourseDisplayName(course)}
               </h3>
-                
-                <p style={{ 
-                  fontSize: '0.875rem', 
-                  color: '#6b7280', 
+
+                <p style={{
+                  fontSize: '0.875rem',
+                  color: '#6b7280',
                   marginBottom: '1rem',
                   lineHeight: '1.5'
                 }}>
                   {course.subtitle || course.description.substring(0, 120) + '...'}
                 </p>
-                
+
                 {course.rating && (
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                     <span style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
@@ -592,7 +592,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                     )}
                   </div>
                 )}
-                
+
                 <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
                   {course.duration && (
                     <div style={{ display: 'flex', alignItems: 'center', gap: '0.25rem' }}>
@@ -607,9 +607,9 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                     </div>
                   )}
                 </div>
-                
-                <div style={{ 
-                  fontSize: '0.875rem', 
+
+                <div style={{
+                  fontSize: '0.875rem',
                   color: '#6b7280',
                   borderTop: '1px solid #f3f4f6',
                   paddingTop: '1rem'
@@ -620,8 +620,8 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
 
               {/* Buy Now Button */}
               <div style={{ padding: '0 1.5rem 1.5rem' }}>
-                <Link 
-                  href="http://localhost:3000/marketplace/course"
+                <Link
+                  href="/marketplace/course"
                   style={{
                     width: '100%',
                     padding: '1rem',
@@ -647,7 +647,7 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                   }}>
                   Buy Now
                 </Link>
-                
+
                 {/* Success Message */}
                 {showAddToCartSuccess && (
                   <div style={{
@@ -673,15 +673,15 @@ export default function CourseDetailPage({ params }: { params: { id: string } })
                   About the Instructor
                 </h4>
                 <div style={{ display: 'flex', gap: '1rem', alignItems: 'flex-start' }}>
-                  <img 
-                    src={getDefaultImage(course)} 
+                  <img
+                    src={getDefaultImage(course)}
                     alt={course.instructor_name || course.author || 'Instructor'}
-                    style={{ 
-                      width: '60px', 
-                      height: '60px', 
-                      borderRadius: '50%', 
-                      objectFit: 'cover' 
-                    }} 
+                    style={{
+                      width: '60px',
+                      height: '60px',
+                      borderRadius: '50%',
+                      objectFit: 'cover'
+                    }}
                   />
                   <div>
                     <h5 style={{ fontSize: '16px', fontWeight: '600', color: '#1f2937', marginBottom: '0.25rem' }}>
