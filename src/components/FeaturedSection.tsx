@@ -24,11 +24,8 @@ type Consultant = {
 };
 
 function getVisibleCount(width: number) {
-  if (width < 600) return 1;
-  if (width < 900) return 2;
-  if (width < 1200) return 3;
-  if (width < 1500) return 4;
-  return 5;
+  // Always show 1 consultant card at a time for better focus and responsiveness
+  return 1;
 }
 
 export default function FeaturedSection() {
@@ -37,7 +34,7 @@ export default function FeaturedSection() {
   const [error, setError] = useState<string | null>(null);
   const [current, setCurrent] = useState(0);
   const [hovering, setHovering] = useState(false);
-  const [visibleCount, setVisibleCount] = useState(3);
+  const [visibleCount, setVisibleCount] = useState(1);
   const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
   const [bookingDate, setBookingDate] = useState('');
   const [bookingTime, setBookingTime] = useState('');
@@ -50,41 +47,16 @@ export default function FeaturedSection() {
 
   // Fetch consultants from API
   useEffect(() => {
-    // Fetch all consultants and filter for featured ones
     fetch('http://localhost:4000/api/consultants/public')
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch consultants');
         return res.json();
       })
       .then(data => {
-        console.log('FeaturedSection - Raw API data:', data);
-        console.log('FeaturedSection - Total consultants from API:', data.length);
-        
-        // Check for duplicates in the raw data
-        const duplicateIds = data.reduce((acc: number[], consultant: Consultant, index: number) => {
-          const firstIndex = data.findIndex((c: Consultant) => c.id === consultant.id);
-          if (firstIndex !== index) {
-            acc.push(consultant.id);
-          }
-          return acc;
-        }, []);
-        
-        if (duplicateIds.length > 0) {
-          console.log('FeaturedSection - Found duplicate IDs in API response:', duplicateIds);
-        }
-        
-        // Filter for consultants with featured: true
         const featuredConsultants = data.filter((consultant: Consultant) => (consultant as any).featured === true);
-        console.log('FeaturedSection - Featured consultants before deduplication:', featuredConsultants.length);
-
-        // Remove duplicates by ID (keep only the first occurrence)
         const uniqueConsultants = Array.from(
           new Map(featuredConsultants.map((c: Consultant) => [c.id, c])).values()
         ) as Consultant[];
-        
-        console.log('FeaturedSection - Unique consultants after deduplication:', uniqueConsultants.length);
-        console.log('FeaturedSection - Final consultant IDs:', uniqueConsultants.map(c => c.id));
-
         setConsultants(uniqueConsultants);
         setLoading(false);
       })
@@ -94,12 +66,9 @@ export default function FeaturedSection() {
       });
   }, []);
 
-  // Responsive visibleCount
+  // Always show one consultant at a time for better focus
   useEffect(() => {
-    setVisibleCount(getVisibleCount(window.innerWidth));
-    const handleResize = () => setVisibleCount(getVisibleCount(window.innerWidth));
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
+    setVisibleCount(1);
   }, []);
 
   // Auto-scroll logic
@@ -116,34 +85,23 @@ export default function FeaturedSection() {
     };
   }, [hovering, consultants.length]);
 
-  // Arrow navigation - only enable if we have more consultants than visible count
+  // Arrow navigation - always allow navigation if we have consultants
   const goLeft = () => {
-    if (consultants.length > visibleCount) {
+    if (consultants.length > 1) {
       setCurrent(c => (c - 1 + consultants.length) % consultants.length);
     }
   };
+
   const goRight = () => {
-    if (consultants.length > visibleCount) {
+    if (consultants.length > 1) {
       setCurrent(c => (c + 1) % consultants.length);
     }
   };
 
-  // Get the visible consultants without duplicates
-  const getVisibleConsultants = () => {
-    if (consultants.length === 0) return [];
-    
-    // If we have fewer consultants than visibleCount, just show all consultants
-    if (consultants.length <= visibleCount) {
-      return consultants;
-    }
-    
-    // If we have more consultants than visibleCount, show a window of consultants
-    const result = [];
-    for (let i = 0; i < visibleCount; i++) {
-      const index = (current + i) % consultants.length;
-      result.push(consultants[index]);
-    }
-    return result;
+  // Get the current consultant to display
+  const getCurrentConsultant = () => {
+    if (consultants.length === 0) return null;
+    return consultants[current];
   };
 
   if (loading) {
@@ -164,7 +122,6 @@ export default function FeaturedSection() {
     );
   }
 
-  // Show message if no featured consultants found
   if (consultants.length === 0 && !loading && !error) {
     return (
       <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
@@ -175,201 +132,701 @@ export default function FeaturedSection() {
   }
 
   return (
-    <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
-      <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
-      <div
-        ref={sliderRef}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
-          maxWidth:
-            visibleCount === 1 ? 440 :
-            visibleCount === 2 ? 880 :
-            visibleCount === 3 ? 1320 :
-            visibleCount === 4 ? 1680 :
-            2000,
+    <section className="featured-section" style={{
+      background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+      padding: '4rem 0',
+      position: 'relative',
+      overflow: 'hidden'
+    }} aria-label="Featured consultants and about MIET">
+
+      {/* Background decorative elements */}
+      <div style={{
+        position: 'absolute',
+        top: '-20%',
+        right: '-20%',
+        width: '40%',
+        height: '40%',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'float 8s ease-in-out infinite'
+      }} />
+
+      <div style={{
+        position: 'absolute',
+        bottom: '-15%',
+        left: '-15%',
+        width: '30%',
+        height: '30%',
+        background: 'radial-gradient(circle, rgba(118, 75, 162, 0.05) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'float 6s ease-in-out infinite reverse'
+      }} />
+
+      {/* Section Title */}
+      <div style={{
+        textAlign: 'center',
+        marginBottom: '3rem',
+        zIndex: 2,
+        position: 'relative'
+      }}>
+        <h2 style={{
+          fontFamily: 'Righteous, cursive',
+          fontSize: 'clamp(2.5rem, 5vw, 3.5rem)',
+          fontWeight: '700',
+          color: '#1e1b4b',
+          marginBottom: '1rem',
+          textShadow: '0 2px 10px rgba(0,0,0,0.1)',
+          letterSpacing: '1px'
+        }}>
+          Featured Consultants & About MIET
+        </h2>
+        <p style={{
+          fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
+          color: '#4b5563',
+          maxWidth: '700px',
           margin: '0 auto',
-          overflow: 'visible',
-        }}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        {/* Left Arrow */}
-        <button
-          onClick={goLeft}
-          aria-label="Previous featured consultant"
-          disabled={consultants.length <= visibleCount}
-          style={{
-            opacity: consultants.length > visibleCount ? 1 : 0.3,
-            position: 'absolute',
-            left: -52,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'var(--card)',
-            border: '3px solid var(--accent)',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            fontSize: 28,
-            color: 'var(--accent)',
-            cursor: consultants.length > visibleCount ? 'pointer' : 'not-allowed',
-            zIndex: 10,
-            boxShadow: '0 4px 16px var(--accent-alt, rgba(90,103,216,0.18))',
-            outline: 'none',
-            transition: 'box-shadow 0.2s, background 0.2s',
-          }}
-          onMouseOver={e => {
-            if (consultants.length > visibleCount) {
-              e.currentTarget.style.background = 'var(--muted-alt)';
-            }
-          }}
-          onMouseOut={e => e.currentTarget.style.background = 'var(--card)'}
-        >
-          &#8592;
-        </button>
-        {/* Slider Cards */}
-        <div style={{ display: 'flex', gap: 24, alignItems: 'center', justifyContent: 'center', width: '100%' }}>
-          {getVisibleConsultants().map((consultant, index) => (
-            <div
-              key={`${consultant.id}-${consultant.name}-${index}-${current}`}
-              onClick={() => setBookingConsultant(consultant)}
-              tabIndex={0}
-              role="button"
-              aria-label={`Book appointment with ${consultant.name}`}
+          lineHeight: '1.6',
+          fontWeight: '400'
+        }}>
+          Discover our exceptional professionals and learn about our mission
+        </p>
+      </div>
+
+      {/* Main Content Container */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(600px, 1fr))',
+        gap: '3rem',
+        maxWidth: '1400px',
+        margin: '0 auto',
+        padding: '0 2rem',
+        zIndex: 2,
+        position: 'relative'
+      }}>
+
+        {/* Left: Featured Consultants Slider */}
+        <div style={{
+          background: 'rgba(255,255,255,0.9)',
+          borderRadius: '24px',
+          padding: '2rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)'
+        }}>
+          <h3 style={{
+            fontFamily: 'Righteous, cursive',
+            fontSize: '1.8rem',
+            fontWeight: '700',
+            color: '#667eea',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            Featured Consultants
+          </h3>
+
+          <div
+            ref={sliderRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
+              maxWidth: '100%',
+              margin: '0 auto',
+              overflow: 'visible',
+            }}
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+          >
+            {/* Left Arrow */}
+            <button
+              className="arrow-left"
+              onClick={goLeft}
+              aria-label="Previous featured consultant"
+              disabled={consultants.length <= 1}
               style={{
-                background: 'linear-gradient(120deg, #e6f0f7 60%, #f7fafc 100%)',
-                borderRadius: 18,
-                boxShadow: '0 4px 24px rgba(90,103,216,0.10)',
-                padding:
-                  visibleCount === 1 ? '28px 36px 22px 36px' :
-                  visibleCount === 2 ? '22px 28px 18px 28px' :
-                  visibleCount === 3 ? '18px 22px 14px 22px' :
-                  visibleCount === 4 ? '16px 18px 12px 18px' :
-                  '14px 14px 10px 14px',
-                minWidth:
-                  visibleCount === 1 ? 370 :
-                  visibleCount === 2 ? 320 :
-                  visibleCount === 3 ? 270 :
-                  visibleCount === 4 ? 220 :
-                  200,
-                maxWidth:
-                  visibleCount === 1 ? 400 :
-                  visibleCount === 2 ? 360 :
-                  visibleCount === 3 ? 310 :
-                  visibleCount === 4 ? 260 :
-                  240,
-                minHeight: 210,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
-                border: '2.5px solid #5a67d8',
-                transition: 'box-shadow 0.2s',
-                cursor: 'pointer',
+                opacity: consultants.length > 1 ? 1 : 0.3,
+                position: 'absolute',
+                left: '-2rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                fontSize: '20px',
+                color: '#fff',
+                cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
+                zIndex: 10,
+                boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
                 outline: 'none',
+                transition: 'all 0.3s ease',
               }}
-              onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') setBookingConsultant(consultant); }}
+              onMouseEnter={(e) => {
+                if (consultants.length > 1) {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(99, 102, 241, 0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (consultants.length > 1) {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
+                }
+              }}
             >
-              <div style={{ position: 'relative', marginBottom: 12 }}>
-                {consultant.image && consultant.image.trim() !== '' ? (
-                  <img
-                    src={consultant.image.startsWith('/')
-                      ? `http://localhost:4000${consultant.image}`
-                      : `http://localhost:4000/uploads/${consultant.image}`}
-                    alt={consultant.name}
-                    style={{ width: visibleCount === 1 ? 74 : 54, height: visibleCount === 1 ? 74 : 54, borderRadius: '50%', objectFit: 'cover', border: '3px solid #5a67d8', boxShadow: '0 0 0 4px #fff' }}
-                    onError={e => { e.currentTarget.onerror = null; e.currentTarget.style.display = 'none'; }}
-                  />
-                ) : (
-                  <div style={{ width: visibleCount === 1 ? 74 : 54, height: visibleCount === 1 ? 74 : 54, borderRadius: '50%', border: '3px solid #5a67d8', boxShadow: '0 0 0 4px #fff', background: '#f3f3f3', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 24, color: '#5a67d8' }}>{consultant.name?.charAt(0)}</div>
-                )}
-                {consultant.status === 'online' && (
-                  <span style={{
-                    position: 'absolute',
-                    bottom: 6,
-                    right: 6,
-                    width: 15,
-                    height: 15,
+              ←
+            </button>
+
+            {/* Single Consultant Card */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              width: '100%',
+              padding: '0 1rem'
+            }}>
+              {getCurrentConsultant() && (
+                <div
+                  className="consultant-card"
+                  key={`${getCurrentConsultant()!.id}-${getCurrentConsultant()!.name}-${current}`}
+                  onClick={() => window.location.href = `/consultants/${getCurrentConsultant()!.id}`}
+                  tabIndex={0}
+                  role="button"
+                  aria-label={`View details for ${getCurrentConsultant()!.name}`}
+                  style={{
+                    background: 'linear-gradient(135deg, #fff 0%, #f8fafc 100%)',
+                    borderRadius: '24px',
+                    boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
+                    padding: '2.5rem',
+                    width: '100%',
+                    maxWidth: '500px',
+                    minHeight: '400px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
+                    border: '2px solid rgba(99, 102, 241, 0.1)',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    overflow: 'hidden'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
+                    e.currentTarget.style.boxShadow = '0 25px 60px rgba(99, 102, 241, 0.25)';
+                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                    e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.15)';
+                    e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.1)';
+                  }}
+                >
+                  {/* Consultant Image */}
+                  <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
+                    <img
+                      className="consultant-image"
+                      src={getCurrentConsultant()!.image && getCurrentConsultant()!.image!.startsWith('/') ? `http://localhost:4000${getCurrentConsultant()!.image}` : `http://localhost:4000/uploads/${getCurrentConsultant()!.image}`}
+                      alt={getCurrentConsultant()!.name}
+                      style={{
+                        width: '140px',
+                        height: '140px',
+                        borderRadius: '50%',
+                        objectFit: 'cover',
+                        border: '5px solid rgba(99, 102, 241, 0.2)',
+                        boxShadow: '0 12px 35px rgba(99, 102, 241, 0.2)',
+                        transition: 'all 0.3s ease'
+                      }}
+                      onError={(e) => {
+                        e.currentTarget.onerror = null;
+                        e.currentTarget.src = '/brain-miet.png';
+                      }}
+                    />
+                    {(getCurrentConsultant()!.mode === 'Online' || getCurrentConsultant()!.status === 'online') && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: '8px',
+                        right: '8px',
+                        width: '32px',
+                        height: '32px',
+                        borderRadius: '50%',
+                        background: 'radial-gradient(circle, #10b981 60%, #10b98188 100%)',
+                        boxShadow: '0 0 16px 4px #10b98188, 0 0 0 4px #fff',
+                        border: '3px solid #fff',
+                        display: 'block',
+                        zIndex: 2,
+                        animation: 'glow-green 1.2s infinite alternate',
+                      }} />
+                    )}
+                  </div>
+
+                  {/* Consultant Info */}
+                  <div style={{ textAlign: 'center', flex: 1, width: '100%' }}>
+                                        <h4 className="consultant-name" style={{
+                      fontSize: 'clamp(2rem, 2.5vw, 2.5rem)',
+                      fontWeight: '700',
+                      color: '#1e1b4b',
+                      marginBottom: '1rem',
+                      lineHeight: '1.2',
+                      textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+                    }}>
+                      {getCurrentConsultant()!.name}
+                    </h4>
+                    <p className="consultant-expertise" style={{
+                      fontSize: 'clamp(1.4rem, 1.8vw, 1.6rem)',
+                      color: '#667eea',
+                      marginBottom: '1.2rem',
+                      lineHeight: '1.4',
+                      fontWeight: '600',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}>
+                      {getCurrentConsultant()!.expertise || getCurrentConsultant()!.speciality || 'Specialist'}
+                    </p>
+
+                    {/* Description */}
+                    <p className="consultant-description" style={{
+                      fontSize: 'clamp(1.1rem, 1.3vw, 1.3rem)',
+                      color: '#ffffff',
+                      marginBottom: '1rem',
+                      lineHeight: '1.6',
+                      fontWeight: '500',
+                      maxWidth: '400px',
+                      margin: '0 auto 1rem auto',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+                    }}>
+                      {getCurrentConsultant()!.bio ||
+                       getCurrentConsultant()!.tagline ||
+                       `Specialized ${getCurrentConsultant()!.expertise || getCurrentConsultant()!.speciality || 'consultant'} with extensive experience in providing personalized support and guidance.`}
+                    </p>
+
+                    {getCurrentConsultant()!.city && (
+                      <p style={{
+                        fontSize: '1rem',
+                        color: '#6b7280',
+                        marginBottom: '1rem',
+                        fontWeight: '500',
+                      }}>
+                        📍 {getCurrentConsultant()!.city}
+                      </p>
+                    )}
+
+                    <div style={{ display: 'flex', gap: '1rem', justifyContent: 'center', alignItems: 'center', flexWrap: 'wrap' }}>
+                      {getCurrentConsultant()!.mode && (
+                        <div style={{
+                          display: 'inline-block',
+                          padding: '0.7rem 1.5rem',
+                          borderRadius: '25px',
+                          fontSize: '1rem',
+                          fontWeight: '600',
+                          color: getCurrentConsultant()!.mode === 'Online' ? '#fff' : '#667eea',
+                          background: getCurrentConsultant()!.mode === 'Online' ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(99, 102, 241, 0.1)',
+                          border: getCurrentConsultant()!.mode === 'Online' ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
+                          transition: 'all 0.3s ease'
+                        }}>
+                          {getCurrentConsultant()!.mode}
+                        </div>
+                      )}
+
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setBookingConsultant(getCurrentConsultant()!);
+                        }}
+                        style={{
+                          background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '25px',
+                          padding: '0.7rem 1.5rem',
+                          fontWeight: '600',
+                          fontSize: '1rem',
+                          cursor: 'pointer',
+                          transition: 'all 0.3s ease',
+                          boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)'
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.transform = 'translateY(-2px)';
+                          e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.4)';
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.transform = 'translateY(0)';
+                          e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)';
+                        }}
+                      >
+                        Book Appointment
+                      </button>
+                    </div>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Right Arrow */}
+            <button
+              className="arrow-right"
+              onClick={goRight}
+              aria-label="Next featured consultant"
+              disabled={consultants.length <= 1}
+              style={{
+                opacity: consultants.length > 1 ? 1 : 0.3,
+                position: 'absolute',
+                right: '-2rem',
+                top: '50%',
+                transform: 'translateY(-50%)',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                border: 'none',
+                borderRadius: '50%',
+                width: '48px',
+                height: '48px',
+                fontSize: '20px',
+                color: '#fff',
+                cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
+                zIndex: 10,
+                boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                outline: 'none',
+                transition: 'all 0.3s ease',
+              }}
+              onMouseEnter={(e) => {
+                if (consultants.length > 1) {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1.1)';
+                  e.currentTarget.style.boxShadow = '0 12px 35px rgba(99, 102, 241, 0.4)';
+                }
+              }}
+              onMouseLeave={(e) => {
+                if (consultants.length > 1) {
+                  e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
+                }
+              }}
+            >
+              →
+            </button>
+          </div>
+
+          {/* Bullets - only show if we have more than one consultant */}
+          {consultants.length > 1 && (
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '0.8rem', marginTop: '1.5rem' }}>
+              {consultants.map((_, idx) => (
+                <span
+                  key={idx}
+                  onClick={() => setCurrent(idx)}
+                  style={{
+                    width: '12px',
+                    height: '12px',
                     borderRadius: '50%',
-                    background: 'radial-gradient(circle, #39e639 60%, #39e63988 100%)',
-                    boxShadow: '0 0 8px 2px #39e63988, 0 0 0 2px #fff',
-                    border: '2px solid #fff',
-                    display: 'block',
-                    zIndex: 2,
-                    animation: 'glow-green 1.2s infinite alternate',
-                  }} />
-                )}
+                    background: idx === current ? '#667eea' : 'rgba(99, 102, 241, 0.2)',
+                    border: idx === current ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
+                    boxShadow: idx === current ? '0 0 8px rgba(99, 102, 241, 0.4)' : 'none',
+                    cursor: 'pointer',
+                    transition: 'all 0.3s ease',
+                    display: 'inline-block',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (idx !== current) {
+                      e.currentTarget.style.background = 'rgba(99, 102, 241, 0.4)';
+                      e.currentTarget.style.transform = 'scale(1.2)';
+                    }
+                  }}
+                  onMouseLeave={(e) => {
+                    if (idx !== current) {
+                      e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+                      e.currentTarget.style.transform = 'scale(1)';
+                    }
+                  }}
+                />
+              ))}
+            </div>
+          )}
+        </div>
+
+        {/* Right: About MIET Section */}
+        <div style={{
+          background: 'rgba(255,255,255,0.9)',
+          borderRadius: '24px',
+          padding: '2.5rem',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}>
+          <h3 style={{
+            fontFamily: 'Righteous, cursive',
+            fontSize: '2rem',
+            fontWeight: '700',
+            color: '#667eea',
+            marginBottom: '1.5rem',
+            textAlign: 'center'
+          }}>
+            About MIET
+          </h3>
+
+          <div style={{
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            borderRadius: '20px',
+            padding: '2rem',
+            marginBottom: '2rem',
+            color: '#fff',
+            textAlign: 'center',
+            position: 'relative',
+            overflow: 'hidden'
+          }}>
+            <div style={{
+              position: 'absolute',
+              top: '-20px',
+              right: '-20px',
+              width: '80px',
+              height: '80px',
+              background: 'rgba(255,255,255,0.1)',
+              borderRadius: '50%'
+            }} />
+            <h4 style={{
+              fontSize: '1.5rem',
+              fontWeight: '700',
+              marginBottom: '1rem',
+              color: '#fff'
+            }}>
+              MieT (मीत)
+            </h4>
+            <p style={{
+              fontSize: '1.1rem',
+              lineHeight: '1.6',
+              marginBottom: '1rem',
+              color: 'rgba(255,255,255,0.9)'
+            }}>
+              A tech-enabled platform based in Gurgaon, empowering individuals with diverse abilities through personalized Special Education, Mental Health Services, and Counselling.
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '1rem',
+              flexWrap: 'wrap'
+            }}>
+              <div style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '0.5rem 1rem',
+                borderRadius: '15px',
+                fontSize: '0.9rem',
+                fontWeight: '600'
+              }}>
+                🎓 Special Education
               </div>
-              <div style={{ fontWeight: 700, color: '#22543d', fontSize: visibleCount === 1 ? 20 : 16, marginBottom: 2 }}>{consultant.name}</div>
-              <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 16 : 14, fontWeight: 600, marginBottom: 2 }}>{consultant.expertise || consultant.speciality}</div>
-              <div style={{ color: '#888', fontSize: visibleCount === 1 ? 15 : 13, marginBottom: 6 }}>{consultant.city} &middot; <span style={{ color: consultant.mode === 'Online' ? '#39e639' : '#22543d', fontWeight: 600 }}>{consultant.mode}</span></div>
-              <div style={{ color: '#444', fontSize: visibleCount === 1 ? 15 : 13, fontStyle: 'italic', marginBottom: 6 }}>{consultant.tagline}</div>
-              <div style={{ color: '#5a67d8', fontSize: visibleCount === 1 ? 14 : 12, marginBottom: 8 }}>{consultant.highlights}</div>
-              <div style={{ color: '#22543d', fontSize: visibleCount === 1 ? 14 : 12, background: '#e6f0f7', borderRadius: 8, padding: '6px 12px', marginTop: 4, fontWeight: 500, boxShadow: '0 1px 4px #5a67d822' }}>
-                <span role="img" aria-label="star">⭐</span> Featured Consultant
+              <div style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '0.5rem 1rem',
+                borderRadius: '15px',
+                fontSize: '0.9rem',
+                fontWeight: '600'
+              }}>
+                🧠 Mental Health
+              </div>
+              <div style={{
+                background: 'rgba(255,255,255,0.2)',
+                padding: '0.5rem 1rem',
+                borderRadius: '15px',
+                fontSize: '0.9rem',
+                fontWeight: '600'
+              }}>
+                💬 Counselling
               </div>
             </div>
-          ))}
-        </div>
-        {/* Right Arrow */}
-        <button
-          onClick={goRight}
-          aria-label="Next featured consultant"
-          disabled={consultants.length <= visibleCount}
-          style={{
-            opacity: consultants.length > visibleCount ? 1 : 0.3,
-            position: 'absolute',
-            right: -52,
-            top: '50%',
-            transform: 'translateY(-50%)',
-            background: 'var(--card)',
-            border: '3px solid var(--accent)',
-            borderRadius: '50%',
-            width: 48,
-            height: 48,
-            fontSize: 28,
-            color: 'var(--accent)',
-            cursor: consultants.length > visibleCount ? 'pointer' : 'not-allowed',
-            zIndex: 10,
-            boxShadow: '0 4px 16px var(--accent-alt, rgba(90,103,216,0.18))',
-            outline: 'none',
-            transition: 'box-shadow 0.2s, background 0.2s',
-          }}
-          onMouseOver={e => {
-            if (consultants.length > visibleCount) {
-              e.currentTarget.style.background = 'var(--muted-alt)';
-            }
-          }}
-          onMouseOut={e => e.currentTarget.style.background = 'var(--card)'}
-        >
-          &#8594;
-        </button>
-      </div>
-      {/* Bullets - only show if we have more consultants than visible count */}
-      {consultants.length > visibleCount && (
-        <div style={{ display: 'flex', justifyContent: 'center', gap: 10, marginTop: 18 }}>
-          {consultants.map((_, idx) => (
-            <span
-              key={idx}
-              onClick={() => setCurrent(idx)}
-              style={{
-                width: 13,
-                height: 13,
-                borderRadius: '50%',
-                background: idx === current ? '#5a67d8' : '#e6f0f7',
-                border: idx === current ? '2.5px solid #5a67d8' : '2.5px solid #e6f0f7',
-                boxShadow: idx === current ? '0 0 8px #5a67d8aa' : 'none',
-                cursor: 'pointer',
-                transition: 'all 0.2s',
+          </div>
+
+          <div style={{
+            background: '#f8fafc',
+            borderRadius: '16px',
+            padding: '1.5rem',
+            border: '1px solid rgba(99, 102, 241, 0.1)'
+          }}>
+            <h5 style={{
+              fontSize: '1.2rem',
+              fontWeight: '700',
+              color: '#1e1b4b',
+              marginBottom: '1rem',
+              textAlign: 'center'
+            }}>
+              Our Mission
+            </h5>
+            <p style={{
+              fontSize: '1rem',
+              lineHeight: '1.6',
+              color: '#4b5563',
+              marginBottom: '1rem'
+            }}>
+              To unlock potential, nurture growth, and build an inclusive community for all individuals, regardless of their abilities or challenges.
+            </p>
+            <div style={{
+              display: 'flex',
+              justifyContent: 'center',
+              gap: '1rem'
+            }}>
+              <a href="/about" style={{
                 display: 'inline-block',
+                background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                color: '#fff',
+                borderRadius: '12px',
+                padding: '0.8rem 1.5rem',
+                fontWeight: '700',
+                fontSize: '1rem',
+                textDecoration: 'none',
+                transition: 'all 0.3s ease',
+                boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
               }}
-            />
-          ))}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+              }}
+              >
+                Learn More
+              </a>
+              <a href="/contact" style={{
+                display: 'inline-block',
+                background: 'rgba(99, 102, 241, 0.1)',
+                color: '#667eea',
+                borderRadius: '12px',
+                padding: '0.8rem 1.5rem',
+                fontWeight: '700',
+                fontSize: '1rem',
+                textDecoration: 'none',
+                border: '2px solid rgba(99, 102, 241, 0.3)',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+              >
+                Contact Us
+              </a>
+            </div>
+          </div>
         </div>
-      )}
+      </div>
+
+      {/* CSS Animations and Responsive Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          @keyframes glow-green {
+            0% { box-shadow: 0 0 8px 2px #39e63988, 0 0 0 2px #fff; }
+            100% { box-shadow: 0 0 16px 6px #39e639cc, 0 0 0 2px #fff; }
+          }
+
+          @keyframes float {
+            0%, 100% { transform: translateY(0px); }
+            50% { transform: translateY(-20px); }
+          }
+
+                    /* Responsive adjustments */
+          @media (max-width: 1200px) {
+            .featured-section .grid-container {
+              grid-template-columns: 1fr !important;
+              gap: 2rem !important;
+            }
+          }
+
+          @media (max-width: 768px) {
+            .featured-section {
+              padding: 2rem 0 !important;
+            }
+
+            .featured-section h2 {
+              font-size: 2rem !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .featured-section p {
+              font-size: 1rem !important;
+              padding: 0 1rem !important;
+            }
+
+            /* Single consultant card responsive adjustments */
+            .featured-section .consultant-card {
+              max-width: 90% !important;
+              padding: 2rem 1.5rem !important;
+              min-height: 350px !important;
+            }
+
+            .featured-section .consultant-image {
+              width: 100px !important;
+              height: 100px !important;
+            }
+
+            .featured-section .consultant-name {
+              font-size: clamp(1.8rem, 2.2vw, 2.2rem) !important;
+            }
+
+            .featured-section .consultant-expertise {
+              font-size: clamp(1.3rem, 1.6vw, 1.5rem) !important;
+            }
+
+            .featured-section .consultant-description {
+              font-size: clamp(1rem, 1.2vw, 1.1rem) !important;
+            }
+
+            /* Arrow positioning for mobile */
+            .featured-section .arrow-left {
+              left: -1rem !important;
+              width: 40px !important;
+              height: 40px !important;
+              font-size: 16px !important;
+            }
+
+            .featured-section .arrow-right {
+              right: -1rem !important;
+              width: 40px !important;
+              height: 40px !important;
+              font-size: 16px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .featured-section h2 {
+              font-size: 1.8rem !important;
+            }
+
+            .featured-section .consultant-card {
+              max-width: 95% !important;
+              padding: 1.5rem 1rem !important;
+              min-height: 320px !important;
+            }
+
+            .featured-section .consultant-image {
+              width: 80px !important;
+              height: 80px !important;
+            }
+
+            .featured-section .consultant-name {
+              font-size: clamp(1.6rem, 1.8vw, 1.8rem) !important;
+            }
+
+            .featured-section .consultant-expertise {
+              font-size: clamp(1.1rem, 1.3vw, 1.2rem) !important;
+            }
+
+            .featured-section .consultant-description {
+              font-size: clamp(0.9rem, 1vw, 1rem) !important;
+            }
+
+            /* Hide arrows on very small screens */
+            .featured-section .arrow-left,
+            .featured-section .arrow-right {
+              display: none !important;
+            }
+          }
+        `
+      }} />
+
       {/* Booking Modal */}
       {bookingConsultant && (
         <div style={{
@@ -396,49 +853,39 @@ export default function FeaturedSection() {
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16 }}>{bookingConsultant.name}</div>
                 <div style={{ color: 'var(--accent)', fontSize: 14 }}>{bookingConsultant.expertise || bookingConsultant.speciality}</div>
-                <div style={{ color: '#888', fontSize: 13 }}>{bookingConsultant.city} &middot; <span style={{ color: bookingConsultant.mode === 'Online' ? 'var(--accent)' : 'var(--text-accent-alt)', fontWeight: 600 }}>{bookingConsultant.mode}</span></div>
+                <div style={{ color: '#888', fontSize: 13 }}>{bookingConsultant.city} &middot; <span style={{ color: bookingConsultant.mode === 'Online' ? 'var(--accent)' : 'var(--text-secondary)', fontWeight: 600 }}>{bookingConsultant.mode}</span></div>
               </div>
             </div>
             <form onSubmit={e => { e.preventDefault(); alert('Booking submitted! (not really)'); setBookingConsultant(null); }} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Date
-                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
+                <input type="date" value={bookingDate} onChange={e => setBookingDate(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Time
-                <input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
+                <input type="time" value={bookingTime} onChange={e => setBookingTime(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Name
-                <input type="text" value={bookingName} onChange={e => setBookingName(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
+                <input type="text" value={bookingName} onChange={e => setBookingName(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Email
-                <input type="email" value={bookingEmail} onChange={e => setBookingEmail(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
+                <input type="email" value={bookingEmail} onChange={e => setBookingEmail(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Phone
-                <input type="tel" value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
+                <input type="tel" value={bookingPhone} onChange={e => setBookingPhone(e.target.value)} required style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
               </label>
               <label style={{ fontWeight: 600, color: 'var(--text-accent-alt)' }}>
                 Notes
-                <textarea value={bookingNotes} onChange={e => setBookingNotes(e.target.value)} style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4, minHeight: 48 }} />
+                <textarea value={bookingNotes} onChange={e => setBookingNotes(e.target.value)} style={{ width: '100%', padding: 8, borderRadius: 6, border: '1px solid var(--border)', marginTop: 4, minHeight: 48 }} />
               </label>
               <button type="submit" style={{ background: 'var(--accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 8 }}>Book Now</button>
             </form>
           </div>
         </div>
       )}
-      {/* Glowing green circle animation */}
-      <style>{`
-        @keyframes glow-green {
-          0% { box-shadow: 0 0 8px 2px #39e63988, 0 0 0 2px #fff; }
-          100% { box-shadow: 0 0 16px 6px #39e639cc, 0 0 0 2px #fff; }
-        }
-        @media (max-width: 900px) {
-          .featured-section h2 { font-size: 22px !important; }
-        }
-      `}</style>
     </section>
   );
 }

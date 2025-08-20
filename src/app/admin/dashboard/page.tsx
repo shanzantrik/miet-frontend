@@ -1963,7 +1963,7 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{categories.length + subcategories.length}</div>
                   <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
                     {categories.length} Categories • {subcategories.length} Subcategories
-                  </div>
+                </div>
                 </div>
 
                 {/* Consultants Card */}
@@ -1989,7 +1989,7 @@ export default function AdminDashboard() {
                   <div style={{ fontSize: 'clamp(28px, 5vw, 40px)', fontWeight: 800, color: '#fff', marginBottom: 8 }}>{consultants.length}</div>
                   <div style={{ fontSize: 14, color: 'rgba(255,255,255,0.8)' }}>
                     {consultants.filter(c => c.status === 'online').length} Online • {consultants.filter(c => c.status === 'offline').length} Offline
-                  </div>
+              </div>
                 </div>
 
                 {/* Services Card */}

@@ -37,33 +37,33 @@ export default function CoursesPage() {
     try {
       setLoading(true);
       setError(null);
-      
+
       // Debug environment variable
       const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
       console.log('🔧 Backend URL:', backendUrl);
-      
+
       if (!backendUrl) {
         throw new Error('Backend URL not configured. Please check your environment variables.');
       }
-      
+
       // Fetch courses from backend API with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
-      
+
       const response = await fetch(`${backendUrl}/api/products`, {
         signal: controller.signal
       });
-      
+
       clearTimeout(timeoutId);
-      
+
       if (response.ok) {
         const data = await response.json();
         console.log('📊 Raw backend data:', data);
-        
+
         const productsArray = data.products || data;
         console.log('📦 Products array:', productsArray);
         console.log('📦 Products array length:', productsArray.length);
-        
+
         // Filter only active courses
         const activeCourses = productsArray.filter((product: any) => {
           const isActive = product.status === 'active';
@@ -72,10 +72,10 @@ export default function CoursesPage() {
           console.log(`🔍 Product: ${product.title || product.name}, Status: ${product.status}, Type: ${product.type || product.product_type}, Active: ${isActive}, Course: ${isCourse}`);
           return isActive && isCourse;
         });
-        
+
         console.log('✅ Active courses found:', activeCourses.length);
         console.log('✅ Active courses data:', activeCourses);
-        
+
         if (activeCourses.length === 0) {
           console.log('⚠️ No active courses found in backend data');
           setError('No courses are currently available. Please check back later or contact support if you believe this is an error.');
@@ -86,10 +86,10 @@ export default function CoursesPage() {
       } else {
         throw new Error(`Backend responded with status: ${response.status}`);
       }
-      
+
     } catch (err) {
       console.error('❌ Error fetching courses:', err);
-      
+
       if (err instanceof Error) {
         if (err.name === 'AbortError') {
           setError('Request timed out. Please check your connection and try again.');
@@ -99,9 +99,9 @@ export default function CoursesPage() {
       } else {
         setError('Failed to load courses. Please check your connection and try again.');
       }
-      
+
       setCourses([]);
-      
+
     } finally {
       setLoading(false);
     }
@@ -131,16 +131,16 @@ export default function CoursesPage() {
 
   const getPriceDisplay = (price: string | number | undefined) => {
     console.log('💰 Processing price:', price, 'Type:', typeof price);
-    
+
     if (!price || price === '0' || price === 0) return 'Free';
-    
+
     // Convert to string if it's a number
     const priceStr = String(price);
     console.log('💰 Price as string:', priceStr);
-    
+
     if (priceStr.startsWith('$')) return priceStr;
     if (priceStr.toLowerCase() === 'free') return 'Free';
-    
+
     // If it's a number or doesn't start with $, add $ prefix
     return `$${priceStr}`;
   };
@@ -182,7 +182,7 @@ export default function CoursesPage() {
         <main style={{ flex: 1, padding: '2rem 2vw', width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <div style={{ textAlign: 'center' }}>
             <p style={{ fontSize: '1.125rem', color: '#ef4444', marginBottom: '1rem' }}>Error: {error}</p>
-            <button 
+            <button
               onClick={fetchCourses}
               style={{
                 padding: '0.75rem 1.5rem',
@@ -204,26 +204,76 @@ export default function CoursesPage() {
   }
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <>
       <TopBar />
-      
-      <main style={{ flex: 1, padding: '2rem 2vw', width: '100%' }}>
-        <div style={{ textAlign: 'center', marginBottom: '3rem' }}>
-          <h1 style={{ fontSize: '3rem', fontWeight: '700', color: '#1f2937', marginBottom: '1rem' }}>
-            Explore Our Courses
-          </h1>
-          <p style={{ fontSize: '1.25rem', color: '#6b7280', maxWidth: '600px', margin: '0 auto' }}>
-            Discover courses designed to help you grow, learn, and achieve your goals
-          </p>
 
-        </div>
+      <main style={{
+        background: 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+        minHeight: '100vh',
+        padding: '4rem 0',
+        position: 'relative',
+        overflow: 'hidden'
+      }}>
+        {/* Background decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-20%',
+          left: '-20%',
+          width: '40%',
+          height: '40%',
+          background: 'radial-gradient(circle, rgba(99, 102, 241, 0.05) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 8s ease-in-out infinite'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-15%',
+          right: '-15%',
+          width: '30%',
+          height: '30%',
+          background: 'radial-gradient(circle, rgba(118, 75, 162, 0.05) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 6s ease-in-out infinite reverse'
+        }} />
+
+        <div style={{
+          maxWidth: '1400px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          position: 'relative',
+          zIndex: 2
+        }}>
+          {/* Page Header */}
+          <div style={{ textAlign: 'center', marginBottom: '4rem' }}>
+            <h1 style={{
+              fontFamily: 'Righteous, cursive',
+              fontSize: 'clamp(2.5rem, 5vw, 4rem)',
+              fontWeight: '700',
+              color: '#1e1b4b',
+              marginBottom: '1rem',
+              textShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              letterSpacing: '1px'
+            }}>
+              Explore Our Courses
+            </h1>
+            <p style={{
+              fontSize: 'clamp(1.1rem, 2.5vw, 1.4rem)',
+              color: '#4b5563',
+              maxWidth: '800px',
+              margin: '0 auto',
+              lineHeight: '1.6',
+              fontWeight: '400'
+            }}>
+              Discover courses designed to help you grow, learn, and achieve your goals
+            </p>
+          </div>
 
         {/* Filter Tabs */}
         <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '2rem' }}>
-          <div style={{ 
-            display: 'flex', 
-            background: '#f3f4f6', 
-            borderRadius: '8px', 
+          <div style={{
+            display: 'flex',
+            background: '#f3f4f6',
+            borderRadius: '8px',
             padding: '0.25rem',
             gap: '0.25rem'
           }}>
@@ -265,7 +315,7 @@ export default function CoursesPage() {
                 <p style={{ color: '#6b7280', marginBottom: '1rem' }}>
                   {error}
                 </p>
-                <button 
+                <button
                   onClick={fetchCourses}
                   style={{
                     padding: '0.75rem 1.5rem',
@@ -294,8 +344,8 @@ export default function CoursesPage() {
         ) : (
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(350px, 1fr))', gap: '2rem' }}>
             {filteredCourses.map((course) => (
-              <Link 
-                key={course.id} 
+              <Link
+                key={course.id}
                 href={`/courses/${course.id}`}
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
@@ -316,14 +366,14 @@ export default function CoursesPage() {
                   e.currentTarget.style.boxShadow = 'none';
                 }}>
                   <div style={{ position: 'relative' }}>
-                    <img 
-                      src={getDefaultImage(course)} 
+                    <img
+                      src={getDefaultImage(course)}
                       alt={course.title}
-                      style={{ 
-                        width: '100%', 
-                        height: '200px', 
-                        objectFit: 'cover' 
-                      }} 
+                      style={{
+                        width: '100%',
+                        height: '200px',
+                        objectFit: 'cover'
+                      }}
                     />
                     {course.featured && (
                       <div style={{
@@ -341,27 +391,27 @@ export default function CoursesPage() {
                       </div>
                     )}
                   </div>
-                  
+
                   <div style={{ padding: '1.5rem' }}>
-                    <h3 style={{ 
-                      fontSize: '1.25rem', 
-                      fontWeight: '700', 
-                      color: '#1f2937', 
+                    <h3 style={{
+                      fontSize: '1.25rem',
+                      fontWeight: '700',
+                      color: '#1f2937',
                       marginBottom: '0.5rem',
                       lineHeight: '1.3'
                     }}>
                       {course.title}
                     </h3>
-                    
-                    <p style={{ 
-                      fontSize: '0.875rem', 
-                      color: '#6b7280', 
+
+                    <p style={{
+                      fontSize: '0.875rem',
+                      color: '#6b7280',
                       marginBottom: '1rem',
                       lineHeight: '1.5'
                     }}>
                       {course.subtitle || course.description.substring(0, 120) + '...'}
                     </p>
-                    
+
                     {course.rating && course.rating > 0 && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
                         <span style={{ fontSize: '1rem', fontWeight: '600', color: '#1f2937' }}>
@@ -377,7 +427,7 @@ export default function CoursesPage() {
                         )}
                       </div>
                     )}
-                    
+
                     {(course.duration || course.enrolled_students) && (
                       <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#6b7280' }}>
                         {course.duration && (
@@ -394,10 +444,10 @@ export default function CoursesPage() {
                         )}
                       </div>
                     )}
-                    
+
                     {course.instructor_name && (
-                      <div style={{ 
-                        fontSize: '0.875rem', 
+                      <div style={{
+                        fontSize: '0.875rem',
                         color: '#6b7280',
                         borderTop: '1px solid #f3f4f6',
                         paddingTop: '1rem'
@@ -411,9 +461,20 @@ export default function CoursesPage() {
             ))}
           </div>
         )}
+        </div>
+
+        {/* CSS Animation */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes float {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-20px); }
+            }
+          `
+        }} />
       </main>
 
       <Footer />
-    </div>
+    </>
   );
 }

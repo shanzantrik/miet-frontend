@@ -18,9 +18,55 @@ export default function WelcomeBoard() {
         justifyContent: 'center',
         boxSizing: 'border-box',
         position: 'relative',
+        overflow: 'hidden',
       }}
       aria-label="Welcome message"
     >
+      {/* Animated Background Glow Elements */}
+      <div style={{
+        position: 'absolute',
+        top: '-20%',
+        left: '-20%',
+        width: '40%',
+        height: '40%',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.20) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'glowFloat1 8s ease-in-out infinite',
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '-15%',
+        right: '-15%',
+        width: '35%',
+        height: '35%',
+        background: 'radial-gradient(circle, rgba(118, 75, 162, 0.18) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'glowFloat2 10s ease-in-out infinite reverse',
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: 'absolute',
+        top: '30%',
+        right: '10%',
+        width: '25%',
+        height: '25%',
+        background: 'radial-gradient(circle, rgba(139, 92, 246, 0.15) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'glowFloat3 12s ease-in-out infinite',
+        zIndex: 0,
+      }} />
+      <div style={{
+        position: 'absolute',
+        bottom: '20%',
+        left: '10%',
+        width: '20%',
+        height: '20%',
+        background: 'radial-gradient(circle, rgba(99, 102, 241, 0.12) 0%, transparent 70%)',
+        borderRadius: '50%',
+        animation: 'glowFloat4 15s ease-in-out infinite reverse',
+        zIndex: 0,
+      }} />
       <div style={{
         width: '100%',
         maxWidth: 1440,
@@ -43,19 +89,86 @@ export default function WelcomeBoard() {
           zIndex: 2,
           boxSizing: 'border-box',
         }}>
-          <div style={{ fontSize: 32, color: 'var(--text-accent-alt)', fontWeight: 700, lineHeight: 1.2, marginBottom: 16 }}>
+                    <div
+            className="hero-title"
+            style={{
+              fontSize: 'clamp(2.5rem, 3vw, 2rem)',
+              color: 'var(--text-accent-alt)',
+              fontWeight: 800,
+              lineHeight: 1.1,
+              marginBottom: '1.5rem',
+              textShadow: '0 2px 10px rgba(0,0,0,0.1)',
+              letterSpacing: '0.5px'
+            }}
+          >
             Comprehensive Support for Special Education and Mental Health Challenges
           </div>
-          <div style={{ fontSize: 20, color: 'var(--text-secondary)', fontWeight: 500, marginBottom: 28 }}>
+                    <div
+            className="hero-subtitle"
+            style={{
+              fontSize: 'clamp(1.3rem, 1.5vw, 1rem)',
+              color: 'var(--text-secondary)',
+              fontWeight: 500,
+              marginBottom: '2rem',
+              lineHeight: 1.4,
+              maxWidth: '600px'
+            }}
+          >
             We provide best specialized education services for children with unique needs &amp; services to address Mental Health Challenges.
           </div>
-          <div style={{ fontSize: 22, color: 'var(--text-accent-alt)', fontWeight: 600, lineHeight: 1.5, marginBottom: 10 }}>
-            Welcome to <b>MieT</b>! <br />
-            <span style={{ fontSize: 18, color: '#444', fontWeight: 400 }}>
+                    <div
+            className="hero-welcome"
+            style={{
+              fontSize: 'clamp(1.5rem, 2.5vw, 2rem)',
+              color: 'var(--text-accent-alt)',
+              fontWeight: 700,
+              lineHeight: 1.4,
+              marginBottom: '1rem',
+              textShadow: '0 1px 5px rgba(0,0,0,0.1)'
+            }}
+          >
+            Welcome to <b style={{ color: '#5a67d8' }}>MieT</b>! <br />
+                        <span
+              className="hero-description"
+              style={{
+                fontSize: 'clamp(1.1rem, 2vw, 1.3rem)',
+                color: '#444',
+                fontWeight: 500,
+                lineHeight: 1.6
+              }}
+            >
               Book sessions, get support, and thrive with MieT.<br />
-              Your trusted platform for connecting with Special Education and Mental Health Professionals, and accessing inclusive resources. <a href="#" style={{ color: '#5a67d8', textDecoration: 'underline' }}>Learn more</a>.
+              Your trusted platform for connecting with Special Education and Mental Health Professionals, and accessing inclusive resources.
             </span>
           </div>
+
+                    <button
+            onClick={() => window.location.href = '/about'}
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#fff',
+              border: 'none',
+              borderRadius: '12px',
+              padding: '0.8rem 1.5rem',
+              fontWeight: '700',
+              fontSize: 'clamp(1rem, 1.5vw, 1.2rem)',
+              cursor: 'pointer',
+              marginTop: '1rem',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+              display: 'inline-block'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+            }}
+          >
+            Learn More
+          </button>
         </div>
         {/* Right: Animated Brain Hero */}
         <div style={{
@@ -205,6 +318,24 @@ export default function WelcomeBoard() {
       <style
         dangerouslySetInnerHTML={{
           __html: `
+        /* Background Glow Animations */
+        @keyframes glowFloat1 {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.8; }
+          50% { transform: translateY(-30px) scale(1.1); opacity: 1; }
+        }
+        @keyframes glowFloat2 {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.6; }
+          50% { transform: translateY(25px) scale(1.05); opacity: 0.9; }
+        }
+        @keyframes glowFloat3 {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.5; }
+          50% { transform: translateY(-20px) scale(1.08); opacity: 0.8; }
+        }
+        @keyframes glowFloat4 {
+          0%, 100% { transform: translateY(0px) scale(1); opacity: 0.4; }
+          50% { transform: translateY(15px) scale(1.03); opacity: 0.7; }
+        }
+
         @keyframes rotateCircles {
           0% { transform: rotate(0deg); }
           100% { transform: rotate(360deg); }
@@ -256,6 +387,41 @@ export default function WelcomeBoard() {
             justify-content: center !important;
             align-items: center !important;
             text-align: center !important;
+          }
+
+          /* Responsive font adjustments for mobile */
+          .welcome-board .hero-title {
+            font-size: clamp(2rem, 4vw, 3rem) !important;
+            margin-bottom: 1rem !important;
+          }
+          .welcome-board .hero-subtitle {
+            font-size: clamp(1.1rem, 2vw, 1.5rem) !important;
+            margin-bottom: 1.5rem !important;
+          }
+          .welcome-board .hero-welcome {
+            font-size: clamp(1.2rem, 2.5vw, 1.6rem) !important;
+            margin-bottom: 0.8rem !important;
+          }
+          .welcome-board .hero-description {
+            font-size: clamp(1rem, 1.8vw, 1.2rem) !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .welcome-board .hero-title {
+            font-size: clamp(1.8rem, 3.5vw, 2.5rem) !important;
+            line-height: 1.2 !important;
+          }
+          .welcome-board .hero-subtitle {
+            font-size: clamp(1rem, 1.8vw, 1.3rem) !important;
+            line-height: 1.3 !important;
+          }
+          .welcome-board .hero-welcome {
+            font-size: clamp(1.1rem, 2.2vw, 1.4rem) !important;
+          }
+          .welcome-board .hero-description {
+            font-size: clamp(0.9rem, 1.6vw, 1.1rem) !important;
+            line-height: 1.4 !important;
           }
         }
       `,

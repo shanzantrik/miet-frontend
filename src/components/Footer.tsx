@@ -1,33 +1,335 @@
 import React from 'react';
 
 export default function Footer() {
-  // TODO: Add more links, social, accessibility info
   return (
     <>
-      <footer className="footer" style={{ background: '#22543d', color: '#fff', padding: '2.5rem 0', textAlign: 'center' }} aria-label="Footer">
-        <div style={{ maxWidth: 900, margin: '0 auto', fontSize: 16 }}>
-          <div style={{ fontFamily: 'Righteous, cursive', fontSize: 24, color: '#5a67d8', marginBottom: 8 }}>MieT</div>
-          <div style={{ marginBottom: 12 }}>Mind Inclusion Education Technology. Empowering children and families through inclusive education, mental health, and technology.</div>
-          <div style={{ marginBottom: 12 }}>
-            <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>About</a>
-            <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Services</a>
-            <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Consultants</a>
-            <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Marketplace</a>
-            <a href="/courses" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Courses</a>
-            <a href="#" style={{ color: '#fff', margin: '0 10px', textDecoration: 'underline' }}>Contact</a>
+      <footer className="footer" style={{
+        background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 25%, #3730a3 50%, #4338ca 75%, #6366f1 100%)',
+        color: '#ffffff',
+        padding: '4rem 0 2rem 0',
+        position: 'relative',
+        overflow: 'hidden'
+      }} aria-label="Footer">
+
+        {/* Background decorative elements */}
+        <div style={{
+          position: 'absolute',
+          top: '-30%',
+          left: '-20%',
+          width: '50%',
+          height: '50%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.03) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 10s ease-in-out infinite'
+        }} />
+        <div style={{
+          position: 'absolute',
+          bottom: '-25%',
+          right: '-15%',
+          width: '40%',
+          height: '40%',
+          background: 'radial-gradient(circle, rgba(255,255,255,0.04) 0%, transparent 70%)',
+          borderRadius: '50%',
+          animation: 'float 8s ease-in-out infinite reverse'
+        }} />
+
+        <div style={{
+          maxWidth: '1200px',
+          margin: '0 auto',
+          padding: '0 2rem',
+          position: 'relative',
+          zIndex: 2
+        }}>
+
+          {/* Main Footer Content */}
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+            gap: '3rem',
+            marginBottom: '3rem'
+          }}>
+
+            {/* Brand Section */}
+            <div style={{ textAlign: 'left' }}>
+              <div style={{
+                fontFamily: 'Righteous, cursive',
+                fontSize: 'clamp(2rem, 3vw, 2.5rem)',
+                color: '#ffffff',
+                marginBottom: '1rem',
+                textShadow: '0 2px 10px rgba(0,0,0,0.3)'
+              }}>
+                MieT
+              </div>
+              <p style={{
+                fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
+                lineHeight: '1.6',
+                color: 'rgba(255,255,255,0.9)',
+                marginBottom: '1.5rem',
+                fontWeight: '400'
+              }}>
+                Mind Inclusion Education Technology. Empowering children and families through inclusive education, mental health, and technology.
+              </p>
+
+              {/* Social Media Icons */}
+              <div style={{
+                display: 'flex',
+                gap: '1rem',
+                marginTop: '1.5rem'
+              }}>
+                {[
+                  { name: 'Facebook', icon: 'F', href: '#' },
+                  { name: 'Instagram', icon: 'I', href: '#' },
+                  { name: 'LinkedIn', icon: 'L', href: '#' },
+                  { name: 'YouTube', icon: 'Y', href: '#' },
+                  { name: 'Twitter', icon: 'T', href: '#' },
+                  { name: 'Google Review', icon: 'G', href: '#' }
+                ].map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    aria-label={social.name}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      fontWeight: '600',
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                      e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(255,255,255,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Quick Links */}
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{
+                fontSize: 'clamp(1.3rem, 1.5vw, 1.4rem)',
+                fontWeight: '700',
+                color: '#ffffff',
+                marginBottom: '1.5rem',
+                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }}>
+                Quick Links
+              </h3>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '0.8rem'
+              }}>
+                {[
+                  { name: 'About Us', href: '/about' },
+                  { name: 'Our Services', href: '/services' },
+                  { name: 'Find Consultants', href: '/consultants' },
+                  { name: 'Marketplace', href: '/marketplace' },
+                  { name: 'Courses', href: '/courses' },
+                  { name: 'Contact Us', href: '/contact' }
+                ].map((link) => (
+                  <a
+                    key={link.name}
+                    href={link.href}
+                    style={{
+                      color: 'rgba(255,255,255,0.8)',
+                      fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
+                      textDecoration: 'none',
+                      fontWeight: '500',
+                      transition: 'all 0.3s ease',
+                      display: 'inline-block'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.color = '#ffffff';
+                      e.currentTarget.style.transform = 'translateX(8px)';
+                      e.currentTarget.style.textShadow = '0 2px 8px rgba(255,255,255,0.3)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+                      e.currentTarget.style.transform = 'translateX(0)';
+                      e.currentTarget.style.textShadow = 'none';
+                    }}
+                  >
+                    → {link.name}
+                  </a>
+                ))}
+              </div>
+            </div>
+
+            {/* Contact Info */}
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{
+                fontSize: 'clamp(1.3rem, 1.5vw, 1.4rem)',
+                fontWeight: '700',
+                color: '#ffffff',
+                marginBottom: '1.5rem',
+                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }}>
+                Get in Touch
+              </h3>
+              <div style={{
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '1rem'
+              }}>
+                <div style={{
+                  fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: '500',
+                  lineHeight: '1.6'
+                }}>
+                  📍 Gurgaon, Haryana, India
+                </div>
+                <div style={{
+                  fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: '500',
+                  lineHeight: '1.6'
+                }}>
+                  📞 +91 90855 38844
+                </div>
+                <div style={{
+                  fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
+                  color: 'rgba(255,255,255,0.9)',
+                  fontWeight: '500',
+                  lineHeight: '1.6'
+                }}>
+                  ✉️ info@miet.in
+                </div>
+
+                {/* Newsletter Signup */}
+                <div style={{ marginTop: '1rem' }}>
+                  <p style={{
+                    fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+                    color: 'rgba(255,255,255,0.8)',
+                    marginBottom: '0.8rem',
+                    fontWeight: '500'
+                  }}>
+                    Subscribe to our newsletter
+                  </p>
+                  <div style={{
+                    display: 'flex',
+                    gap: '0.5rem',
+                    flexWrap: 'wrap'
+                  }}>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      style={{
+                        flex: 1,
+                        minWidth: '200px',
+                        padding: '0.8rem',
+                        borderRadius: '12px',
+                        border: 'none',
+                        background: 'rgba(255,255,255,0.1)',
+                        color: '#ffffff',
+                        fontSize: '1rem',
+                        backdropFilter: 'blur(10px)',
+                        outline: 'none'
+                      }}
+                    />
+                    <button style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#ffffff',
+                      border: 'none',
+                      borderRadius: '12px',
+                      padding: '0.8rem 1.5rem',
+                      fontSize: '1rem',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      transition: 'all 0.3s ease',
+                      boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+                    }}
+                    >
+                      Subscribe
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
           </div>
-          <div style={{ marginBottom: 12 }}>
-            <a href="#" aria-label="Facebook" style={{ color: '#fff', margin: '0 8px' }}>F</a>
-            <a href="#" aria-label="Instagram" style={{ color: '#fff', margin: '0 8px' }}>I</a>
-            <a href="#" aria-label="LinkedIn" style={{ color: '#fff', margin: '0 8px' }}>L</a>
-            <a href="#" aria-label="YouTube" style={{ color: '#fff', margin: '0 8px' }}>Y</a>
-            <a href="#" aria-label="Twitter" style={{ color: '#fff', margin: '0 8px' }}>T</a>
-            <a href="#" aria-label="Google Review" style={{ color: '#fff', margin: '0 8px' }}>G</a>
-          </div>
-          <div style={{ color: '#cbd5e1', fontSize: 14, marginTop: 18 }}>
-            &copy; {new Date().getFullYear()} MieT. All rights reserved.
+
+          {/* Footer Bottom */}
+          <div style={{
+            borderTop: '1px solid rgba(255,255,255,0.1)',
+            paddingTop: '2rem',
+            textAlign: 'center'
+          }}>
+            <p style={{
+              color: 'rgba(255,255,255,0.7)',
+              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+              fontWeight: '500',
+              lineHeight: '1.6'
+            }}>
+              &copy; {new Date().getFullYear()} MieT (Mind Inclusion Education Technology). All rights reserved.
+            </p>
+            <p style={{
+              color: 'rgba(255,255,255,0.6)',
+              fontSize: 'clamp(0.8rem, 0.9vw, 0.9rem)',
+              marginTop: '0.5rem',
+              fontWeight: '400'
+            }}>
+              Designed with ❤️ for inclusive education and mental health support
+            </p>
           </div>
         </div>
+
+        {/* CSS Animations */}
+        <style dangerouslySetInnerHTML={{
+          __html: `
+            @keyframes float {
+              0%, 100% { transform: translateY(0px); }
+              50% { transform: translateY(-20px); }
+            }
+
+            /* Responsive adjustments */
+            @media (max-width: 768px) {
+              .footer {
+                padding: 3rem 0 1.5rem 0 !important;
+              }
+
+              .footer input {
+                min-width: 100% !important;
+                margin-bottom: 0.5rem !important;
+              }
+
+              .footer button {
+                width: 100% !important;
+              }
+            }
+
+            @media (max-width: 480px) {
+              .footer {
+                padding: 2rem 0 1rem 0 !important;
+              }
+            }
+          `
+        }} />
       </footer>
       {/* WhatsApp Floating Button */}
       <a

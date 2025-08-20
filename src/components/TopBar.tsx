@@ -109,40 +109,305 @@ export default function TopBar() {
   // Only one TopBar: no duplicate rendering
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
-      {/* Utility Row */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: 13, padding: '2px 2vw', background: highContrast ? '#000' : '#e6f0f7' }}>
-        <div style={{ display: 'flex', gap: 16 }}>
-          <a href="#" aria-label="Home" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18 }}><FaHome /></a>
-          <a
-            href="#"
-            aria-label="Sitemap"
+              {/* Utility Row */}
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
+          padding: '0.5rem 2vw',
+          background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+        }}>
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            <Link href="/" aria-label="Home" style={{
+              color: highContrast ? '#fff' : '#667eea',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
+              fontWeight: '500',
+              transition: 'all 0.3s ease'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = highContrast ? '#fff' : '#764ba2';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = highContrast ? '#fff' : '#667eea';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+            >
+              <FaHome style={{ marginRight: '0.5rem' }} />
+              Home
+            </Link>
+            <Link
+              href="/sitemap"
+              aria-label="Sitemap"
+              style={{
+                color: highContrast ? '#fff' : '#667eea',
+                textDecoration: 'none',
+                fontWeight: '500',
+                transition: 'all 0.3s ease',
+                padding: '0.25rem 0.75rem',
+                borderRadius: '6px',
+                border: '1px solid transparent'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.color = highContrast ? '#fff' : '#764ba2';
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.borderColor = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.color = highContrast ? '#fff' : '#667eea';
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.borderColor = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              Sitemap
+            </Link>
+          </div>
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          {/* Accessibility Controls */}
+          <div style={{
+            display: 'flex',
+            gap: '0.5rem',
+            alignItems: 'center',
+            background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
+            padding: '0.5rem',
+            borderRadius: '8px',
+            border: '1px solid transparent'
+          }}>
+            <button
+              aria-label="Decrease font size"
+              onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: highContrast ? '#fff' : '#667eea',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '4px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              A-
+            </button>
+            <button
+              aria-label="Reset font size"
+              onClick={() => setFontSize(1)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: highContrast ? '#fff' : '#667eea',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '4px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              A
+            </button>
+            <button
+              aria-label="Increase font size"
+              onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: highContrast ? '#fff' : '#667eea',
+                cursor: 'pointer',
+                fontWeight: '700',
+                fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+                padding: '0.25rem 0.5rem',
+                borderRadius: '4px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              A+
+            </button>
+          </div>
+
+          {/* High Contrast Toggle */}
+          <button
+            aria-label="Toggle high contrast"
+            onClick={() => setHighContrast(h => !h)}
             style={{
-              color: highContrast ? '#fff' : '#22543d',
-              textDecoration: 'none'
+              background: highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
+              border: '1px solid transparent',
+              color: highContrast ? '#fff' : '#667eea',
+              cursor: 'pointer',
+              fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+              padding: '0.5rem',
+              borderRadius: '6px',
+              transition: 'all 0.3s ease',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.3)' : 'rgba(99, 102, 241, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
             }}
           >
-            Sitemap
-          </a>
-        </div>
-        <div style={{ display: 'flex', gap: 16, alignItems: 'center' }}>
-          <button aria-label="Decrease font size" onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontWeight: 700, fontSize: 18, padding: '0 6px' }}>A-</button>
-          <button aria-label="Reset font size" onClick={() => setFontSize(1)} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontWeight: 700, fontSize: 20, padding: '0 6px' }}>A</button>
-          <button aria-label="Increase font size" onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontWeight: 700, fontSize: 22, padding: '0 6px' }}>A+</button>
-          <button aria-label="Toggle high contrast" onClick={() => setHighContrast(h => !h)} style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', cursor: 'pointer', fontSize: 20, marginLeft: 4 }}><FaAdjust /></button>
-          {/* Language dropdown with flag */}
-          <div style={{ position: 'relative', marginLeft: 8 }}>
-            <button aria-label="Switch language" onClick={() => setShowLang(l => !l)} style={{ background: '#fff', border: '1px solid #22543d', borderRadius: 4, color: '#22543d', padding: '0 8px', fontWeight: 600, cursor: 'pointer', display: 'flex', alignItems: 'center' }}>
-              <Flag code={lang} />{lang.toUpperCase()} ▼
+            <FaAdjust />
+          </button>
+
+          {/* Language Dropdown */}
+          <div style={{ position: 'relative' }}>
+            <button
+              aria-label="Switch language"
+              onClick={() => setShowLang(l => !l)}
+              style={{
+                background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '8px',
+                color: highContrast ? '#fff' : '#667eea',
+                padding: '0.5rem 0.75rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <Flag code={lang} />
+              {lang.toUpperCase()}
+              <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showLang ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
             </button>
             {showLang && (
-              <div style={{ position: 'absolute', top: 32, left: 0, background: '#fff', border: '1px solid #e2e8f0', borderRadius: 4, zIndex: 10, minWidth: 70 }}>
-                <button onClick={() => { setLang('en'); setShowLang(false); }} style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', color: '#22543d', padding: '6px 12px', cursor: 'pointer' }}><Flag code="en" />EN</button>
-                <button onClick={() => { setLang('hi'); setShowLang(false); }} style={{ display: 'flex', alignItems: 'center', width: '100%', background: 'none', border: 'none', color: '#22543d', padding: '6px 12px', cursor: 'pointer' }}><Flag code="hi" />HI</button>
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 0.5rem)',
+                left: 0,
+                background: highContrast ? '#222' : 'rgba(255,255,255,0.95)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '8px',
+                zIndex: 10,
+                minWidth: '80px',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                backdropFilter: 'blur(10px)',
+                overflow: 'hidden'
+              }}>
+                <button
+                  onClick={() => { setLang('en'); setShowLang(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    color: highContrast ? '#fff' : '#667eea',
+                    padding: '0.75rem 1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  <Flag code="en" /> EN
+                </button>
+                <button
+                  onClick={() => { setLang('hi'); setShowLang(false); }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    color: highContrast ? '#fff' : '#667eea',
+                    padding: '0.75rem 1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  <Flag code="hi" /> HI
+                </button>
               </div>
             )}
           </div>
-          {/* TODO: Implement currency switch */}
-          <button aria-label="Switch currency" style={{ background: '#fff', border: '1px solid #22543d', borderRadius: 4, color: '#22543d', padding: '0 8px', fontWeight: 600, marginLeft: 8, cursor: 'pointer', display: 'flex', alignItems: 'center' }}><FaGlobe style={{ marginRight: 4 }} />₹</button>
+
+          {/* Currency Switch */}
+          <button
+            aria-label="Switch currency"
+            style={{
+              background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
+              border: '1px solid rgba(99, 102, 241, 0.2)',
+              borderRadius: '8px',
+              color: highContrast ? '#fff' : '#667eea',
+              padding: '0.5rem 0.75rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              transition: 'all 0.3s ease',
+              backdropFilter: 'blur(10px)'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+          >
+            <FaGlobe style={{ fontSize: 'clamp(0.9rem, 1vw, 1rem)' }} />
+            ₹
+          </button>
         </div>
       </div>
       {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
@@ -155,26 +420,175 @@ export default function TopBar() {
         </div>
         {/* Main Navigation (desktop) */}
         {!isMobile && (
-          <nav aria-label="Main navigation" style={{ display: 'flex', alignItems: 'center', gap: 18, fontSize: 16, fontWeight: 600, flex: 1, justifyContent: 'center', color: highContrast ? '#fff' : '#22543d' }}>
-            <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', display: 'flex', alignItems: 'center', fontSize: 18, marginRight: 8 }}><FaHome /></Link>
-            <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>About Us</Link>
-            {/* Services with single link */}
-            <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Services</Link>
-            <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Consultants</Link>
-            <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Marketplace</Link>
-            <Link href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Courses</Link>
-            {/* Resources with submenu - removed for now */}
-            {/* <div style={{ position: 'relative', margin: 0 }} onMouseOver={() => setShowResources(true)} onMouseOut={() => setShowResources(false)}>
-              <button style={{ background: 'none', border: 'none', color: highContrast ? '#fff' : '#22543d', fontWeight: 600, fontSize: 16, cursor: 'pointer', padding: 0 }}>Resources ▼</button>
-              {showResources && (
-                <div style={{ position: 'absolute', top: '100%', left: 0, background: highContrast ? '#222' : '#fff', border: '1px solid #e2e8f0', borderRadius: 8, boxShadow: '0 2px 12px rgba(90,103,216,0.07)', display: 'flex', flexDirection: 'column', padding: 12, zIndex: 20, minWidth: 180, marginTop: 0 }}>
-                  <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Blog</Link>
-                  <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', marginBottom: 8, padding: '6px 12px', borderRadius: 4 }}>Legal Framework</Link>
-                  <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', padding: '6px 12px', borderRadius: 4 }}>Free Resources</Link>
-                </div>
-              )}
-            </div> */}
-            <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none' }}>Contact Us</Link>
+          <nav aria-label="Main navigation" style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: '2rem',
+            fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+            fontWeight: '600',
+            flex: 1,
+            justifyContent: 'center',
+            color: highContrast ? '#fff' : '#1e1b4b',
+            position: 'relative'
+          }}>
+            <Link href="/" style={{
+              color: highContrast ? '#fff' : '#667eea',
+              textDecoration: 'none',
+              display: 'flex',
+              alignItems: 'center',
+              fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+              fontWeight: '700',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              background: 'transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              <FaHome style={{ marginRight: '0.5rem' }} />
+              Home
+            </Link>
+
+            <Link href="/about" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              About Us
+            </Link>
+
+            <Link href="/services" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              Services
+            </Link>
+
+            <Link href="/consultants" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              Consultants
+            </Link>
+
+            <Link href="/marketplace" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              Marketplace
+            </Link>
+
+            <Link href="/courses" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              Courses
+            </Link>
+
+            <Link href="/contact" style={{
+              color: highContrast ? '#fff' : '#1e1b4b',
+              textDecoration: 'none',
+              padding: '0.5rem 1rem',
+              borderRadius: '8px',
+              transition: 'all 0.3s ease',
+              fontWeight: '600'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
+            >
+              Contact Us
+            </Link>
           </nav>
         )}
         {/* Hamburger for mobile */}
@@ -183,43 +597,113 @@ export default function TopBar() {
             {mobileMenu ? <FaTimes /> : <FaBars />}
           </button>
         )}
-        {/* Login/Signup and Social */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6, marginLeft: 16 }}>
-          <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
-            {/* Cart Icon */}
-            <Link href="/cart" style={{ position: 'relative', textDecoration: 'none', color: highContrast ? '#fff' : '#5a67d8' }}>
-              <FaShoppingCart style={{ fontSize: '20px', cursor: 'pointer' }} />
-              {itemCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                  background: '#ef4444',
-                  color: 'white',
-                  borderRadius: '50%',
-                  width: '20px',
-                  height: '20px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  fontSize: '12px',
-                  fontWeight: '600'
-                }}>
-                  {itemCount}
-                </span>
-              )}
-            </Link>
-            <button style={{ background: '#5a67d8', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowLogin(true)}>Login</button>
-            <button style={{ background: '#22543d', color: '#fff', borderRadius: 6, border: 'none', padding: '6px 18px', fontWeight: 600, cursor: 'pointer' }} onClick={() => setShowSignup(true)}>Sign Up</button>
-          </div>
-          <div style={{ display: 'flex', gap: 8, marginTop: 4 }}>
-            <a href="#" aria-label="Facebook"><FaFacebookF /></a>
-            <a href="#" aria-label="Instagram"><FaInstagram /></a>
-            <a href="#" aria-label="LinkedIn"><FaLinkedinIn /></a>
-            <a href="#" aria-label="YouTube"><FaYoutube /></a>
-            <a href="#" aria-label="Twitter"><FaTwitter /></a>
-            <a href="#" aria-label="Google Review"><span style={{ fontWeight: 700, fontSize: 18, margin: '0 4px' }}>G</span></a>
-          </div>
+        {/* Login/Signup and Cart */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '1.5rem', marginLeft: '2rem' }}>
+          {/* Cart Icon */}
+          <Link href="/cart" style={{
+            position: 'relative',
+            textDecoration: 'none',
+            color: highContrast ? '#fff' : '#667eea',
+            padding: '0.75rem',
+            borderRadius: '12px',
+            background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
+            border: '1px solid transparent',
+            transition: 'all 0.3s ease',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+            e.currentTarget.style.transform = 'translateY(-2px)';
+            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+          }}
+          onMouseLeave={(e) => {
+            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+            e.currentTarget.style.transform = 'translateY(0)';
+            e.currentTarget.style.boxShadow = 'none';
+          }}
+          >
+            <FaShoppingCart style={{
+              fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+              cursor: 'pointer'
+            }} />
+            {itemCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
+                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                color: 'white',
+                borderRadius: '50%',
+                width: '24px',
+                height: '24px',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                fontSize: 'clamp(0.7rem, 0.8vw, 0.8rem)',
+                fontWeight: '700',
+                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+                border: '2px solid #ffffff'
+              }}>
+                {itemCount}
+              </span>
+            )}
+          </Link>
+
+          {/* Login Button */}
+          <button
+            style={{
+              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+              color: '#fff',
+              borderRadius: '12px',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
+            }}
+            onClick={() => setShowLogin(true)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+            }}
+          >
+            Login
+          </button>
+
+          {/* Sign Up Button */}
+          <button
+            style={{
+              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+              color: '#fff',
+              borderRadius: '12px',
+              border: 'none',
+              padding: '0.75rem 1.5rem',
+              fontWeight: '600',
+              cursor: 'pointer',
+              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+              transition: 'all 0.3s ease',
+              boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)'
+            }}
+            onClick={() => setShowSignup(true)}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 27, 75, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 27, 75, 0.3)';
+            }}
+          >
+            Sign Up
+          </button>
         </div>
         {/* Mobile menu overlay */}
         {mobileMenu && (

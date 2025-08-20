@@ -19,7 +19,13 @@ const tabs = [
         }}
       >
         <div style={{ flex: 1, minWidth: 280 }}>
-          <h3 style={{ color: '#5a67d8', fontWeight: 700 }}>
+          <h3 style={{
+            color: '#667eea',
+            fontWeight: '700',
+            fontSize: 'clamp(1.5rem, 2vw, 1.8rem)',
+            marginBottom: '1rem',
+            lineHeight: '1.3'
+          }}>
             Comprehensive Support for Special Education and Mental Health Challenges
           </h3>
           <p>
@@ -154,17 +160,21 @@ export default function AboutSection() {
   return (
     <section
       className="about-section"
-      style={{ background: 'var(--muted-alt)', padding: '2.5rem 0', textAlign: 'center' }}
+      style={{
+        padding: '0 2rem',
+        textAlign: 'center'
+      }}
       aria-label="About us"
     >
-
+      {/* Tab Navigation */}
       <div
         style={{
           display: 'flex',
           justifyContent: 'center',
-          gap: 8,
-          marginBottom: 32,
+          gap: '1rem',
+          marginBottom: '3rem',
           flexWrap: 'wrap',
+          padding: '0 1rem'
         }}
       >
         {tabs.map((tab, idx) => (
@@ -172,17 +182,33 @@ export default function AboutSection() {
             key={tab.label}
             onClick={() => setActiveTab(idx)}
             style={{
-              background: activeTab === idx ? 'var(--accent)' : 'var(--card)',
-              color: activeTab === idx ? 'var(--card)' : 'var(--text-accent-alt)',
-              border: '2px solid var(--accent)',
-              borderRadius: 8,
-              padding: '0.7rem 1.7rem',
-              fontWeight: 700,
-              fontSize: 18,
+              background: activeTab === idx ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(255,255,255,0.9)',
+              color: activeTab === idx ? '#ffffff' : '#1e1b4b',
+              border: activeTab === idx ? 'none' : '2px solid rgba(99, 102, 241, 0.2)',
+              borderRadius: '15px',
+              padding: '1rem 2rem',
+              fontWeight: '700',
+              fontSize: 'clamp(0.9rem, 1.1vw, 1.1rem)',
               cursor: 'pointer',
-              boxShadow: activeTab === idx ? '0 2px 12px var(--accent-alt, #5a67d822)' : 'none',
-              transition: 'all 0.2s',
+              boxShadow: activeTab === idx ? '0 8px 25px rgba(99, 102, 241, 0.3)' : '0 4px 15px rgba(0,0,0,0.1)',
+              transition: 'all 0.3s ease',
               outline: 'none',
+              backdropFilter: 'blur(10px)',
+              minWidth: '120px'
+            }}
+            onMouseEnter={(e) => {
+              if (activeTab !== idx) {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.2)';
+              }
+            }}
+            onMouseLeave={(e) => {
+              if (activeTab !== idx) {
+                e.currentTarget.style.background = 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = '0 4px 15px rgba(0,0,0,0.1)';
+              }
             }}
             aria-selected={activeTab === idx}
             aria-controls={`about-tabpanel-${idx}`}
@@ -192,19 +218,23 @@ export default function AboutSection() {
           </button>
         ))}
       </div>
+
+      {/* Tab Content */}
       <div
         id={`about-tabpanel-${activeTab}`}
         role="tabpanel"
         aria-labelledby={`about-tab-${activeTab}`}
         style={{
-          animation: 'fadeIn 0.5s',
-          maxWidth: 'min(1200px, 96vw)',
+          maxWidth: '1400px',
           margin: '0 auto',
           textAlign: 'left',
-          background: 'var(--card)',
-          borderRadius: 12,
-          boxShadow: '0 2px 12px var(--accent-alt, #5a67d822)',
-          padding: 24,
+          background: 'rgba(255,255,255,0.95)',
+          borderRadius: '24px',
+          boxShadow: '0 20px 60px rgba(0,0,0,0.1)',
+          padding: '3rem',
+          backdropFilter: 'blur(10px)',
+          border: '1px solid rgba(255,255,255,0.2)',
+          transition: 'all 0.3s ease'
         }}
       >
         {tabs[activeTab].content}
