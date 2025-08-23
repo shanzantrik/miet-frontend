@@ -407,6 +407,117 @@ export default function WelcomeBoard() {
           }
         }
 
+        /* iPhone 14 Pro Max specific optimizations (430px width) */
+        @media (max-width: 430px) {
+          .welcome-board {
+            padding: 1.5rem 1rem !important;
+            min-height: 100vh !important;
+            justify-content: center !important;
+          }
+          
+          .welcome-board .hero-title {
+            font-size: clamp(1.6rem, 4.5vw, 2.2rem) !important;
+            line-height: 1.1 !important;
+            margin-bottom: 0.8rem !important;
+            max-width: 90% !important;
+          }
+          
+          .welcome-board .hero-subtitle {
+            font-size: clamp(0.9rem, 2.2vw, 1.2rem) !important;
+            line-height: 1.2 !important;
+            margin-bottom: 1.2rem !important;
+            max-width: 95% !important;
+          }
+          
+          .welcome-board .hero-welcome {
+            font-size: clamp(1rem, 2.8vw, 1.3rem) !important;
+            margin-bottom: 0.6rem !important;
+          }
+          
+          .welcome-board .hero-description {
+            font-size: clamp(0.85rem, 2vw, 1rem) !important;
+            line-height: 1.3 !important;
+            max-width: 100% !important;
+          }
+          
+          /* Optimize floating brain animation for mobile */
+          .welcome-board [style*="position: absolute"] {
+            transform: scale(0.7) !important;
+          }
+          
+          /* Adjust floating labels for smaller screen */
+          .welcome-board .floating-label {
+            font-size: clamp(0.7rem, 1.8vw, 0.9rem) !important;
+            padding: 0.3rem 0.6rem !important;
+          }
+          
+          /* Better spacing for touch interactions */
+          .welcome-board button,
+          .welcome-board a {
+            min-height: 48px !important;
+            padding: 0.75rem 1.5rem !important;
+            font-size: clamp(0.9rem, 2.2vw, 1rem) !important;
+          }
+
+          /* Scale down the entire animation container for mobile */
+          .welcome-board > div > div:last-child > div:last-child {
+            transform: scale(0.75) !important;
+            transform-origin: center !important;
+          }
+
+          /* Ensure all labels are visible within the scaled container */
+          .welcome-board .labelFloat1,
+          .welcome-board .labelFloat2,
+          .welcome-board .labelFloat3,
+          .welcome-board .labelFloat4 {
+            font-size: 16px !important;
+            padding: 3px 14px !important;
+            min-width: 80px !important;
+          }
+        }
+
+        /* Mobile optimization for labels visibility */
+        @media (max-width: 768px) {
+          /* Scale down the animation container on mobile */
+          .welcome-board > div > div:last-child > div:last-child {
+            transform: scale(0.85) !important;
+            transform-origin: center !important;
+          }
+
+          /* Adjust label positions to ensure visibility */
+          .welcome-board .labelFloat1,
+          .welcome-board .labelFloat2,
+          .welcome-board .labelFloat3,
+          .welcome-board .labelFloat4 {
+            font-size: 18px !important;
+            padding: 4px 16px !important;
+          }
+
+          /* Reorder elements on mobile - animation first, then text */
+          .welcome-board > div {
+            flex-direction: column !important;
+          }
+
+          .welcome-board > div > div:first-child {
+            order: 2 !important;
+            flex: 1 !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            padding: 2rem 1.5rem !important;
+            text-align: center !important;
+          }
+
+          .welcome-board > div > div:last-child {
+            order: 1 !important;
+            flex: 1 !important;
+            min-width: 100% !important;
+            max-width: 100% !important;
+            height: 50vh !important;
+            min-height: 280px !important;
+            margin-bottom: 1rem !important;
+          }
+        }
+
         @media (max-width: 480px) {
           .welcome-board .hero-title {
             font-size: clamp(1.8rem, 3.5vw, 2.5rem) !important;
@@ -422,6 +533,24 @@ export default function WelcomeBoard() {
           .welcome-board .hero-description {
             font-size: clamp(0.9rem, 1.6vw, 1.1rem) !important;
             line-height: 1.4 !important;
+          }
+
+          /* Further scale down for very small screens */
+          .welcome-board > div > div:last-child > div:last-child {
+            transform: scale(0.7) !important;
+            transform-origin: center !important;
+          }
+
+          /* Optimize layout for very small screens */
+          .welcome-board > div > div:first-child {
+            padding: 1.5rem 1rem !important;
+            margin-top: 0 !important;
+          }
+
+          .welcome-board > div > div:last-child {
+            height: 45vh !important;
+            min-height: 250px !important;
+            margin-bottom: 0.5rem !important;
           }
         }
       `,

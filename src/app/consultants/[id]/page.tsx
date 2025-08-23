@@ -1,6 +1,6 @@
 "use client";
-import React, { useState, useEffect } from "react";
-import { useParams, useRouter } from "next/navigation";
+import React, { useState, useEffect, use } from "react";
+import { useRouter } from "next/navigation";
 import Link from "next/link";
 import TopBar from "../../../components/TopBar";
 import Footer from "../../../components/Footer";
@@ -22,8 +22,8 @@ type Consultant = {
   location?: string;
 };
 
-export default function ConsultantDetailPage() {
-  const params = useParams();
+export default function ConsultantDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = use(params);
   const router = useRouter();
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [loading, setLoading] = useState(true);
@@ -31,7 +31,7 @@ export default function ConsultantDetailPage() {
 
   useEffect(() => {
     const fetchConsultant = async () => {
-      if (!params.id) return;
+      if (!id) return;
 
       setLoading(true);
       setError("");
@@ -45,7 +45,7 @@ export default function ConsultantDetailPage() {
         }
 
         const allConsultants = await res.json();
-        const consultant = allConsultants.find((c: any) => c.id === parseInt(params.id as string));
+        const consultant = allConsultants.find((c: any) => c.id === parseInt(id));
 
         if (!consultant) {
           throw new Error("Consultant not found");
@@ -60,7 +60,7 @@ export default function ConsultantDetailPage() {
     };
 
     fetchConsultant();
-  }, [params.id]);
+  }, [id]);
 
   if (loading) {
     return (
@@ -156,14 +156,14 @@ export default function ConsultantDetailPage() {
           </nav>
 
           {/* Main Content */}
-          <div style={{
+          <div className="consultant-layout" style={{
             display: "grid",
             gridTemplateColumns: "1fr 2fr",
             gap: "3rem",
             alignItems: "start"
           }}>
             {/* Left Column - Image and Basic Info */}
-            <div style={{
+            <div className="consultant-profile" style={{
               background: "var(--muted)",
               borderRadius: "12px",
               padding: "2rem",
@@ -309,7 +309,7 @@ export default function ConsultantDetailPage() {
             </div>
 
             {/* Right Column - Detailed Information */}
-            <div>
+            <div className="consultant-details">
               {/* Tagline */}
               {consultant.tagline && (
                 <div style={{
@@ -486,6 +486,52 @@ export default function ConsultantDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Mobile Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          /* Mobile styles for consultant layout */
+          @media (max-width: 768px) {
+            .consultant-layout {
+              grid-template-columns: 1fr !important;
+              gap: 2rem !important;
+            }
+
+            /* Reorder columns on mobile */
+            .consultant-profile {
+              order: 1 !important;
+            }
+
+            .consultant-details {
+              order: 2 !important;
+            }
+
+            /* Adjust padding for mobile */
+            .consultant-profile {
+              padding: 1.5rem !important;
+            }
+
+            .consultant-details > div {
+              padding: 1.25rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .consultant-layout {
+              gap: 1.5rem !important;
+            }
+
+            .consultant-profile {
+              padding: 1.25rem !important;
+            }
+
+            .consultant-details > div {
+              padding: 1rem !important;
+            }
+          }
+        `
+      }} />
+
       <Footer />
     </>
   );

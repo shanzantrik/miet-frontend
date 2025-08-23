@@ -1,6 +1,6 @@
 'use client';
 
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, use } from 'react';
 import { categories } from '../../../components/marketplaceData';
 import { notFound, redirect } from 'next/navigation';
 import Link from 'next/link';
@@ -8,6 +8,7 @@ import TopBar from '../../../components/TopBar';
 import Footer from '../../../components/Footer';
 import Image from 'next/image';
 import { useCart } from '../../../components/CartContext';
+import { useCallback } from 'react';
 
 interface Product {
   id: number;
@@ -22,30 +23,28 @@ interface Product {
   featured?: boolean;
 }
 
-export default function CategoryPage({ params }: { params: { category: string } }) {
+export default function CategoryPage({ params }: { params: Promise<{ category: string }> }) {
+  const { category: categoryParam } = use(params);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const [expandedDescriptions, setExpandedDescriptions] = useState<{ [key: number]: boolean }>({});
   const { addToCart, isInCart, removeFromCart } = useCart();
 
   // Convert URL format back to category name
-  const categoryName = params.category
+  const categoryName = categoryParam
     .split('-')
     .map(word => word.charAt(0).toUpperCase() + word.slice(1))
     .join(' ');
 
   // Find the exact category match
   const category = categories.find(cat => 
-    cat.toLowerCase().replace(/\s+/g, '-') === params.category ||
+    cat.toLowerCase().replace(/\s+/g, '-') === categoryParam ||
     cat.toLowerCase() === categoryName.toLowerCase()
   );
 
-  if (!category) return notFound();
-
-  useEffect(() => {
-    fetchProducts();
-  }, []);
-
-  const fetchProducts = async () => {
+  const fetchProducts = useCallback(async () => {
+    if (!category) return;
+    
     try {
       setLoading(true);
       
@@ -106,7 +105,15 @@ export default function CategoryPage({ params }: { params: { category: string } 
     } finally {
       setLoading(false);
     }
-  };
+  }, [category]);
+
+  useEffect(() => {
+    if (category) {
+      fetchProducts();
+    }
+  }, [fetchProducts]);
+
+  if (!category) return notFound();
 
   const getProductDisplayName = (product: Product) => {
     return product.title || product.name || 'Untitled Product';
@@ -118,6 +125,20 @@ export default function CategoryPage({ params }: { params: { category: string } 
     }
     // Fallback to a default image
     return 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80';
+  };
+
+  // Helper function to truncate description to 2-3 lines
+  const truncateDescription = (text: string, maxLength: number = 150) => {
+    if (text.length <= maxLength) return text;
+    return text.substring(0, maxLength).trim() + '...';
+  };
+
+  // Helper function to toggle description expansion
+  const toggleDescription = (productId: number) => {
+    setExpandedDescriptions(prev => ({
+      ...prev,
+      [productId]: !prev[productId]
+    }));
   };
 
   if (loading) {
@@ -177,114 +198,114 @@ export default function CategoryPage({ params }: { params: { category: string } 
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 350px))', gap: 24, justifyContent: 'center' }}>
               {products.map(product => (
                 <div key={product.id} style={{ 
-                background: 'var(--muted)', 
-                borderRadius: 16, 
-                padding: 24, 
-                textAlign: 'center',
-                boxShadow: '0 2px 12px var(--accent-20)',
-                transition: 'transform 0.2s, box-shadow 0.2s',
-                border: '2px solid transparent'
+                  background: 'var(--muted)', 
+                  borderRadius: '16px', 
+                  padding: '24px', 
+                  textAlign: 'center', 
+                  boxShadow: '0 2px 12px var(--accent-20)', 
+                  transition: 'transform 0.2s, box-shadow 0.2s', 
+                  border: '2px solid transparent',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '500px'
                 }}>
-                  {/* Clickable course image and title */}
-                  <Link 
-                    href={`/courses/${product.id}`}
-                    style={{ textDecoration: 'none', color: 'inherit', display: 'block' }}
-                  >
-                    <Image 
-                      src={getProductImage(product)} 
+                  <a href={`/courses/${product.id}`} style={{ textDecoration: 'none', color: 'inherit', display: 'block', flex: '1' }}>
+                    <img 
                       alt={getProductDisplayName(product)} 
-                      width={400}
-                      height={160}
-                  style={{ 
-                    width: '100%', 
-                    height: 160, 
-                    objectFit: 'cover', 
-                    borderRadius: 12, 
-                        marginBottom: 16,
-                        cursor: 'pointer'
+                      loading="lazy" 
+                      width={400} 
+                      height={160} 
+                      decoding="async" 
+                      data-nimg="1" 
+                      srcSet={product.thumbnail ? `${getProductImage(product)}?w=640&q=75 1x, ${getProductImage(product)}?w=828&q=75 2x` : ''} 
+                      src={getProductImage(product)} 
+                      style={{ 
+                        color: 'transparent', 
+                        width: '100%', 
+                        height: '160px', 
+                        objectFit: 'cover', 
+                        borderRadius: '12px', 
+                        marginBottom: '16px', 
+                        cursor: 'pointer' 
                       }} 
                     />
                     <h3 style={{ color: '#22543d', fontWeight: '700', fontSize: '18', marginBottom: '8', cursor: 'pointer' }}>
                       {getProductDisplayName(product)}
                     </h3>
-                    <p style={{ color: '#666', fontSize: '14', marginBottom: '12', lineHeight: '1.4' }}>
-                      {product.description}
-                    </p>
-                  </Link>
-                  
-                  {product.price && (
-                    <div style={{ color: '#5a67d8', fontWeight: '700', fontSize: '18', marginBottom: '16' }}>₹{product.price}</div>
-                  )}
-                  
-                  {/* Action buttons */}
-                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center' }}>
-                    <Link 
-                      href={`/courses/${product.id}`}
-                      style={{
-                        background: '#22543d', 
-                        color: 'white', 
-                        padding: '10px 16px', 
-                        borderRadius: '8', 
-                        fontSize: '14', 
-                        fontWeight: '600',
-                        textDecoration: 'none',
-                        display: 'inline-block',
-                        cursor: 'pointer',
-                        flex: 1,
-                        textAlign: 'center'
+                    <div style={{ color: '#666', fontSize: '14', marginBottom: '12', lineHeight: '1.4', flex: '1' }}>
+                      <p style={{ margin: 0, marginBottom: '8px' }}>
+                        {expandedDescriptions[product.id] 
+                          ? product.description 
+                          : truncateDescription(product.description)
+                        }
+                      </p>
+                      {product.description.length > 150 && (
+                        <span style={{ color: '#5a67d8', fontWeight: '600', fontSize: '14px' }}>
+                          Read more...
+                        </span>
+                      )}
+                    </div>
+                  </a>
+                  <div style={{ color: '#5a67d8', fontWeight: '700', marginBottom: '16px' }}>
+                    ₹{product.price}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: 'auto' }}>
+                    <a 
+                      href={`/courses/${product.id}`} 
+                      style={{ 
+                        background: 'linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%)', 
+                        color: 'rgb(255, 255, 255)', 
+                        padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)', 
+                        fontWeight: '600', 
+                        textDecoration: 'none', 
+                        display: 'inline-block', 
+                        cursor: 'pointer', 
+                        flex: '1 1 0%', 
+                        textAlign: 'center',
+                        borderRadius: '12px',
+                        border: 'none',
+                        fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                        transition: '0.3s',
+                        boxShadow: 'rgba(99, 102, 241, 0.3) 0px 4px 15px',
+                        minWidth: 'clamp(80px, 20vw, 100px)',
+                        minHeight: 'clamp(36px, 8vw, 44px)',
+                        transform: 'translateY(0px)'
                       }}
                     >
                       View Details
-                    </Link>
-                    {isInCart(product.id) ? (
-                      <button 
-                        style={{ 
-                          background: '#ef4444', 
-                          color: 'white', 
-                          padding: '10px 16px', 
-                          borderRadius: '8', 
-                          fontSize: '14', 
-                          fontWeight: '600',
-                          border: 'none',
-                          cursor: 'pointer',
-                          flex: 1
-                        }}
-                        onClick={() => removeFromCart(product.id)}
-                      >
-                        Remove from Cart
-                      </button>
-                    ) : (
-                      <button 
-                        style={{ 
-                  background: '#5a67d8', 
-                  color: 'white', 
-                          padding: '10px 16px', 
-                          borderRadius: '8', 
-                          fontSize: '14', 
-                          fontWeight: '600',
-                          border: 'none',
-                          cursor: 'pointer',
-                          flex: 1
-                        }}
-                        onClick={() => {
-                          addToCart({
-                            id: product.id,
-                            title: getProductDisplayName(product),
-                            price: product.price || '0',
-                            thumbnail: product.thumbnail,
-                            instructor_name: undefined,
-                            type: product.type || product.product_type || 'Unknown'
-                          });
-                          alert('Added to cart!');
-                        }}
-                      >
-                        Add to Cart
-                      </button>
-                    )}
+                    </a>
+                    <button 
+                      onClick={() => addToCart({
+                        id: product.id,
+                        title: getProductDisplayName(product),
+                        price: product.price || '0',
+                        thumbnail: product.thumbnail,
+                        instructor_name: undefined,
+                        type: product.type || product.product_type || 'Unknown'
+                      })}
+                      style={{ 
+                        background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)', 
+                        color: 'rgb(255, 255, 255)', 
+                        padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)', 
+                        fontWeight: '600', 
+                        border: 'none', 
+                        cursor: 'pointer', 
+                        flex: '1 1 0%',
+                        borderRadius: '12px',
+                        fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                        transition: '0.3s',
+                        boxShadow: 'rgba(239, 68, 68, 0.3) 0px 4px 15px',
+                        minWidth: 'clamp(80px, 20vw, 100px)',
+                        minHeight: 'clamp(36px, 8vw, 44px)',
+                        transform: 'translateY(0px)'
+                      }}
+                    >
+                      Add to Cart
+                    </button>
+                  </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
           ) : (
             <div style={{ textAlign: 'center', padding: '40px 20px' }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>📦</div>

@@ -48,7 +48,7 @@ export default function SearchPanel() {
   const [city, setCity] = useState('Delhi');
   const [cityLoading, setCityLoading] = useState(false);
   const leftRef = useRef<HTMLDivElement>(null);
-  const [mapHeight, setMapHeight] = useState(500);
+  const [mapHeight, setMapHeight] = useState(400);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
   });
@@ -698,7 +698,8 @@ export default function SearchPanel() {
           flex: '1.5',
           minWidth: '320',
           maxWidth: '540',
-          height: mapHeight,
+          height: '400px',
+          width: '400px',
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '20px',
           overflow: 'hidden',

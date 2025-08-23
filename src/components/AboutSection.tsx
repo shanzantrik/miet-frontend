@@ -52,8 +52,9 @@ const tabs = [
             Best Reviews · Special Education · Mental Health · Counselling · Assessment · Delhi NCR · Gurgaon · Online · Offline
           </div>
         </div>
-        <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
+        <div className="about-image-container" style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 24 }}>
           <img
+            className="miet-hero-image"
             src="/intro.webp"
             alt="MieT Hero"
             style={{ width: '100%', maxWidth: 420, borderRadius: 16, margin: '0 auto', display: 'block', boxShadow: '0 4px 24px #5a67d822' }}
@@ -239,6 +240,91 @@ export default function AboutSection() {
       >
         {tabs[activeTab].content}
       </div>
+
+      {/* Mobile Styles */}
+      <style dangerouslySetInnerHTML={{
+        __html: `
+          /* Mobile styles for About section */
+          @media (max-width: 768px) {
+            .about-section {
+              padding: 0 1rem !important;
+            }
+
+            .about-section [role="tabpanel"] {
+              padding: 2rem 1.5rem !important;
+            }
+
+            /* Reorder image container on mobile */
+            .about-image-container {
+              order: -1 !important;
+              margin-bottom: 1.5rem !important;
+            }
+
+            /* Ensure image is at the top */
+            .miet-hero-image {
+              order: -1 !important;
+              margin-bottom: 1rem !important;
+            }
+
+            /* Adjust container layout for mobile */
+            .about-image-container {
+              flex-direction: column !important;
+              gap: 1rem !important;
+            }
+
+            /* Make image heights consistent across tabs on mobile */
+            .miet-hero-image {
+              height: 280px !important;
+              object-fit: cover !important;
+            }
+
+            /* Target images in other tabs to match Team tab height */
+            .about-section img[src="/programmes.webp"] {
+              height: 280px !important;
+              object-fit: cover !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .about-section [role="tabpanel"] {
+              padding: 1.5rem 1rem !important;
+            }
+
+            .about-image-container {
+              margin-bottom: 1rem !important;
+              gap: 0.75rem !important;
+            }
+
+            .miet-hero-image {
+              margin-bottom: 0.75rem !important;
+            }
+
+            /* Further optimize image heights for small screens */
+            .miet-hero-image {
+              height: 240px !important;
+              object-fit: cover !important;
+            }
+
+            .about-section img[src="/programmes.webp"] {
+              height: 240px !important;
+              object-fit: cover !important;
+            }
+
+            .about-section img[src="/team.webp"] {
+              height: 240px !important;
+              object-fit: cover !important;
+            }
+          }
+
+          /* Ensure consistent image heights across all screen sizes on mobile */
+          @media (max-width: 768px) {
+            .about-section img[src="/team.webp"] {
+              height: 280px !important;
+              object-fit: cover !important;
+            }
+          }
+        `
+      }} />
     </section>
   );
 }

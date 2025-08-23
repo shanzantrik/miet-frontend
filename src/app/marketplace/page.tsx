@@ -406,9 +406,13 @@ export default function MarketplacePage() {
                     borderRadius: 12,
                     padding: 20,
                     textAlign: 'center',
-                    boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+                    boxShadow: 'rgba(0, 0, 0, 0.1) 0px 2px 8px',
                     transition: 'transform 0.2s, box-shadow 0.2s',
-                    cursor: 'pointer'
+                    cursor: 'pointer',
+                    height: '280px',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    justifyContent: 'space-between'
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.transform = 'translateY(-4px)';
@@ -416,31 +420,38 @@ export default function MarketplacePage() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.1)';
+                    e.currentTarget.style.boxShadow = 'rgba(0, 0, 0, 0.1) 0px 2px 8px';
                   }}
                   >
-                    <Image
-                      src={getProductImage(product)}
-                      alt={getProductDisplayName(product)}
-                      width={400}
-                      height={120}
-                      style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }}
-                      priority
-                    />
-                    <h4 style={{ color: '#22543d', fontWeight: '600', fontSize: '16', marginBottom: '4' }}>{getProductDisplayName(product)}</h4>
-                    <p style={{ color: '#666', fontSize: '14', marginBottom: '8' }}>{product.description}</p>
-                    {product.price && (
-                      <div style={{ color: '#5a67d8', fontWeight: '700', fontSize: '16' }}>₹{product.price}</div>
-                    )}
+                    <div style={{ flex: '1' }}>
+                      <Image
+                        src={getProductImage(product)}
+                        alt={getProductDisplayName(product)}
+                        width={400}
+                        height={120}
+                        style={{ width: '100%', height: 120, objectFit: 'cover', borderRadius: 8, marginBottom: 12 }}
+                        priority
+                      />
+                      <h4 style={{ color: '#22543d', fontWeight: '600', fontSize: '16', marginBottom: '4' }}>{getProductDisplayName(product)}</h4>
+                      <p style={{ color: '#666', fontSize: '14', marginBottom: '8' }}>{product.description}</p>
+                      {product.price && (
+                        <div style={{ color: '#5a67d8', fontWeight: '700', fontSize: '16' }}>₹{product.price}</div>
+                      )}
+                    </div>
                     <div style={{
-                      background: '#5a67d8',
-                      color: 'white',
-                      padding: '6px 12px',
-                      borderRadius: '6',
-                      fontSize: '12',
+                      background: 'linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%)',
+                      color: 'rgb(255, 255, 255)',
+                      padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                      borderRadius: '12px',
+                      fontSize: 'clamp(0.8rem, 2vw, 1rem)',
                       fontWeight: '600',
                       display: 'inline-block',
-                      marginTop: '8'
+                      marginTop: '8px',
+                      transition: '0.3s',
+                      boxShadow: 'rgba(99, 102, 241, 0.3) 0px 4px 15px',
+                      minWidth: 'clamp(80px, 20vw, 100px)',
+                      minHeight: 'clamp(36px, 8vw, 44px)',
+                      transform: 'translateY(0px)'
                     }}>
                       View Details
                     </div>

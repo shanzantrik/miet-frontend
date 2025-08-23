@@ -43,7 +43,7 @@ export default function Footer() {
         }}>
 
           {/* Main Footer Content */}
-          <div style={{
+          <div className="footer-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
             gap: '3rem',
@@ -51,7 +51,7 @@ export default function Footer() {
           }}>
 
             {/* Brand Section */}
-            <div style={{ textAlign: 'left' }}>
+            <div className="footer-brand" style={{ textAlign: 'left' }}>
               <div style={{
                 fontFamily: 'Righteous, cursive',
                 fontSize: 'clamp(2rem, 3vw, 2.5rem)',
@@ -72,7 +72,7 @@ export default function Footer() {
               </p>
 
               {/* Social Media Icons */}
-              <div style={{
+              <div className="social-icons" style={{
                 display: 'flex',
                 gap: '1rem',
                 marginTop: '1.5rem'
@@ -122,7 +122,7 @@ export default function Footer() {
             </div>
 
             {/* Quick Links */}
-            <div style={{ textAlign: 'left' }}>
+            <div className="footer-quick-links" style={{ textAlign: 'left' }}>
               <h3 style={{
                 fontSize: 'clamp(1.3rem, 1.5vw, 1.4rem)',
                 fontWeight: '700',
@@ -171,10 +171,62 @@ export default function Footer() {
                   </a>
                 ))}
               </div>
+
+              {/* Mobile Social Icons - Hidden on desktop, visible on mobile */}
+              <div className="mobile-social-icons" style={{
+                display: 'none',
+                justifyContent: 'center',
+                gap: '1rem',
+                marginTop: '1.5rem',
+                paddingTop: '1.5rem',
+                borderTop: '1px solid rgba(255,255,255,0.1)'
+              }}>
+                {[
+                  { name: 'Facebook', icon: <FaFacebookF />, href: '#' },
+                  { name: 'Instagram', icon: <FaInstagram />, href: '#' },
+                  { name: 'LinkedIn', icon: <FaLinkedinIn />, href: '#' },
+                  { name: 'YouTube', icon: <FaYoutube />, href: '#' },
+                  { name: 'Twitter', icon: <FaTwitter />, href: '#' },
+                  { name: 'Google Review', icon: <FaGoogle />, href: '#' }
+                ].map((social) => (
+                  <a
+                    key={social.name}
+                    href={social.href}
+                    aria-label={social.name}
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      background: 'rgba(255,255,255,0.1)',
+                      color: '#ffffff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontSize: '1.2rem',
+                      textDecoration: 'none',
+                      transition: 'all 0.3s ease',
+                      backdropFilter: 'blur(10px)',
+                      border: '1px solid rgba(255,255,255,0.2)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.2)';
+                      e.currentTarget.style.transform = 'translateY(-3px) scale(1.1)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(255,255,255,0.2)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'rgba(255,255,255,0.1)';
+                      e.currentTarget.style.transform = 'translateY(0) scale(1)';
+                      e.currentTarget.style.boxShadow = 'none';
+                    }}
+                  >
+                    {social.icon}
+                  </a>
+                ))}
+              </div>
             </div>
 
             {/* Contact Info */}
-            <div style={{ textAlign: 'left' }}>
+            <div className="footer-contact" style={{ textAlign: 'left' }}>
               <h3 style={{
                 fontSize: 'clamp(1.3rem, 1.5vw, 1.4rem)',
                 fontWeight: '700',
@@ -321,11 +373,130 @@ export default function Footer() {
               .footer button {
                 width: 100% !important;
               }
+
+              /* Mobile footer layout reordering */
+              .footer-grid {
+                grid-template-columns: 1fr !important;
+                gap: 2rem !important;
+              }
+
+              .footer-brand {
+                order: 1 !important;
+                text-align: center !important;
+              }
+
+              .footer-quick-links {
+                order: 2 !important;
+                text-align: left !important;
+                position: relative !important;
+              }
+
+              .footer-contact {
+                order: 3 !important;
+                text-align: center !important;
+              }
+
+              /* Move social icons to Quick Links section on mobile */
+              .footer-brand .social-icons {
+                display: none !important;
+              }
+
+              .footer-quick-links {
+                position: relative !important;
+              }
+
+              .footer-quick-links::after {
+                content: '' !important;
+                display: block !important;
+                height: 2rem !important;
+              }
+
+              /* Add social icons after Quick Links on mobile */
+              .footer-quick-links .mobile-social-icons {
+                display: flex !important;
+                flex-direction: column !important;
+                justify-content: flex-start !important;
+                align-items: center !important;
+                gap: 0.75rem !important;
+                margin-top: 0 !important;
+                padding-top: 0 !important;
+                border-top: none !important;
+                position: absolute !important;
+                right: 0 !important;
+                top: 0 !important;
+                width: 60px !important;
+              }
+
+              /* Adjust Quick Links container for side-by-side layout */
+              .footer-quick-links > div:first-child {
+                display: inline-block !important;
+                width: calc(100% - 80px) !important;
+                margin-right: 80px !important;
+              }
+
+              /* Reduce footer height on mobile */
+              .footer {
+                padding: 2rem 0 1rem 0 !important;
+              }
+
+              .footer-grid {
+                gap: 1.5rem !important;
+                margin-bottom: 2rem !important;
+              }
+
+              .footer-brand,
+              .footer-quick-links,
+              .footer-contact {
+                padding: 0 1rem !important;
+              }
+
+              .footer-quick-links .mobile-social-icons a {
+                width: 44px !important;
+                height: 44px !important;
+                font-size: 1.1rem !important;
+              }
             }
 
             @media (max-width: 480px) {
               .footer {
                 padding: 2rem 0 1rem 0 !important;
+              }
+
+              /* Further optimize mobile layout for small screens */
+              .footer-grid {
+                gap: 1.5rem !important;
+              }
+
+              .footer-brand,
+              .footer-quick-links,
+              .footer-contact {
+                padding: 0 1rem !important;
+              }
+
+              /* Optimize side-by-side layout for very small screens */
+              .footer-quick-links > div:first-child {
+                width: calc(100% - 70px) !important;
+                margin-right: 70px !important;
+              }
+
+              .footer-quick-links .mobile-social-icons {
+                width: 50px !important;
+                gap: 0.5rem !important;
+              }
+
+              .footer-quick-links .mobile-social-icons a {
+                width: 40px !important;
+                height: 40px !important;
+                font-size: 1rem !important;
+              }
+
+              /* Reduce spacing further for small screens */
+              .footer-quick-links h3 {
+                margin-bottom: 1rem !important;
+              }
+
+              .footer-quick-links > div:first-child {
+                gap: 0.6rem !important;
               }
             }
           `

@@ -355,7 +355,7 @@ export default function BlogSection() {
 
       {/* Blogs Grid - Modern Layout */}
       {blogs.length > 0 && (
-        <div style={{
+        <div className="blogs-grid" style={{
           display: 'grid',
           gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
           gap: '2rem',
@@ -583,6 +583,115 @@ export default function BlogSection() {
 
             .blog-card img {
               height: 160px !important;
+            }
+          }
+
+          /* Mobile Blog Grid Optimizations */
+          @media (max-width: 768px) {
+            .blogs-grid {
+              display: flex !important;
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              scroll-snap-type: x mandatory !important;
+              scrollbar-width: none !important;
+              -ms-overflow-style: none !important;
+              gap: 1.5rem !important;
+              padding: 0 1rem !important;
+              margin: 0 auto 2rem auto !important;
+              max-width: 100vw !important;
+            }
+
+            .blogs-grid::-webkit-scrollbar {
+              display: none !important;
+            }
+
+            .blogs-grid .blog-card {
+              flex: 0 0 auto !important;
+              width: 320px !important;
+              min-width: 320px !important;
+              max-width: 320px !important;
+              height: 380px !important;
+              min-height: 380px !important;
+              max-height: 380px !important;
+              scroll-snap-align: center !important;
+              margin-right: 0 !important;
+              border-radius: 20px !important;
+            }
+
+            .blogs-grid .blog-card:last-child {
+              margin-right: 1rem !important;
+            }
+
+            /* Hide description on mobile */
+            .blogs-grid .blog-card p {
+              display: none !important;
+            }
+
+            /* Adjust image dimensions for mobile */
+            .blogs-grid .blog-card > div:first-child {
+              height: 160px !important;
+              margin-bottom: 0.75rem !important;
+            }
+
+            /* Optimize spacing for mobile */
+            .blogs-grid .blog-card h3 {
+              font-size: 1.1rem !important;
+              margin-bottom: 0.75rem !important;
+              line-height: 1.2 !important;
+            }
+
+            .blogs-grid .blog-card > div:last-child {
+              padding: 1.5rem !important;
+            }
+
+            .blogs-grid .blog-card > div:last-child > div:first-child {
+              margin-bottom: 0.75rem !important;
+            }
+
+            .blogs-grid .blog-card button {
+              padding: 0.5rem 1rem !important;
+              font-size: 0.9rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .blogs-grid {
+              padding: 0 1rem !important;
+              gap: 1rem !important;
+            }
+
+            .blogs-grid .blog-card {
+              width: 300px !important;
+              min-width: 300px !important;
+              max-width: 300px !important;
+              height: 360px !important;
+              min-height: 360px !important;
+              max-height: 360px !important;
+              border-radius: 18px !important;
+            }
+
+            /* Further optimize for very small screens */
+            .blogs-grid .blog-card > div:first-child {
+              height: 150px !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .blogs-grid .blog-card h3 {
+              font-size: 1rem !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .blogs-grid .blog-card > div:last-child {
+              padding: 1.25rem !important;
+            }
+
+            .blogs-grid .blog-card > div:last-child > div:first-child {
+              margin-bottom: 0.5rem !important;
+            }
+
+            .blogs-grid .blog-card button {
+              padding: 0.4rem 0.8rem !important;
+              font-size: 0.85rem !important;
             }
           }
         `

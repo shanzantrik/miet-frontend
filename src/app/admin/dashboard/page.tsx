@@ -159,6 +159,7 @@ export default function AdminDashboard() {
   const [subEditId, setSubEditId] = useState<number | null>(null);
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
+  const [isMobile, setIsMobile] = useState(false);
   const [ailmentsExpanded, setAilmentsExpanded] = useState(false);
   const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs'>('dashboard');
   // Consultant state
@@ -295,6 +296,28 @@ export default function AdminDashboard() {
     fetchCategories();
     fetchSubcategories();
   }, []);
+
+  // Mobile detection
+  useEffect(() => {
+    const checkMobile = () => {
+      const wasMobile = isMobile;
+      const newIsMobile = window.innerWidth < 768;
+      setIsMobile(newIsMobile);
+      
+      if (newIsMobile && !wasMobile) {
+        // Switching to mobile: hide sidebar
+        setSidebarOpen(false);
+      } else if (!newIsMobile && wasMobile) {
+        // Switching to desktop: show sidebar
+        setSidebarOpen(true);
+      }
+    };
+    
+    checkMobile();
+    window.addEventListener('resize', checkMobile);
+    
+    return () => window.removeEventListener('resize', checkMobile);
+  }, [isMobile]);
 
   useEffect(() => {
     if (activeMenu === 'consultants') fetchConsultants();
@@ -1057,7 +1080,7 @@ export default function AdminDashboard() {
     if (ailmentsExpanded && activeMenu !== 'categories' && activeMenu !== 'subcategories') {
       setActiveMenu('categories');
     }
-  }, [ailmentsExpanded]);
+  }, [ailmentsExpanded, activeMenu]);
 
   // Auto-expand ailments when categories or subcategories are active
   useEffect(() => {
@@ -1609,7 +1632,7 @@ export default function AdminDashboard() {
         zIndex: 10,
         boxShadow: '0 4px 20px rgba(102, 126, 234, 0.15)'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+        <div style={{ display: isMobile ? 'flex' : 'none', alignItems: 'center', gap: 16 }}>
           <button
             onClick={() => setSidebarOpen(o => !o)}
             style={{
@@ -1618,11 +1641,14 @@ export default function AdminDashboard() {
               color: '#fff',
               fontSize: 20,
               cursor: 'pointer',
-              marginRight: 8,
               padding: '8px',
               borderRadius: '8px',
-              transition: 'all 0.2s ease',
-              backdropFilter: 'blur(10px)'
+              backdropFilter: 'blur(10px)',
+              position: 'fixed',
+              top: '20px',
+              left: sidebarOpen ? '260px' : '20px',
+              zIndex: 1001,
+              transition: 'left 0.3s ease, all 0.2s ease'
             }}
             aria-label="Toggle sidebar"
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
@@ -1630,15 +1656,34 @@ export default function AdminDashboard() {
           >
             {sidebarOpen ? <FaChevronLeft /> : <FaChevronRight />}
           </button>
+        </div>
+        
+        {/* Center title */}
+        <div style={{ 
+          display: 'flex', 
+          alignItems: 'center', 
+          justifyContent: 'center',
+          position: 'absolute',
+          left: '50%',
+          top: '50%',
+          transform: 'translate(-50%, -50%)',
+          pointerEvents: 'none',
+          width: 'auto',
+          maxWidth: '300px'
+        }}>
           <span style={{
-            fontSize: 24,
+            fontSize: isMobile ? 18 : (sidebarOpen ? 24 : 20),
             fontWeight: 700,
             color: '#fff',
             letterSpacing: 1,
-            textShadow: '0 2px 4px rgba(0,0,0,0.1)'
+            textShadow: '0 2px 4px rgba(0,0,0,0.1)',
+            transition: 'font-size 0.3s ease',
+            textAlign: 'center',
+            whiteSpace: 'nowrap'
           }}>MIET Admin Panel</span>
         </div>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24 }}>
+        
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? 12 : 24 }}>
           <button
             onClick={() => setShowProfileModal(true)}
             style={{
@@ -1650,8 +1695,8 @@ export default function AdminDashboard() {
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
-              padding: '10px 16px',
+              gap: isMobile ? 0 : 8,
+              padding: isMobile ? '10px' : '10px 16px',
               borderRadius: '8px',
               transition: 'all 0.2s ease',
               backdropFilter: 'blur(10px)'
@@ -1659,7 +1704,7 @@ export default function AdminDashboard() {
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.2)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(255,255,255,0.1)'}
           >
-            <FaUserCircle size={24} color="#fff" /> Profile
+            <FaUserCircle size={24} color="#fff" /> {!isMobile && "Profile"}
           </button>
           <button
             onClick={handleLogout}
@@ -1668,20 +1713,20 @@ export default function AdminDashboard() {
               color: '#fff',
               border: 'none',
               borderRadius: '8px',
-              padding: '10px 20px',
+              padding: isMobile ? '10px' : '10px 20px',
               fontWeight: 700,
               fontSize: 16,
               cursor: 'pointer',
               display: 'flex',
               alignItems: 'center',
-              gap: 8,
+              gap: isMobile ? 0 : 8,
               transition: 'all 0.2s ease',
               boxShadow: '0 4px 12px rgba(220, 38, 38, 0.3)'
             }}
             onMouseEnter={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 1)'}
             onMouseLeave={(e) => e.currentTarget.style.background = 'rgba(220, 38, 38, 0.9)'}
           >
-            <FaSignOutAlt /> Logout
+            <FaSignOutAlt /> {!isMobile && "Logout"}
           </button>
         </div>
       </div>
@@ -1701,17 +1746,21 @@ export default function AdminDashboard() {
       <div style={{ flex: 1, display: 'flex', minHeight: 0 }}>
         {/* Sidebar */}
         <aside style={{
-          width: sidebarOpen ? 240 : 70,
+          width: isMobile ? 240 : (sidebarOpen ? 240 : 70),
           background: 'linear-gradient(180deg, #667eea 0%, #764ba2 100%)',
           color: '#fff',
-          transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+          transition: 'transform 0.3s ease, width 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
           display: 'flex',
           flexDirection: 'column',
           alignItems: sidebarOpen ? 'flex-start' : 'center',
           padding: sidebarOpen ? '32px 0 0 0' : '32px 0 0 0',
           minHeight: 'calc(100vh - 70px)',
           boxShadow: '4px 0 20px rgba(102, 126, 234, 0.15)',
-          position: 'relative'
+          position: isMobile ? 'fixed' : 'relative',
+          top: isMobile ? 0 : 'auto',
+          left: isMobile ? (sidebarOpen ? 0 : '-240px') : 'auto',
+          zIndex: isMobile ? 1000 : 'auto',
+          transform: isMobile ? (sidebarOpen ? 'translateX(0)' : 'translateX(-100%)') : 'none'
         }}>
           <div style={{
             width: '100%',
@@ -1912,13 +1961,32 @@ export default function AdminDashboard() {
             ))}
           </nav>
         </aside>
+        
+        {/* Mobile overlay to close sidebar */}
+        {isMobile && sidebarOpen && (
+          <div 
+            style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0, 0, 0, 0.5)',
+              zIndex: 999
+            }}
+            onClick={() => setSidebarOpen(false)}
+          />
+        )}
+        
         {/* Main content */}
         <main style={{
           flex: 1,
           background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)',
           padding: '32px 24px',
           minHeight: 'calc(100vh - 70px)',
-          overflow: 'auto'
+          overflow: 'auto',
+          marginLeft: isMobile ? 0 : 'auto',
+          width: isMobile ? '100vw' : 'auto'
         }}>
           {/* Dashboard view with charts/tables */}
           {activeMenu === 'dashboard' && (
@@ -2075,8 +2143,12 @@ export default function AdminDashboard() {
                     gap: '8px'
                   }}>
                     {Array.from({ length: 12 }, (_, i) => {
-                      const month = new Date(2024, i, 1).toLocaleString('default', { month: 'short' });
-                      const height = Math.floor(Math.random() * 80) + 20;
+                      // Use predefined month names to avoid locale-based hydration mismatches
+                      const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+                      const month = months[i];
+                      // Use deterministic heights based on month index to avoid hydration mismatches
+                      const heights = [45, 65, 55, 35, 75, 85, 90, 70, 60, 50, 40, 30];
+                      const height = heights[i];
                       return (
                         <div key={i} style={{ textAlign: 'center' }}>
                           <div style={{
@@ -3543,7 +3615,7 @@ export default function AdminDashboard() {
                       justifyContent: 'center',
                       borderRadius: '50%',
                       transition: 'all 0.2s ease'
-                    }} onMouseEnter={(e) => e.currentTarget.style.background = '#f3f4f6'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>×</button>
+                    }} onMouseEnter={(e) => e.target.style.background = '#f3f4f6'} onMouseLeave={(e) => e.target.style.background = 'transparent'}>×</button>
 
                     <h2 style={{
                       fontSize: 'clamp(20px, 3vw, 28px)',
@@ -3587,7 +3659,8 @@ export default function AdminDashboard() {
                               borderRadius: '8px',
                               border: '1px solid #d1d5db',
                               fontSize: '14px',
-                              transition: 'all 0.2s ease'
+                              transition: 'all 0.2s ease',
+                              background: 'grey'
                             }}
                             onFocus={(e) => e.target.style.borderColor = '#667eea'}
                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3612,7 +3685,8 @@ export default function AdminDashboard() {
                               borderRadius: '8px',
                               border: '1px solid #d1d5db',
                               fontSize: '14px',
-                              transition: 'all 0.2s ease'
+                              transition: 'all 0.2s ease',
+                              background: 'grey'
                             }}
                             onFocus={(e) => e.target.style.borderColor = '#667eea'}
                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3640,7 +3714,8 @@ export default function AdminDashboard() {
                               borderRadius: '8px',
                               border: '1px solid #d1d5db',
                               fontSize: '14px',
-                              transition: 'all 0.2s ease'
+                              transition: 'all 0.2s ease',
+                              background: 'grey'
                             }}
                             onFocus={(e) => e.target.style.borderColor = '#667eea'}
                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3671,7 +3746,8 @@ export default function AdminDashboard() {
                               borderRadius: '8px',
                               border: '1px solid #d1d5db',
                               fontSize: '14px',
-                              transition: 'all 0.2s ease'
+                              transition: 'all 0.2s ease',
+                              background: 'grey'
                             }}
                             onFocus={(e) => e.target.style.borderColor = '#667eea'}
                             onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3699,7 +3775,8 @@ export default function AdminDashboard() {
                             border: '1px solid #d1d5db',
                             fontSize: '14px',
                             transition: 'all 0.2s ease',
-                            resize: 'vertical'
+                            resize: 'vertical',
+                            background: 'grey'
                           }}
                           onFocus={(e) => e.target.style.borderColor = '#667eea'}
                           onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3800,7 +3877,8 @@ export default function AdminDashboard() {
                                 borderRadius: '8px',
                                 border: '1px solid #d1d5db',
                                 fontSize: '14px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                background: 'grey'
                               }}
                               onFocus={(e) => e.target.style.borderColor = '#667eea'}
                               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3826,7 +3904,8 @@ export default function AdminDashboard() {
                                 borderRadius: '8px',
                                 border: '1px solid #d1d5db',
                                 fontSize: '14px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                background: 'grey'
                               }}
                               onFocus={(e) => e.target.style.borderColor = '#667eea'}
                               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3854,7 +3933,8 @@ export default function AdminDashboard() {
                                 borderRadius: '8px',
                                 border: '1px solid #d1d5db',
                                 fontSize: '14px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                background: 'grey'
                               }}
                               onFocus={(e) => e.target.style.borderColor = '#667eea'}
                               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3881,7 +3961,8 @@ export default function AdminDashboard() {
                                 borderRadius: '8px',
                                 border: '1px solid #d1d5db',
                                 fontSize: '14px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                background: 'grey'
                               }}
                               onFocus={(e) => e.target.style.borderColor = '#667eea'}
                               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -3908,7 +3989,8 @@ export default function AdminDashboard() {
                                 borderRadius: '8px',
                                 border: '1px solid #d1d5db',
                                 fontSize: '14px',
-                                transition: 'all 0.2s ease'
+                                transition: 'all 0.2s ease',
+                                background: 'grey'
                               }}
                               onFocus={(e) => e.target.style.borderColor = '#667eea'}
                               onBlur={(e) => e.target.style.borderColor = '#d1d5db'}
@@ -4564,7 +4646,7 @@ export default function AdminDashboard() {
                       border: '1px solid rgba(102, 126, 234, 0.2)',
                       minWidth: '140px',
                       fontSize: '14px',
-                      background: '#fff'
+                      background: 'grey'
                     }}
                 >
                   <option value="Course">Course</option>
@@ -4914,7 +4996,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -4947,16 +5029,16 @@ export default function AdminDashboard() {
                           }}>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Title *</label>
-                              <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., A Mini Course on Time Management" />
+                              <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., A Mini Course on Time Management" />
                             </div>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Price</label>
-                              <input type="text" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Free, $49.99" />
+                              <input type="text" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., Free, $49.99" />
                             </div>
                           </div>
 
                           <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Subtitle *</label>
-                          <input type="text" value={productForm.subtitle || ''} onChange={e => setProductForm(f => ({ ...f, subtitle: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 7 steps you can use immediately to become more productive and master time management" />
+                          <input type="text" value={productForm.subtitle || ''} onChange={e => setProductForm(f => ({ ...f, subtitle: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem', background: 'grey' }} placeholder="e.g., 7 steps you can use immediately to become more productive and master time management" />
 
                           <div style={{
                             display: 'grid',
@@ -4966,11 +5048,11 @@ export default function AdminDashboard() {
                           }}>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Duration</label>
-                              <input type="text" value={productForm.duration || ''} onChange={e => setProductForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 37min of on-demand video" />
+                              <input type="text" value={productForm.duration || ''} onChange={e => setProductForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., 37min of on-demand video" />
                             </div>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Lectures</label>
-                              <input type="number" value={productForm.total_lectures || ''} onChange={e => setProductForm(f => ({ ...f, total_lectures: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 11" />
+                              <input type="number" value={productForm.total_lectures || ''} onChange={e => setProductForm(f => ({ ...f, total_lectures: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., 11" />
                             </div>
                           </div>
 
@@ -4982,11 +5064,11 @@ export default function AdminDashboard() {
                           }}>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Language</label>
-                              <input type="text" value={productForm.language || ''} onChange={e => setProductForm(f => ({ ...f, language: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., English, Arabic" />
+                              <input type="text" value={productForm.language || ''} onChange={e => setProductForm(f => ({ ...f, language: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., English, Arabic" />
                             </div>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Level</label>
-                              <select value={productForm.level || 'Beginner'} onChange={e => setProductForm(f => ({ ...f, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }}>
+                              <select value={productForm.level || 'Beginner'} onChange={e => setProductForm(f => ({ ...f, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }}>
                                 <option value="Beginner">Beginner</option>
                                 <option value="Intermediate">Intermediate</option>
                                 <option value="Advanced">Advanced</option>
@@ -5011,7 +5093,7 @@ export default function AdminDashboard() {
                                       setProductForm(f => ({ ...f, learning_objectives: newObjectives }));
                                     }}
                                     placeholder="e.g., Master the 7-step time management system"
-                                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }}
+                                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px', background: 'grey' }}
                                   />
                                   <button
                                     type="button"
@@ -5052,7 +5134,7 @@ export default function AdminDashboard() {
                                       setProductForm(f => ({ ...f, requirements: newRequirements }));
                                     }}
                                     placeholder="e.g., A willingness to take action on what we cover in this mini course"
-                                    style={{ flex: 1, padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }}
+                                    style={{ flex: 1, padding: 6, borderRadius: 6, border: '1px solid #e2e8f0', fontSize: '12px', background: 'grey' }}
                                   />
                                   <button
                                     type="button"
@@ -5094,7 +5176,7 @@ export default function AdminDashboard() {
                                         setProductForm(f => ({ ...f, course_content: newContent }));
                                       }}
                                       placeholder="Section name (e.g., Introduction)"
-                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px' }}
+                                      style={{ padding: 6, borderRadius: 4, border: '1px solid #e2e8f0', fontSize: '12px', background: 'grey' }}
                                     />
                                     <input
                                       type="number"
@@ -5196,11 +5278,11 @@ export default function AdminDashboard() {
                           }}>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Name</label>
-                              <input type="text" value={productForm.instructor_name || ''} onChange={e => setProductForm(f => ({ ...f, instructor_name: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Brandon Hakim" />
+                              <input type="text" value={productForm.instructor_name || ''} onChange={e => setProductForm(f => ({ ...f, instructor_name: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., Brandon Hakim" />
                             </div>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Title</label>
-                              <input type="text" value={productForm.instructor_title || ''} onChange={e => setProductForm(f => ({ ...f, instructor_title: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Productivity Expert & Time Management Coach" />
+                              <input type="text" value={productForm.instructor_title || ''} onChange={e => setProductForm(f => ({ ...f, instructor_title: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., Productivity Expert & Time Management Coach" />
                             </div>
                           </div>
 
@@ -5224,19 +5306,19 @@ export default function AdminDashboard() {
                           }}>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Rating</label>
-                              <input type="number" step="0.1" min="0" max="5" value={productForm.rating || ''} onChange={e => setProductForm(f => ({ ...f, rating: parseFloat(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 4.4" />
+                              <input type="number" step="0.1" min="0" max="5" value={productForm.rating || ''} onChange={e => setProductForm(f => ({ ...f, rating: parseFloat(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., 4.4" />
                             </div>
                             <div>
                               <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Ratings</label>
-                              <input type="number" value={productForm.total_ratings || ''} onChange={e => setProductForm(f => ({ ...f, total_ratings: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 47803" />
+                              <input type="number" value={productForm.total_ratings || ''} onChange={e => setProductForm(f => ({ ...f, total_ratings: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', background: 'grey' }} placeholder="e.g., 47803" />
                             </div>
                           </div>
 
                           <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Enrolled Students</label>
-                          <input type="number" value={productForm.enrolled_students || ''} onChange={e => setProductForm(f => ({ ...f, enrolled_students: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 439950" />
+                          <input type="number" value={productForm.enrolled_students || ''} onChange={e => setProductForm(f => ({ ...f, enrolled_students: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem', background: 'grey' }} placeholder="e.g., 439950" />
 
                           <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Video URL</label>
-                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="URL to course preview video" />
+                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem', background: 'grey' }} placeholder="URL to course preview video" />
 
                           <div style={{ marginBottom: '0.5rem' }}>
                             <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Thumbnail</label>
@@ -5251,11 +5333,11 @@ export default function AdminDashboard() {
                       {productForm.type === 'E-book' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Title</label>
-                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
                           <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Author</label>
-                          <input type="text" value={productForm.author || ''} onChange={e => setProductForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.author || ''} onChange={e => setProductForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>PDF File</label>
                           <input type="file" accept="application/pdf" onChange={e => {
                             const file = e.target.files?.[0];
@@ -5273,11 +5355,11 @@ export default function AdminDashboard() {
                       {productForm.type === 'App' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
-                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
                           <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Download Link</label>
-                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Icon</label>
                           <input type="file" accept="image/*" onChange={e => {
                             const file = e.target.files?.[0];
@@ -5289,11 +5371,11 @@ export default function AdminDashboard() {
                       {productForm.type === 'Gadget' && (
                         <>
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Name</label>
-                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.name || ''} onChange={e => setProductForm(f => ({ ...f, name: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Description</label>
                           <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
-                          <input type="number" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="number" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Product Image</label>
                           <input type="file" accept="image/*" onChange={e => {
                             const file = e.target.files?.[0];
@@ -5301,9 +5383,9 @@ export default function AdminDashboard() {
                           }} />
                           {productForm.product_image && <img src={productForm.product_image} alt="Product" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Purchase Link</label>
-                          <input type="text" value={productForm.purchase_link || ''} onChange={e => setProductForm(f => ({ ...f, purchase_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.purchase_link || ''} onChange={e => setProductForm(f => ({ ...f, purchase_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Download Link</label>
-                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
+                          <input type="text" value={productForm.download_link || ''} onChange={e => setProductForm(f => ({ ...f, download_link: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }} />
                           <label style={{ fontWeight: 600, color: '#22543d' }}>Icon</label>
                           <input type="file" accept="image/*" onChange={e => {
                             const file = e.target.files?.[0];
@@ -5313,7 +5395,7 @@ export default function AdminDashboard() {
                         </>
                       )}
                       <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
-                      <select value={productForm.status} onChange={e => setProductForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                      <select value={productForm.status} onChange={e => setProductForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', background: 'grey' }}>
                         <option value="active">Active</option>
                         <option value="inactive">Inactive</option>
                       </select>
@@ -5389,7 +5471,7 @@ export default function AdminDashboard() {
                       border: '1px solid rgba(102, 126, 234, 0.2)',
                       minWidth: '140px',
                       fontSize: '14px',
-                      background: '#fff'
+                      background: 'grey'
                     }}
                 >
                   <option value="Therapy">Therapy</option>
@@ -5579,7 +5661,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -5613,7 +5695,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -5639,7 +5721,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none',
                               minHeight: 80,
@@ -5667,7 +5749,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -5694,7 +5776,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -5736,7 +5818,7 @@ export default function AdminDashboard() {
                               border: '2px solid rgba(102, 126, 234, 0.2)',
                               fontSize: '16px',
                               width: '100%',
-                              background: '#fff',
+                              background: 'grey',
                               transition: 'all 0.2s ease',
                               outline: 'none'
                             }}
@@ -6211,9 +6293,9 @@ export default function AdminDashboard() {
                     border: '2px solid rgba(102, 126, 234, 0.2)',
                     fontSize: '16px',
                     width: '100%',
-                    transition: 'all 0.2s ease',
+                    transition: '0.2s',
                     outline: 'none',
-                    background: userEditId ? '#f8fafc' : '#fff'
+                    background: 'grey'
                   }}
                   onFocus={(e) => !userEditId && (e.target.style.borderColor = '#667eea')}
                   onBlur={(e) => !userEditId && (e.target.style.borderColor = 'rgba(102, 126, 234, 0.2)')}

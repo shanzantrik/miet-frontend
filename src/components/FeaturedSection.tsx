@@ -566,7 +566,7 @@ export default function FeaturedSection() {
             About MIET
           </h3>
 
-          <div style={{
+          <div className="miet-card" style={{
             background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
             borderRadius: '20px',
             padding: '2rem',
@@ -574,7 +574,13 @@ export default function FeaturedSection() {
             color: '#fff',
             textAlign: 'center',
             position: 'relative',
-            overflow: 'hidden'
+            overflow: 'hidden',
+            height: '400px',
+            width: '100%',
+            minHeight: '400px',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'space-between'
           }}>
             <div style={{
               position: 'absolute',
@@ -867,6 +873,61 @@ export default function FeaturedSection() {
             .featured-section .arrow-left,
             .featured-section .arrow-right {
               display: none !important;
+            }
+          }
+
+          /* MieT Card Responsive Styles */
+          @media (max-width: 768px) {
+            .miet-card {
+              height: 350px !important;
+              min-height: 350px !important;
+              padding: 1.5rem !important;
+            }
+
+            .miet-card h4 {
+              font-size: 1.3rem !important;
+              margin-bottom: 0.75rem !important;
+            }
+
+            .miet-card p {
+              font-size: 1rem !important;
+              margin-bottom: 0.75rem !important;
+            }
+
+            .miet-card > div:last-child {
+              gap: 0.75rem !important;
+            }
+
+            .miet-card > div:last-child > div {
+              padding: 0.4rem 0.8rem !important;
+              font-size: 0.85rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .miet-card {
+              height: 320px !important;
+              min-height: 320px !important;
+              padding: 1.25rem !important;
+            }
+
+            .miet-card h4 {
+              font-size: 1.2rem !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .miet-card p {
+              font-size: 0.95rem !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .miet-card > div:last-child {
+              gap: 0.5rem !important;
+            }
+
+            .miet-card > div:last-child > div {
+              padding: 0.35rem 0.7rem !important;
+              font-size: 0.8rem !important;
             }
           }
         `

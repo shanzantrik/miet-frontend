@@ -216,7 +216,7 @@ export default function MarketplaceSection() {
       {filtered.length > 0 ? (
         <>
           {/* Products Grid - Responsive and evenly distributed */}
-          <div style={{
+          <div className="products-grid" style={{
             display: 'grid',
             gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(250px, 80vw, 280px), 1fr))',
             gap: 'clamp(1rem, 4vw, 2rem)',
@@ -542,6 +542,109 @@ export default function MarketplaceSection() {
 
             .marketplace-section .product-card img {
               height: 120px !important;
+            }
+          }
+
+          /* Mobile Horizontal Slider Styles */
+          @media (max-width: 768px) {
+            .products-grid {
+              display: flex !important;
+              overflow-x: auto !important;
+              overflow-y: hidden !important;
+              scroll-snap-type: x mandatory !important;
+              scrollbar-width: none !important;
+              -ms-overflow-style: none !important;
+              gap: 1.5rem !important;
+              padding: 0 1rem !important;
+              margin: 0 auto 2rem auto !important;
+              max-width: 100vw !important;
+            }
+
+            .products-grid::-webkit-scrollbar {
+              display: none !important;
+            }
+
+            .products-grid .product-card {
+              flex: 0 0 auto !important;
+              width: 300px !important;
+              min-width: 300px !important;
+              max-width: 300px !important;
+              height: 300px !important;
+              min-height: 300px !important;
+              max-height: 300px !important;
+              scroll-snap-align: center !important;
+              margin-right: 0 !important;
+              border-radius: 16px !important;
+            }
+
+            .products-grid .product-card:last-child {
+              margin-right: 1rem !important;
+            }
+
+            /* Hide description on mobile */
+            .products-grid .product-card p {
+              display: none !important;
+            }
+
+            /* Adjust image dimensions for mobile */
+            .products-grid .product-card > div:first-child {
+              height: 140px !important;
+              margin-bottom: 1rem !important;
+            }
+
+            /* Optimize spacing for mobile */
+            .products-grid .product-card h3 {
+              font-size: 1.1rem !important;
+              margin-bottom: 0.75rem !important;
+              line-height: 1.2 !important;
+            }
+
+            .products-grid .product-card > div:last-child > div:nth-child(2) {
+              margin-bottom: 1rem !important;
+              font-size: 1.1rem !important;
+            }
+
+            .products-grid .product-card button {
+              padding: 0.75rem 1.5rem !important;
+              font-size: 0.95rem !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .products-grid {
+              padding: 0 1rem !important;
+              gap: 1rem !important;
+            }
+
+            .products-grid .product-card {
+              width: 280px !important;
+              min-width: 280px !important;
+              max-width: 280px !important;
+              height: 280px !important;
+              min-height: 280px !important;
+              max-height: 280px !important;
+              border-radius: 12px !important;
+            }
+
+            /* Further optimize for very small screens */
+            .products-grid .product-card > div:first-child {
+              height: 130px !important;
+              margin-bottom: 0.75rem !important;
+            }
+
+            .products-grid .product-card h3 {
+              font-size: 1rem !important;
+              margin-bottom: 0.5rem !important;
+            }
+
+            .products-grid .product-card > div:last-child > div:nth-child(2) {
+              margin-bottom: 0.75rem !important;
+              font-size: 1rem !important;
+            }
+
+            .products-grid .product-card button {
+              padding: 0.6rem 1.25rem !important;
+              font-size: 0.9rem !important;
             }
           }
         `

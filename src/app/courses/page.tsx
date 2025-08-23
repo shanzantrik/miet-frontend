@@ -4,6 +4,7 @@ import Link from 'next/link';
 import { FaStar, FaVideo, FaUsers, FaClock, FaSpinner } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Footer from '../../components/Footer';
+import { useCart } from '../../components/CartContext';
 
 interface Course {
   id: string;
@@ -28,6 +29,7 @@ export default function CoursesPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [filter, setFilter] = useState<'all' | 'free' | 'paid'>('all');
+  const { addToCart } = useCart();
 
   useEffect(() => {
     fetchCourses();
@@ -350,20 +352,16 @@ export default function CoursesPage() {
                 style={{ textDecoration: 'none', color: 'inherit' }}
               >
                 <div style={{
-                  border: '1px solid #e5e7eb',
-                  borderRadius: '12px',
-                  overflow: 'hidden',
-                  transition: 'all 0.2s',
-                  cursor: 'pointer',
-                  background: 'white'
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = 'translateY(-4px)';
-                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.1)';
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = 'translateY(0)';
-                  e.currentTarget.style.boxShadow = 'none';
+                  background: 'var(--muted)',
+                  borderRadius: '16px',
+                  padding: '24px',
+                  textAlign: 'center',
+                  boxShadow: '0 2px 12px var(--accent-20)',
+                  transition: 'transform 0.2s, box-shadow 0.2s',
+                  border: '2px solid transparent',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  height: '500px'
                 }}>
                   <div style={{ position: 'relative' }}>
                     <img
@@ -403,7 +401,7 @@ export default function CoursesPage() {
                       {course.title}
                     </h3>
 
-                    <p style={{
+                    <p className="course-description" style={{
                       fontSize: '0.875rem',
                       color: '#6b7280',
                       marginBottom: '1rem',
@@ -455,6 +453,59 @@ export default function CoursesPage() {
                         Created by <span style={{ color: '#3b82f6' }}>{course.instructor_name}</span>
                       </div>
                     )}
+                  </div>
+                  <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'center', marginTop: 'auto' }}>
+                    <Link 
+                      href={`/courses/${course.id}`}
+                      style={{
+                        background: 'linear-gradient(135deg, rgb(102, 126, 234) 0%, rgb(118, 75, 162) 100%)',
+                        color: 'rgb(255, 255, 255)',
+                        padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                        borderRadius: '12px',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                        transition: '0.3s',
+                        boxShadow: 'rgba(99, 102, 241, 0.3) 0px 4px 15px',
+                        minWidth: 'clamp(80px, 20vw, 100px)',
+                        minHeight: 'clamp(36px, 8vw, 44px)',
+                        transform: 'translateY(0px)',
+                        display: 'inline-block',
+                        cursor: 'pointer',
+                        flex: '1 1 0%',
+                        textAlign: 'center'
+                      }}
+                    >
+                      View Details
+                    </Link>
+                    <button 
+                      onClick={() => addToCart({
+                        id: course.id,
+                        title: course.title || 'Untitled Course',
+                        price: course.price || '0',
+                        thumbnail: course.thumbnail,
+                        instructor_name: course.instructor_name,
+                        type: 'Course'
+                      })}
+                      style={{
+                        background: 'linear-gradient(135deg, #ef4444 0%, #000000 100%)', // Add to Cart (red to black)
+                        color: 'rgb(255, 255, 255)',
+                        padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                        borderRadius: '12px',
+                        border: 'none',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                        transition: '0.3s',
+                        boxShadow: 'rgba(239, 68, 68, 0.3) 0px 4px 15px',
+                        minWidth: 'clamp(80px, 20vw, 100px)',
+                        minHeight: 'clamp(36px, 8vw, 44px)',
+                        transform: 'translateY(0px)',
+                        flex: '1 1 0%'
+                      }}
+                    >
+                      Add to Cart
+                    </button>
                   </div>
                 </div>
               </Link>

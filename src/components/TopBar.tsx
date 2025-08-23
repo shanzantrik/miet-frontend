@@ -24,10 +24,10 @@ export default function TopBar() {
   // Cart functionality
   const { itemCount } = useCart();
 
-  // Responsive: detect small screens
-  const [isMobile, setIsMobile] = React.useState(false);
+  // Responsive: detect small screens (optimized for iPhone 14 Pro Max: 430px)
+  const [isMobile, setIsMobile] = useState(false);
   React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 900);
+    const handleResize = () => setIsMobile(window.innerWidth <= 768);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -109,16 +109,17 @@ export default function TopBar() {
   // Only one TopBar: no duplicate rendering
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
-      {/* Utility Row */}
-              <div className="utility-row" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
-        padding: '0.5rem 2vw',
-        background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
-        borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
-      }}>
+      {/* Utility Row - Desktop Only */}
+      {!isMobile && (
+        <div className="utility-row" style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          fontSize: 'clamp(0.8rem, 1vw, 0.9rem)',
+          padding: '0.5rem 2vw',
+          background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
+          borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+        }}>
           <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
             <Link href="/" aria-label="Home" style={{
               color: highContrast ? '#fff' : '#667eea',
@@ -143,7 +144,7 @@ export default function TopBar() {
             </Link>
             <Link
               href="/sitemap"
-            aria-label="Sitemap"
+              aria-label="Sitemap"
               style={{
                 color: highContrast ? '#fff' : '#667eea',
                 textDecoration: 'none',
@@ -169,122 +170,217 @@ export default function TopBar() {
               Sitemap
             </Link>
           </div>
-        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-          {/* Accessibility Controls */}
-          <div className="accessibility-controls" style={{
-            display: 'flex',
-            gap: '0.5rem',
-            alignItems: 'center',
-            background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
-            padding: '0.5rem',
-            borderRadius: '8px',
-            border: '1px solid transparent'
-          }}>
-            <button
-              aria-label="Decrease font size"
-              onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: highContrast ? '#fff' : '#667eea',
-                cursor: 'pointer',
-                fontWeight: '700',
-                fontSize: 'clamp(0.9rem, 1vw, 1rem)',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'none';
-              }}
-            >
-              A-
-            </button>
-            <button
-              aria-label="Reset font size"
-              onClick={() => setFontSize(1)}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: highContrast ? '#fff' : '#667eea',
-                cursor: 'pointer',
-                fontWeight: '700',
-                fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'none';
-              }}
-            >
-              A
-            </button>
-            <button
-              aria-label="Increase font size"
-              onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))}
-              style={{
-                background: 'none',
-                border: 'none',
-                color: highContrast ? '#fff' : '#667eea',
-                cursor: 'pointer',
-                fontWeight: '700',
-                fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
-                padding: '0.25rem 0.5rem',
-                borderRadius: '4px',
-                transition: 'all 0.3s ease'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'none';
-              }}
-            >
-              A+
-            </button>
-          </div>
-
-          {/* High Contrast Toggle */}
-          <button
-            aria-label="Toggle high contrast"
-            onClick={() => setHighContrast(h => !h)}
-            style={{
-              background: highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
-              border: '1px solid transparent',
-              color: highContrast ? '#fff' : '#667eea',
-              cursor: 'pointer',
-              fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
-              padding: '0.5rem',
-              borderRadius: '6px',
-              transition: 'all 0.3s ease',
+          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+            {/* Accessibility Controls */}
+            <div className="accessibility-controls" style={{
               display: 'flex',
+              gap: '0.5rem',
               alignItems: 'center',
-              justifyContent: 'center'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.3)' : 'rgba(99, 102, 241, 0.2)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(0)';
-            }}
-          >
-            <FaAdjust />
-          </button>
+              background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
+              padding: '0.5rem',
+              borderRadius: '8px',
+              border: '1px solid transparent'
+            }}>
+              <button
+                aria-label="Decrease font size"
+                onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: highContrast ? '#fff' : '#667eea',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                A-
+              </button>
+              <button
+                aria-label="Reset font size"
+                onClick={() => setFontSize(1)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: highContrast ? '#fff' : '#667eea',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                A
+              </button>
+              <button
+                aria-label="Increase font size"
+                onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: highContrast ? '#fff' : '#667eea',
+                  cursor: 'pointer',
+                  fontWeight: '700',
+                  fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+                  padding: '0.25rem 0.5rem',
+                  borderRadius: '4px',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'none';
+                }}
+              >
+                A+
+              </button>
+            </div>
 
-          {/* Language Dropdown */}
-          <div style={{ position: 'relative' }}>
+            {/* High Contrast Toggle */}
             <button
-              aria-label="Switch language"
-              onClick={() => setShowLang(l => !l)}
+              aria-label="Toggle high contrast"
+              onClick={() => setHighContrast(h => !h)}
+              style={{
+                background: highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
+                border: '1px solid transparent',
+                color: highContrast ? '#fff' : '#667eea',
+                cursor: 'pointer',
+                fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+                padding: '0.5rem',
+                borderRadius: '6px',
+                transition: 'all 0.3s ease',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.3)' : 'rgba(99, 102, 241, 0.2)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(0)';
+              }}
+            >
+              <FaAdjust />
+            </button>
+
+            {/* Language Dropdown */}
+            <div style={{ position: 'relative' }}>
+              <button
+                aria-label="Switch language"
+                onClick={() => setShowLang(l => !l)}
+                style={{
+                  background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  borderRadius: '8px',
+                  color: highContrast ? '#fff' : '#667eea',
+                  padding: '0.5rem 0.75rem',
+                  fontWeight: '600',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  transition: 'all 0.3s ease',
+                  backdropFilter: 'blur(10px)'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+                  e.currentTarget.style.transform = 'translateY(-1px)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <Flag code={lang} />
+                {lang.toUpperCase()}
+                <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showLang ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+              </button>
+              {showLang && (
+                <div style={{
+                  position: 'absolute',
+                  top: 'calc(100% + 0.5rem)',
+                  left: 0,
+                  background: highContrast ? '#222' : 'rgba(255,255,255,0.95)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  borderRadius: '8px',
+                  zIndex: 10,
+                  minWidth: '80px',
+                  boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                  backdropFilter: 'blur(10px)',
+                  overflow: 'hidden'
+                }}>
+                  <button
+                    onClick={() => { setLang('en'); setShowLang(false); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      color: highContrast ? '#fff' : '#667eea',
+                      padding: '0.75rem 1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease',
+                      borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'none';
+                    }}
+                  >
+                    <Flag code="en" /> EN
+                  </button>
+                  <button
+                    onClick={() => { setLang('hi'); setShowLang(false); }}
+                    style={{
+                      display: 'flex',
+                      alignItems: 'center',
+                      width: '100%',
+                      background: 'none',
+                      border: 'none',
+                      color: highContrast ? '#fff' : '#667eea',
+                      padding: '0.75rem 1rem',
+                      cursor: 'pointer',
+                      transition: 'all 0.2s ease'
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.background = 'none';
+                    }}
+                  >
+                    <Flag code="hi" /> HI
+                  </button>
+                </div>
+              )}
+            </div>
+
+            {/* Currency Switch */}
+            <button
+              aria-label="Switch currency"
               style={{
                 background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
                 border: '1px solid rgba(99, 102, 241, 0.2)',
@@ -310,117 +406,22 @@ export default function TopBar() {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <Flag code={lang} />
-              {lang.toUpperCase()}
-              <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showLang ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+              <FaGlobe style={{ fontSize: 'clamp(0.9rem, 1vw, 1rem)' }} />
+              ₹
             </button>
-            {showLang && (
-              <div style={{
-                position: 'absolute',
-                top: 'calc(100% + 0.5rem)',
-                left: 0,
-                background: highContrast ? '#222' : 'rgba(255,255,255,0.95)',
-                border: '1px solid rgba(99, 102, 241, 0.2)',
-                borderRadius: '8px',
-                zIndex: 10,
-                minWidth: '80px',
-                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
-                backdropFilter: 'blur(10px)',
-                overflow: 'hidden'
-              }}>
-                <button
-                  onClick={() => { setLang('en'); setShowLang(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    color: highContrast ? '#fff' : '#667eea',
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'none';
-                  }}
-                >
-                  <Flag code="en" /> EN
-                </button>
-                <button
-                  onClick={() => { setLang('hi'); setShowLang(false); }}
-                  style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    width: '100%',
-                    background: 'none',
-                    border: 'none',
-                    color: highContrast ? '#fff' : '#667eea',
-                    padding: '0.75rem 1rem',
-                    cursor: 'pointer',
-                    transition: 'all 0.2s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = 'none';
-                  }}
-                >
-                  <Flag code="hi" /> HI
-                </button>
-              </div>
-            )}
           </div>
-
-          {/* Currency Switch */}
-          <button
-            aria-label="Switch currency"
-            style={{
-              background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
-              border: '1px solid rgba(99, 102, 241, 0.2)',
-              borderRadius: '8px',
-              color: highContrast ? '#fff' : '#667eea',
-              padding: '0.5rem 0.75rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              transition: 'all 0.3s ease',
-              backdropFilter: 'blur(10px)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            <FaGlobe style={{ fontSize: 'clamp(0.9rem, 1vw, 1rem)' }} />
-            ₹
-          </button>
         </div>
-      </div>
-              {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
-      <div className="main-row" style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        padding: 'clamp(8px, 2vw, 10px) clamp(1rem, 3vw, 2vw)',
-        background: highContrast ? '#222' : '#fff',
-        position: 'relative',
-        flexWrap: 'wrap',
-        gap: 'clamp(0.5rem, 2vw, 1rem)'
-      }}>
+      )}
+      
+      {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
+       <div className="main-row" style={{
+         display: 'flex',
+         justifyContent: 'space-between',
+         alignItems: 'center',
+         padding: 'clamp(8px, 2vw, 10px) clamp(1rem, 3vw, 2vw)',
+         background: highContrast ? '#222' : '#fff',
+         position: 'relative'
+       }}>
         <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 16px)' }}>
           <Link href="/">
             <Image
@@ -449,8 +450,8 @@ export default function TopBar() {
           <nav aria-label="Main navigation" style={{
             display: 'flex',
             alignItems: 'center',
-            gap: '2rem',
-            fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+            gap: 'clamp(1rem, 1.5vw, 1.5rem)',
+            fontSize: 'clamp(0.9rem, 1vw, 1rem)',
             fontWeight: '600',
             flex: 1,
             justifyContent: 'center',
@@ -462,12 +463,13 @@ export default function TopBar() {
               textDecoration: 'none',
               display: 'flex',
               alignItems: 'center',
-              fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+              fontSize: 'clamp(0.9rem, 1vw, 1rem)',
               fontWeight: '700',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              background: 'transparent'
+              background: 'transparent',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -487,10 +489,11 @@ export default function TopBar() {
             <Link href="/about" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -509,10 +512,11 @@ export default function TopBar() {
             <Link href="/services" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -531,10 +535,11 @@ export default function TopBar() {
             <Link href="/consultants" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -553,10 +558,11 @@ export default function TopBar() {
             <Link href="/marketplace" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -575,10 +581,11 @@ export default function TopBar() {
             <Link href="/courses" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -597,10 +604,11 @@ export default function TopBar() {
             <Link href="/contact" style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
-              padding: '0.5rem 1rem',
+              padding: '0.4rem 0.8rem',
               borderRadius: '8px',
               transition: 'all 0.3s ease',
-              fontWeight: '600'
+              fontWeight: '600',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
@@ -617,131 +625,157 @@ export default function TopBar() {
             </Link>
           </nav>
         )}
-        {/* Hamburger for mobile */}
-        {isMobile && (
-          <button onClick={() => setMobileMenu(m => !m)} aria-label="Open menu" style={{ background: 'none', border: 'none', fontSize: 32, color: highContrast ? '#fff' : '#5a67d8', cursor: 'pointer', marginLeft: 16 }}>
-            {mobileMenu ? <FaTimes /> : <FaBars />}
-          </button>
-        )}
-        {/* Login/Signup and Cart */}
-        <div className="login-section" style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 'clamp(0.5rem, 2vw, 1.5rem)',
-          marginLeft: 'clamp(1rem, 3vw, 2rem)',
-          flexWrap: 'wrap'
-        }}>
-            {/* Cart Icon */}
-          <Link href="/cart" style={{
-            position: 'relative',
-            textDecoration: 'none',
-            color: highContrast ? '#fff' : '#667eea',
-            padding: 'clamp(0.5rem, 2vw, 0.75rem)',
-            borderRadius: '12px',
-            background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
-            border: '1px solid transparent',
-            transition: 'all 0.3s ease',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            minWidth: 'clamp(40px, 10vw, 48px)',
-            minHeight: 'clamp(40px, 10vw, 48px)'
-          }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
-          >
-            <FaShoppingCart style={{
-              fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
-              cursor: 'pointer'
-            }} />
-              {itemCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
-                background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  color: 'white',
-                  borderRadius: '50%',
-                width: '24px',
-                height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                fontSize: 'clamp(0.7rem, 0.8vw, 0.8rem)',
-                fontWeight: '700',
-                boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
-                border: '2px solid #ffffff'
-                }}>
-                  {itemCount}
-                </span>
-              )}
-            </Link>
 
-          {/* Login Button */}
-          <button
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: '#fff',
-              borderRadius: '12px',
-              border: 'none',
-              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
-              minWidth: 'clamp(80px, 20vw, 100px)',
-              minHeight: 'clamp(36px, 8vw, 44px)'
-            }}
-            onClick={() => setShowLogin(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-            }}
-          >
-            Login
-          </button>
+                 {/* Right side: Cart, Login, and Hamburger for mobile */}
+         <div className="right-section" style={{
+           display: 'flex',
+           alignItems: 'center',
+           gap: 'clamp(0.5rem, 2vw, 1.5rem)',
+           marginLeft: 'auto'
+         }}>
+           {/* Cart Icon */}
+           <Link href="/cart" style={{
+             position: 'relative',
+             textDecoration: 'none',
+             color: highContrast ? '#fff' : '#667eea',
+             padding: 'clamp(0.5rem, 2vw, 0.75rem)',
+             borderRadius: '12px',
+             background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)',
+             border: '1px solid transparent',
+             transition: 'all 0.3s ease',
+             display: 'flex',
+             alignItems: 'center',
+             justifyContent: 'center',
+             minWidth: 'clamp(40px, 10vw, 48px)',
+             minHeight: 'clamp(40px, 10vw, 48px)'
+           }}
+           onMouseEnter={(e) => {
+             e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+             e.currentTarget.style.transform = 'translateY(-2px)';
+             e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+           }}
+           onMouseLeave={(e) => {
+             e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+             e.currentTarget.style.transform = 'translateY(0)';
+             e.currentTarget.style.boxShadow = 'none';
+           }}
+           >
+             <FaShoppingCart style={{
+               fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
+               cursor: 'pointer'
+             }} />
+               {itemCount > 0 && (
+                 <span style={{
+                   position: 'absolute',
+                   top: '-8px',
+                   right: '-8px',
+                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
+                   color: 'white',
+                   borderRadius: '50%',
+                 width: '24px',
+                 height: '24px',
+                   display: 'flex',
+                   alignItems: 'center',
+                   justifyContent: 'center',
+                 fontSize: 'clamp(0.7rem, 0.8vw, 0.8rem)',
+                 fontWeight: '700',
+                 boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
+                 border: '2px solid #ffffff'
+                 }}>
+                   {itemCount}
+                 </span>
+               )}
+             </Link>
 
-          {/* Sign Up Button */}
-          <button
-            style={{
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-              color: '#fff',
-              borderRadius: '12px',
-              border: 'none',
-              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)',
-              minWidth: 'clamp(80px, 20vw, 100px)',
-              minHeight: 'clamp(36px, 8vw, 44px)'
-            }}
-            onClick={() => setShowSignup(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 27, 75, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 27, 75, 0.3)';
-            }}
-          >
-            Sign Up
-          </button>
+           {/* Login Button - Show on both mobile and desktop */}
+           <button
+             style={{
+               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+               color: '#fff',
+               borderRadius: '12px',
+               border: 'none',
+               padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+               fontWeight: '600',
+               cursor: 'pointer',
+               fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+               transition: 'all 0.3s ease',
+               boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
+               minWidth: 'clamp(80px, 20vw, 100px)',
+               minHeight: 'clamp(36px, 8vw, 44px)'
+             }}
+             onClick={() => setShowLogin(true)}
+             onMouseEnter={(e) => {
+               e.currentTarget.style.transform = 'translateY(-2px)';
+               e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+             }}
+             onMouseLeave={(e) => {
+               e.currentTarget.style.transform = 'translateY(0)';
+               e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+             }}
+           >
+             Login
+           </button>
+
+           {/* Sign Up Button - Show only on desktop, hide on mobile */}
+           {!isMobile && (
+             <button
+               style={{
+                 background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                 color: '#fff',
+                 borderRadius: '12px',
+                 border: 'none',
+                 padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
+                 fontWeight: '600',
+                 cursor: 'pointer',
+                 fontSize: 'clamp(0.8rem, 2vw, 1rem)',
+                 transition: 'all 0.3s ease',
+                 boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)',
+                 minWidth: 'clamp(80px, 20vw, 100px)',
+                 minHeight: 'clamp(36px, 8vw, 44px)'
+               }}
+               onClick={() => setShowSignup(true)}
+               onMouseEnter={(e) => {
+                 e.currentTarget.style.transform = 'translateY(-2px)';
+                 e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 27, 75, 0.4)';
+               }}
+               onMouseLeave={(e) => {
+                 e.currentTarget.style.transform = 'translateY(0)';
+                 e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+               }}
+             >
+               Sign Up
+             </button>
+           )}
+
+          {/* Hamburger for mobile */}
+          {isMobile && (
+            <button 
+              onClick={() => {
+                const newState = !mobileMenu;
+                setMobileMenu(newState);
+                console.log('Mobile menu toggled:', newState, 'isMobile:', isMobile, 'mobileMenu state:', mobileMenu);
+              }} 
+              aria-label="Open menu" 
+              style={{ 
+                background: 'none', 
+                border: 'none', 
+                fontSize: 32, 
+                color: highContrast ? '#fff' : '#5a67d8', 
+                cursor: 'pointer',
+                padding: '8px',
+                borderRadius: '8px',
+                transition: 'all 0.3s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              {mobileMenu ? <FaTimes /> : <FaBars />}
+            </button>
+          )}
         </div>
         {/* Mobile menu overlay */}
         {mobileMenu && (
@@ -751,24 +785,233 @@ export default function TopBar() {
               <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</Link>
               {/* Services submenu */}
               <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Services</Link>
-              <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
-              <a href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
-              <a href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Courses</a>
-              {/* Cart in mobile menu */}
-              <Link href="/cart" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: '18', marginBottom: '8', display: 'flex', alignItems: 'center' }}>
-                <FaShoppingCart style={{ marginRight: '8' }} />
-                Cart {itemCount > 0 && `(${itemCount})`}
-              </Link>
-              {/* Resources submenu - removed for now */}
-              {/* <div style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 4 }}>Resources</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</Link>
-                  <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</Link>
-                  <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</Link>
-                </div>
-              </div> */}
-              <a href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18 }}>Contact Us</a>
+              <Link href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</Link>
+              <Link href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</Link>
+              <Link href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Courses</Link>
+               <Link href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 16 }}>Contact Us</Link>
+               
+               {/* Accessibility Section */}
+               <div style={{ borderTop: '1px solid rgba(99, 102, 241, 0.1)', paddingTop: 16, marginTop: 16 }}>
+                 <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 12, fontSize: 16 }}>Accessibility</div>
+                 
+                 {/* Font Size Controls */}
+                 <div style={{ display: 'flex', gap: '8px', marginBottom: 12, justifyContent: 'center' }}>
+                   <button
+                     aria-label="Decrease font size"
+                     onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))}
+                     style={{
+                       background: 'rgba(99, 102, 241, 0.1)',
+                       border: '1px solid rgba(99, 102, 241, 0.2)',
+                       color: highContrast ? '#fff' : '#667eea',
+                       cursor: 'pointer',
+                       fontWeight: '700',
+                       fontSize: '14px',
+                       padding: '8px 12px',
+                       borderRadius: '6px',
+                       transition: 'all 0.3s ease'
+                     }}
+                   >
+                     A-
+                   </button>
+                   <button
+                     aria-label="Reset font size"
+                     onClick={() => setFontSize(1)}
+                     style={{
+                       background: 'rgba(99, 102, 241, 0.1)',
+                       border: '1px solid rgba(99, 102, 241, 0.2)',
+                       color: highContrast ? '#fff' : '#667eea',
+                       cursor: 'pointer',
+                       fontWeight: '700',
+                       fontSize: '14px',
+                       padding: '8px 12px',
+                       borderRadius: '6px',
+                       transition: 'all 0.3s ease'
+                     }}
+                   >
+                     A
+                   </button>
+                   <button
+                     aria-label="Increase font size"
+                     onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))}
+                     style={{
+                       background: 'rgba(99, 102, 241, 0.1)',
+                       border: '1px solid rgba(99, 102, 241, 0.2)',
+                       color: highContrast ? '#fff' : '#667eea',
+                       cursor: 'pointer',
+                       fontWeight: '700',
+                       fontSize: '14px',
+                       padding: '8px 12px',
+                       borderRadius: '6px',
+                       transition: 'all 0.3s ease'
+                     }}
+                   >
+                     A+
+                   </button>
+                 </div>
+
+                 {/* High Contrast Toggle */}
+                 <button
+                   aria-label="Toggle high contrast"
+                   onClick={() => setHighContrast(h => !h)}
+                   style={{
+                     background: highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
+                     border: '1px solid rgba(99, 102, 241, 0.2)',
+                     color: highContrast ? '#fff' : '#667eea',
+                     cursor: 'pointer',
+                     fontSize: '16',
+                     padding: '12px 16px',
+                     borderRadius: '8px',
+                     transition: 'all 0.3s ease',
+                     display: 'flex',
+                     alignItems: 'center',
+                     justifyContent: 'center',
+                     width: '100%',
+                     gap: '8px'
+                   }}
+                 >
+                   <FaAdjust />
+                   {highContrast ? 'Disable' : 'Enable'} High Contrast
+                 </button>
+               </div>
+
+               {/* Settings Section */}
+               <div style={{ borderTop: '1px solid rgba(99, 102, 241, 0.1)', paddingTop: 16, marginTop: 16 }}>
+                 <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 12, fontSize: 16 }}>Settings</div>
+                 
+                 {/* Language Dropdown */}
+                 <div style={{ marginBottom: 12, position: 'relative' }}>
+                   <button
+                     aria-label="Switch language"
+                     onClick={() => setShowLang(l => !l)}
+                     style={{
+                       background: 'rgba(255,255,255,0.9)',
+                       border: '1px solid rgba(99, 102, 241, 0.2)',
+                       borderRadius: '8px',
+                       color: '#667eea',
+                       padding: '12px 16px',
+                       fontWeight: '600',
+                       cursor: 'pointer',
+                       display: 'flex',
+                       alignItems: 'center',
+                       gap: '8px',
+                       transition: 'all 0.3s ease',
+                       width: '100%',
+                       justifyContent: 'space-between'
+                     }}
+                   >
+                     <span style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                       <Flag code={lang} />
+                       {lang === 'en' ? 'English' : 'हिंदी'}
+                     </span>
+                     <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showLang ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+                   </button>
+                   {showLang && (
+                     <div style={{
+                       position: 'absolute',
+                       top: '100%',
+                       left: 0,
+                       right: 0,
+                       background: 'rgba(255,255,255,0.95)',
+                       border: '1px solid rgba(99, 102, 241, 0.2)',
+                       borderRadius: '8px',
+                       zIndex: 10,
+                       boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                       backdropFilter: 'blur(10px)',
+                       overflow: 'hidden',
+                       marginTop: '4px'
+                     }}>
+                       <button
+                         onClick={() => { setLang('en'); setShowLang(false); }}
+                         style={{
+                           display: 'flex',
+                           alignItems: 'center',
+                           width: '100%',
+                           background: 'none',
+                           border: 'none',
+                           color: '#667eea',
+                           padding: '12px 16px',
+                           cursor: 'pointer',
+                           transition: 'all 0.2s ease',
+                           borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+                         }}
+                         onMouseEnter={(e) => {
+                           e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.currentTarget.style.background = 'none';
+                         }}
+                       >
+                         <Flag code="en" /> English
+                       </button>
+                       <button
+                         onClick={() => { setLang('hi'); setShowLang(false); }}
+                         style={{
+                           display: 'flex',
+                           alignItems: 'center',
+                           width: '100%',
+                           background: 'none',
+                           border: 'none',
+                           color: '#667eea',
+                           padding: '12px 16px',
+                           cursor: 'pointer',
+                           transition: 'all 0.2s ease'
+                         }}
+                         onMouseEnter={(e) => {
+                           e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                         }}
+                         onMouseLeave={(e) => {
+                           e.currentTarget.style.background = 'none';
+                         }}
+                       >
+                         <Flag code="hi" /> हिंदी
+                       </button>
+                     </div>
+                   )}
+                 </div>
+
+                 {/* Currency Switch */}
+                 <button
+                   aria-label="Switch currency"
+                   style={{
+                     background: 'rgba(255,255,255,0.9)',
+                     border: '1px solid rgba(99, 102, 241, 0.2)',
+                     borderRadius: '8px',
+                     color: '#667eea',
+                     padding: '12px 16px',
+                     fontWeight: '600',
+                     cursor: 'pointer',
+                     display: 'flex',
+                     alignItems: 'center',
+                     gap: '8px',
+                     transition: 'all 0.3s ease',
+                     width: '100%'
+                   }}
+                 >
+                   <FaGlobe style={{ fontSize: '16' }} />
+                   Indian Rupee (₹)
+                 </button>
+               </div>
+
+               {/* Sign Up Button at the bottom of mobile menu */}
+               <div style={{ borderTop: '1px solid rgba(99, 102, 241, 0.1)', paddingTop: 16, marginTop: 16 }}>
+                 <button
+                   style={{
+                     background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
+                     color: '#fff',
+                     borderRadius: '8px',
+                     border: 'none',
+                     padding: '12px 16px',
+                     fontWeight: '600',
+                     cursor: 'pointer',
+                     fontSize: '16',
+                     transition: 'all 0.3s ease',
+                     width: '100%'
+                   }}
+                   onClick={() => setShowSignup(true)}
+                 >
+                   Sign Up
+                 </button>
+               </div>
             </nav>
           </div>
         )}
@@ -825,30 +1068,49 @@ export default function TopBar() {
             }
 
             .topbar-root .main-row {
-              flex-direction: column !important;
-              align-items: stretch !important;
-              gap: 1rem !important;
-            }
-
-            .topbar-root .login-section {
-              justify-content: center !important;
-              gap: 1rem !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              gap: 0 !important;
             }
 
             .topbar-root .logo-section {
-              justify-content: center !important;
+              justify-content: flex-start !important;
+              flex-shrink: 0 !important;
+              min-width: 120px !important;
             }
-          }
 
-          @media (max-width: 480px) {
-            .topbar-root .utility-row {
-              flex-direction: column !important;
+            .topbar-root .right-section {
+              justify-content: flex-end !important;
+              margin-left: auto !important;
               gap: 0.5rem !important;
+            }
+
+            .topbar-root .main-row {
               padding: 0.5rem 1rem !important;
             }
+            
+            .topbar-root .utility-row {
+              display: none !important;
+            }
 
-            .topbar-root .accessibility-controls {
-              justify-content: center !important;
+            .topbar-root .logo-section span {
+              font-size: clamp(18px, 4vw, 22px) !important;
+            }
+
+            .topbar-root .right-section {
+              gap: 0.4rem !important;
+            }
+
+            .topbar-root .right-section button {
+              min-width: clamp(70px, 18vw, 80px) !important;
+              padding: 0.5rem 0.8rem !important;
+              font-size: clamp(0.7rem, 1.8vw, 0.8rem) !important;
+            }
+            
+            .topbar-root .right-section a {
+              min-width: clamp(36px, 9vw, 40px) !important;
+              min-height: clamp(36px, 9vw, 40px) !important;
+              padding: 0.4rem !important;
             }
           }
         `
