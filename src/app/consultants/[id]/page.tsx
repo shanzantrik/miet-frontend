@@ -4,6 +4,10 @@ import { useParams, useRouter } from "next/navigation";
 import Link from "next/link";
 import TopBar from "../../../components/TopBar";
 import Footer from "../../../components/Footer";
+import GoogleAuth from "../../../components/GoogleAuth";
+import { useNotifications } from "../../../components/NotificationSystem";
+import { getApiUrl } from "../../../utils/api";
+import { FaCalendarAlt, FaUserMd } from "react-icons/fa";
 
 type Consultant = {
   id: number;
@@ -28,6 +32,11 @@ export default function ConsultantDetailPage() {
   const [consultant, setConsultant] = useState<Consultant | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  // Authentication states
+  const [user, setUser] = useState<any>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const { addNotification } = useNotifications();
 
   useEffect(() => {
     const fetchConsultant = async () => {
@@ -60,7 +69,54 @@ export default function ConsultantDetailPage() {
     };
 
     fetchConsultant();
+    checkAuthStatus();
   }, [params.id]);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('user_jwt');
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const response = await fetch(`${getApiUrl('api/auth/profile')}`, {
+        headers: { 'Authorization': `Bearer ${token}` }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem('user_jwt');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      setUser(null);
+    }
+  };
+
+  const handleBookClick = () => {
+    if (user) {
+      // User is logged in, redirect to dashboard
+      router.push('/dashboard');
+    } else {
+      // User not logged in, show login modal
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginSuccess = (userData: any) => {
+    setUser(userData);
+    setShowLoginModal(false);
+    // Redirect to dashboard after successful login
+    router.push('/dashboard');
+  };
+
+  const handleLoginModalClose = () => {
+    setShowLoginModal(false);
+  };
 
   if (loading) {
     return (
@@ -305,6 +361,67 @@ export default function ConsultantDetailPage() {
                 >
                   Call Now
                 </a>
+
+                {/* Booking Buttons */}
+                <button
+                  onClick={handleBookClick}
+                  style={{
+                    background: "linear-gradient(135deg, #667eea 0%, #764ba2 100%)",
+                    color: "white",
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px",
+                    border: "none",
+                    fontWeight: 600,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.3s ease"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.transform = "translateY(-1px)";
+                    e.currentTarget.style.boxShadow = "0 4px 12px rgba(102, 126, 234, 0.3)";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.transform = "translateY(0)";
+                    e.currentTarget.style.boxShadow = "none";
+                  }}
+                >
+                  <FaCalendarAlt />
+                  Book Consultation
+                </button>
+
+                <button
+                  onClick={() => router.push('/services/consultations')}
+                  style={{
+                    background: "transparent",
+                    color: "#667eea",
+                    padding: "0.75rem 1.5rem",
+                    borderRadius: "8px",
+                    border: "2px solid #667eea",
+                    fontWeight: 600,
+                    textAlign: "center",
+                    cursor: "pointer",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: "8px",
+                    transition: "all 0.3s ease"
+                  }}
+                  onMouseOver={(e) => {
+                    e.currentTarget.style.background = "#667eea";
+                    e.currentTarget.style.color = "white";
+                  }}
+                  onMouseOut={(e) => {
+                    e.currentTarget.style.background = "transparent";
+                    e.currentTarget.style.color = "#667eea";
+                  }}
+                >
+                  <FaUserMd />
+                  View All Consultants
+                </button>
               </div>
             </div>
 
@@ -486,6 +603,75 @@ export default function ConsultantDetailPage() {
           </div>
         </div>
       </div>
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000
+          }}
+          onClick={handleLoginModalClose}
+        >
+          <div
+            style={{
+              background: 'white',
+              borderRadius: '16px',
+              padding: '32px',
+              maxWidth: '400px',
+              width: '90%',
+              boxShadow: '0 20px 40px rgba(0, 0, 0, 0.1)',
+              textAlign: 'center'
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h2 style={{
+              fontSize: '24px',
+              fontWeight: '700',
+              color: '#333',
+              marginBottom: '16px'
+            }}>
+              Login Required
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              color: '#666',
+              marginBottom: '24px',
+              lineHeight: '1.5'
+            }}>
+              Please login to book a consultation with {consultant?.name}
+            </p>
+            <GoogleAuth onLogin={handleLoginSuccess} />
+            <button
+              onClick={handleLoginModalClose}
+              style={{
+                background: 'transparent',
+                color: '#666',
+                border: '1px solid #e5e7eb',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                fontSize: '14px',
+                fontWeight: '600',
+                cursor: 'pointer',
+                marginTop: '16px'
+              }}
+            >
+              Cancel
+            </button>
+          </div>
+        </div>
+      )}
+
       <Footer />
     </>
   );

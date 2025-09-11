@@ -63,7 +63,12 @@ export default function EventsPage() {
               <div style={{ color: '#5a67d8', fontSize: 16, marginBottom: 8 }}>{new Date(selectedEvent.date).toLocaleDateString()}</div>
               <div style={{ color: '#444', fontSize: 16, marginBottom: 12 }}>{selectedEvent.details}</div>
               <div style={{ color: '#22543d', fontSize: 15, fontWeight: 600, marginBottom: 10 }}>{selectedEvent.location}</div>
-              <button style={{ background: '#5a67d8', color: '#fff', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, border: 'none', cursor: 'pointer', marginTop: 8 }}>Book Now</button>
+              <button
+                onClick={() => window.location.href = '/services/consultations'}
+                style={{ background: '#5a67d8', color: '#fff', borderRadius: 8, padding: '12px 32px', fontWeight: 700, fontSize: 18, border: 'none', cursor: 'pointer', marginTop: 8 }}
+              >
+                Book Now
+              </button>
             </div>
           </div>
         )}

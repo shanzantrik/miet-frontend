@@ -72,10 +72,11 @@ export default function CTASection() {
     setAssessmentScore(score);
   };
 
-  // Video call link simulation
+  // Video call booking - redirect to consultation booking
   const handleGenerateMeet = (e: React.FormEvent) => {
     e.preventDefault();
-    setMeetLink('https://meet.google.com/xyz-1234');
+    // Redirect to consultation booking page
+    window.location.href = '/services/consultations';
   };
 
   // Time slots for booking
@@ -282,12 +283,10 @@ export default function CTASection() {
               Time
               <input type="time" value={videoTime} onChange={e => setVideoTime(e.target.value)} required style={{ width: '100%', padding: '8px', borderRadius: 6, border: '1px solid var(--border)', marginTop: 4 }} />
             </label>
-            <button type="submit" style={{ background: 'var(--accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 8, gridColumn: '1/3' }}>Generate Google Meet Link</button>
-            {meetLink && (
-              <div style={{ marginTop: 12, color: 'var(--text-accent-alt)', fontWeight: 700, fontSize: 18, gridColumn: '1/3' }}>
-                Your Google Meet Link: <a href={meetLink} target="_blank" rel="noopener noreferrer" style={{ color: 'var(--accent)', textDecoration: 'underline' }}>{meetLink}</a>
-              </div>
-            )}
+            <button type="submit" style={{ background: 'var(--accent)', color: 'var(--text-on-accent)', border: 'none', borderRadius: 8, padding: '0.9rem 1.5rem', fontWeight: 700, fontSize: 17, cursor: 'pointer', marginTop: 8, gridColumn: '1/3' }}>Book Consultation</button>
+            <div style={{ marginTop: 12, color: 'var(--text-accent-alt)', fontWeight: 500, fontSize: 14, gridColumn: '1/3', textAlign: 'center' }}>
+              You'll be redirected to our consultation booking page where you can schedule a meeting with our experts and receive a Google Meet link.
+            </div>
           </form>
         )}
       </div>

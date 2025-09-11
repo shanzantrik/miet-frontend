@@ -1,10 +1,12 @@
 'use client';
+
+
 import React, { useState } from 'react';
-import { FaHome, FaAdjust, FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGlobe, FaBars, FaTimes, FaShoppingCart } from 'react-icons/fa';
-import { FcGoogle } from 'react-icons/fc';
+import { FaHome, FaAdjust, FaGlobe, FaBars, FaTimes, FaShoppingCart } from 'react-icons/fa';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartContext';
+import { GoogleAuth } from './GoogleAuth';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
   <span style={{ fontSize: 18, marginRight: 4 }}>{code === 'en' ? '🇬🇧' : '🇮🇳'}</span>
@@ -17,9 +19,7 @@ export default function TopBar() {
   const [highContrast, setHighContrast] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
 
-  // Modal state
-  const [showLogin, setShowLogin] = useState(false);
-  const [showSignup, setShowSignup] = useState(false);
+
 
   // Cart functionality
   const { itemCount } = useCart();
@@ -45,66 +45,20 @@ export default function TopBar() {
     }
   }, [highContrast, fontSize]);
 
-  // Close modal on Esc
+  // Prevent body scroll when mobile menu is open
   React.useEffect(() => {
-    const handleKeyDown = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') {
-        setShowLogin(false);
-        setShowSignup(false);
+    if (typeof document !== 'undefined') {
+      if (mobileMenu) {
+        document.body.classList.add('drawer-open');
+      } else {
+        document.body.classList.remove('drawer-open');
       }
-    };
-    window.addEventListener('keydown', handleKeyDown);
-    return () => window.removeEventListener('keydown', handleKeyDown);
-  }, []);
+    }
+  }, [mobileMenu]);
 
-  // Modal component
-  const Modal = ({ open, onClose, title, children }: { open: boolean; onClose: () => void; title: string; children: React.ReactNode }) => {
-    if (!open) return null;
-    return (
-      <div
-        className="modal-overlay"
-        tabIndex={-1}
-        aria-modal="true"
-        role="dialog"
-        style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          width: '100vw',
-          height: '100vh',
-          background: 'rgba(34,37,77,0.45)',
-          zIndex: 3000,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}
-        onClick={e => { if (e.target === e.currentTarget) onClose(); }}
-      >
-        <div
-          style={{
-            background: '#fff',
-            borderRadius: 12,
-            boxShadow: '0 4px 32px #5a67d855',
-            padding: '2.5rem 2rem 2rem 2rem',
-            minWidth: 320,
-            maxWidth: '90vw',
-            position: 'relative',
-            outline: 'none',
-          }}
-        >
-          <button
-            aria-label="Close modal"
-            onClick={onClose}
-            style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 26, color: '#5a67d8', cursor: 'pointer' }}
-          >
-            <FaTimes />
-          </button>
-          <h2 style={{ color: '#5a67d8', fontWeight: 700, fontSize: 24, marginBottom: 18, textAlign: 'center' }}>{title}</h2>
-          {children}
-        </div>
-      </div>
-    );
-  };
+
+
+
 
   // Only one TopBar: no duplicate rendering
   return (
@@ -410,7 +364,7 @@ export default function TopBar() {
           </button>
         </div>
       </div>
-              {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
+      {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
       <div className="main-row" style={{
         display: 'flex',
         justifyContent: 'space-between',
@@ -685,140 +639,454 @@ export default function TopBar() {
               )}
             </Link>
 
-          {/* Login Button */}
-          <button
-            style={{
-              background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-              color: '#fff',
-              borderRadius: '12px',
-              border: 'none',
-              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
-              minWidth: 'clamp(80px, 20vw, 100px)',
-              minHeight: 'clamp(36px, 8vw, 44px)'
-            }}
-            onClick={() => setShowLogin(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-            }}
-          >
-            Login
-          </button>
-
-          {/* Sign Up Button */}
-          <button
-            style={{
-              background: 'linear-gradient(135deg, #1e1b4b 0%, #312e81 100%)',
-              color: '#fff',
-              borderRadius: '12px',
-              border: 'none',
-              padding: 'clamp(0.6rem, 2vw, 0.75rem) clamp(1rem, 3vw, 1.5rem)',
-              fontWeight: '600',
-              cursor: 'pointer',
-              fontSize: 'clamp(0.8rem, 2vw, 1rem)',
-              transition: 'all 0.3s ease',
-              boxShadow: '0 4px 15px rgba(30, 27, 75, 0.3)',
-              minWidth: 'clamp(80px, 20vw, 100px)',
-              minHeight: 'clamp(36px, 8vw, 44px)'
-            }}
-            onClick={() => setShowSignup(true)}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 8px 25px rgba(30, 27, 75, 0.4)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = '0 4px 15px rgba(30, 27, 75, 0.3)';
-            }}
-          >
-            Sign Up
-          </button>
+          {/* Google Auth Login */}
+          <GoogleAuth />
         </div>
-        {/* Mobile menu overlay */}
-        {mobileMenu && (
-          <div style={{ position: 'absolute', top: 70, right: 0, background: highContrast ? '#222' : '#fff', border: '1px solid #e2e8f0', borderRadius: 12, boxShadow: '0 2px 12px #5a67d822', padding: 24, zIndex: 100, minWidth: 220 }}>
-            <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
-              <Link href="/" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, display: 'flex', alignItems: 'center', marginBottom: 8 }}><FaHome style={{ marginRight: 8 }} />Home</Link>
-              <Link href="/about" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>About Us</Link>
-              {/* Services submenu */}
-              <Link href="/services" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Services</Link>
-              <a href="/consultants" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Consultants</a>
-              <a href="/marketplace" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Marketplace</a>
-              <a href="/courses" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18, marginBottom: 8 }}>Courses</a>
-              {/* Cart in mobile menu */}
-              <Link href="/cart" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: '18', marginBottom: '8', display: 'flex', alignItems: 'center' }}>
-                <FaShoppingCart style={{ marginRight: '8' }} />
+        {/* Mobile Left Drawer */}
+        <div
+          className={`mobile-drawer-overlay ${mobileMenu ? 'drawer-open' : 'drawer-closed'}`}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.5)',
+            zIndex: 9998,
+            opacity: mobileMenu ? 1 : 0,
+            visibility: mobileMenu ? 'visible' : 'hidden',
+            transition: 'all 0.3s ease-in-out'
+          }}
+          onClick={() => setMobileMenu(false)}
+        />
+        <div
+          className={`mobile-drawer ${mobileMenu ? 'drawer-open' : 'drawer-closed'}`}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '320px',
+            height: '100vh',
+            background: highContrast ? '#1a1a1a' : '#ffffff',
+            zIndex: 9999,
+            transform: mobileMenu ? 'translateX(0)' : 'translateX(-100%)',
+            transition: 'transform 0.3s ease-in-out',
+            boxShadow: '2px 0 20px rgba(0, 0, 0, 0.1)',
+            overflowY: 'auto'
+          }}
+        >
+          {/* Drawer Header */}
+          <div style={{
+            padding: '1.5rem',
+            borderBottom: '1px solid rgba(99, 102, 241, 0.1)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between'
+          }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+              <Image
+                src="/miet-main.webp"
+                alt="MieT Logo"
+                width={32}
+                height={32}
+                style={{
+                  borderRadius: 8,
+                  background: '#f7fafc'
+                }}
+              />
+              <span style={{
+                fontFamily: 'Righteous, cursive',
+                fontSize: '20px',
+                color: '#5a67d8',
+                fontWeight: 700
+              }}>MieT</span>
+            </div>
+            <button
+              onClick={() => setMobileMenu(false)}
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: '24px',
+                color: highContrast ? '#fff' : '#667eea',
+                cursor: 'pointer',
+                padding: '4px',
+                borderRadius: '4px',
+                transition: 'all 0.2s ease'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'none';
+              }}
+            >
+              <FaTimes />
+            </button>
+          </div>
+
+          {/* Drawer Content */}
+          <div style={{ padding: '1.5rem' }}>
+            {/* Search Section */}
+            <div style={{ marginBottom: '2rem' }}>
+              <h3 style={{
+                fontSize: '16px',
+                fontWeight: '600',
+                color: highContrast ? '#fff' : '#1e1b4b',
+                marginBottom: '12px'
+              }}>Search Consultants</h3>
+              <div style={{ position: 'relative' }}>
+                <input
+                  type="text"
+                  placeholder="Search consultants..."
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    borderRadius: '8px',
+                    border: '2px solid rgba(99, 102, 241, 0.2)',
+                    fontSize: '14px',
+                    background: highContrast ? '#333' : '#f8fafc',
+                    color: highContrast ? '#fff' : '#1e1b4b',
+                    outline: 'none',
+                    transition: 'all 0.3s ease'
+                  }}
+                  onFocus={(e) => {
+                    e.target.style.borderColor = '#667eea';
+                    e.target.style.boxShadow = '0 0 0 3px rgba(99, 102, 241, 0.1)';
+                  }}
+                  onBlur={(e) => {
+                    e.target.style.borderColor = 'rgba(99, 102, 241, 0.2)';
+                    e.target.style.boxShadow = 'none';
+                  }}
+                />
+              </div>
+            </div>
+
+            {/* Navigation Menu */}
+            <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <Link
+                href="/"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                <FaHome style={{ marginRight: '12px', fontSize: '16px' }} />
+                Home
+              </Link>
+
+              <Link
+                href="/about"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                About Us
+              </Link>
+
+              <Link
+                href="/services"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                Services
+              </Link>
+
+              <Link
+                href="/consultants"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                Consultants
+              </Link>
+
+              <Link
+                href="/marketplace"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                Marketplace
+              </Link>
+
+              <Link
+                href="/courses"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                Courses
+              </Link>
+
+              <Link
+                href="/contact"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                Contact Us
+              </Link>
+            </nav>
+
+            {/* Cart Section */}
+            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(99, 102, 241, 0.1)' }}>
+              <Link
+                href="/cart"
+                onClick={() => setMobileMenu(false)}
+                style={{
+                  color: highContrast ? '#fff' : '#1e1b4b',
+                  textDecoration: 'none',
+                  fontSize: '16px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  padding: '12px 16px',
+                  borderRadius: '8px',
+                  transition: 'all 0.2s ease',
+                  fontWeight: '500',
+                  background: itemCount > 0 ? 'rgba(99, 102, 241, 0.1)' : 'transparent'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+                  e.currentTarget.style.transform = 'translateX(4px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = itemCount > 0 ? 'rgba(99, 102, 241, 0.1)' : 'transparent';
+                  e.currentTarget.style.transform = 'translateX(0)';
+                }}
+              >
+                <FaShoppingCart style={{ marginRight: '12px', fontSize: '16px' }} />
                 Cart {itemCount > 0 && `(${itemCount})`}
               </Link>
-              {/* Resources submenu - removed for now */}
-              {/* <div style={{ marginBottom: 8 }}>
-                <div style={{ fontWeight: 600, color: highContrast ? '#fff' : '#22543d', marginBottom: 4 }}>Resources</div>
-                <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
-                  <Link href="/blog" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Blog</Link>
-                  <Link href="/legal" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Legal Framework</Link>
-                  <Link href="/resources" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 16 }}>Free Resources</Link>
                 </div>
-              </div> */}
-              <a href="/contact" style={{ color: highContrast ? '#fff' : '#22543d', textDecoration: 'none', fontSize: 18 }}>Contact Us</a>
-            </nav>
+
+            {/* Utility Controls */}
+            <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(99, 102, 241, 0.1)' }}>
+              <h3 style={{
+                fontSize: '14px',
+                fontWeight: '600',
+                color: highContrast ? '#fff' : '#1e1b4b',
+                marginBottom: '12px'
+              }}>Accessibility</h3>
+
+              <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
+                <button
+                  onClick={() => setFontSize(f => Math.max(0.8, +(f - 0.1).toFixed(2)))}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    color: highContrast ? '#fff' : '#667eea',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  A-
+                </button>
+                <button
+                  onClick={() => setFontSize(1)}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    color: highContrast ? '#fff' : '#667eea',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  A
+                </button>
+                <button
+                  onClick={() => setFontSize(f => Math.min(1.5, +(f + 0.1).toFixed(2)))}
+                  style={{
+                    background: 'rgba(99, 102, 241, 0.1)',
+                    border: '1px solid rgba(99, 102, 241, 0.2)',
+                    color: highContrast ? '#fff' : '#667eea',
+                    cursor: 'pointer',
+                    fontWeight: '700',
+                    fontSize: '14px',
+                    padding: '8px 12px',
+                    borderRadius: '6px',
+                    transition: 'all 0.2s ease'
+                  }}
+                >
+                  A+
+                </button>
           </div>
-        )}
-        {/* Modals for Login and Signup */}
-        <Modal open={showLogin} onClose={() => setShowLogin(false)} title="Login">
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginBottom: 18 }}>
-            <button aria-label="Login with Google" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center' }}><FcGoogle /></button>
-            <button aria-label="Login with Facebook" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 20, color: '#1877f3', display: 'flex', alignItems: 'center' }}><FaFacebookF /></button>
-            <button aria-label="Login with LinkedIn" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 20, color: '#0077b5', display: 'flex', alignItems: 'center' }}><FaLinkedinIn /></button>
-          </div>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={e => { e.preventDefault(); setShowLogin(false); }}>
-            <label style={{ fontWeight: 600, color: '#22543d' }} htmlFor="login-email">Email</label>
-            <input id="login-email" type="email" required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-            <label style={{ fontWeight: 600, color: '#22543d' }} htmlFor="login-password">Password</label>
-            <input id="login-password" type="password" required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: -8 }}>
-              <label style={{ display: 'flex', alignItems: 'center', fontSize: 15, color: '#22543d', fontWeight: 500 }}>
-                <input type="checkbox" style={{ marginRight: 6 }} /> Remember me
-              </label>
-              <button type="button" style={{ background: 'none', border: 'none', color: '#5a67d8', textDecoration: 'underline', fontSize: 15, cursor: 'pointer', padding: 0 }}>Forgot password?</button>
+
+              <button
+                onClick={() => setHighContrast(h => !h)}
+                style={{
+                  background: highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.1)',
+                  border: '1px solid rgba(99, 102, 241, 0.2)',
+                  color: highContrast ? '#fff' : '#667eea',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  padding: '8px 16px',
+                  borderRadius: '6px',
+                  transition: 'all 0.2s ease',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '8px',
+                  width: '100%',
+                  justifyContent: 'center'
+                }}
+              >
+                <FaAdjust />
+                High Contrast
+              </button>
             </div>
-            <button type="submit" style={{ background: '#5a67d8', color: '#fff', borderRadius: 6, border: 'none', padding: '10px 0', fontWeight: 700, fontSize: 16, marginTop: 8, cursor: 'pointer' }}>Login</button>
-          </form>
-        </Modal>
-        <Modal open={showSignup} onClose={() => setShowSignup(false)} title="Sign Up">
-          <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginBottom: 18 }}>
-            <button aria-label="Sign up with Google" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 22, display: 'flex', alignItems: 'center' }}><FcGoogle /></button>
-            <button aria-label="Sign up with Facebook" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 20, color: '#1877f3', display: 'flex', alignItems: 'center' }}><FaFacebookF /></button>
-            <button aria-label="Sign up with LinkedIn" style={{ background: 'none', border: '1px solid #e2e8f0', borderRadius: 6, padding: 8, cursor: 'pointer', fontSize: 20, color: '#0077b5', display: 'flex', alignItems: 'center' }}><FaLinkedinIn /></button>
           </div>
-          <form style={{ display: 'flex', flexDirection: 'column', gap: 16 }} onSubmit={e => { e.preventDefault(); setShowSignup(false); }}>
-            <label style={{ fontWeight: 600, color: '#22543d' }} htmlFor="signup-name">Name</label>
-            <input id="signup-name" type="text" required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-            <label style={{ fontWeight: 600, color: '#22543d' }} htmlFor="signup-email">Email</label>
-            <input id="signup-email" type="email" required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-            <label style={{ fontWeight: 600, color: '#22543d' }} htmlFor="signup-password">Password</label>
-            <input id="signup-password" type="password" required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: -8 }}>
-              <label style={{ display: 'flex', alignItems: 'center', fontSize: 15, color: '#22543d', fontWeight: 500 }}>
-                <input type="checkbox" style={{ marginRight: 6 }} /> Remember me
-              </label>
-              <button type="button" style={{ background: 'none', border: 'none', color: '#5a67d8', textDecoration: 'underline', fontSize: 15, cursor: 'pointer', padding: 0 }}>Forgot password?</button>
-            </div>
-            <button type="submit" style={{ background: '#22543d', color: '#fff', borderRadius: 6, border: 'none', padding: '10px 0', fontWeight: 700, fontSize: 16, marginTop: 8, cursor: 'pointer' }}>Sign Up</button>
-          </form>
-        </Modal>
+        </div>
+
       </div>
       {/* Responsive styles */}
       <style dangerouslySetInnerHTML={{
         __html: `
+          /* Mobile Drawer Animations */
+          .mobile-drawer-overlay {
+            transition: opacity 0.3s ease-in-out, visibility 0.3s ease-in-out;
+          }
+
+          .mobile-drawer {
+            transition: transform 0.3s ease-in-out;
+          }
+
+          .mobile-drawer.drawer-open {
+            transform: translateX(0) !important;
+          }
+
+          .mobile-drawer.drawer-closed {
+            transform: translateX(-100%) !important;
+          }
+
+          .mobile-drawer-overlay.drawer-open {
+            opacity: 1 !important;
+            visibility: visible !important;
+          }
+
+          .mobile-drawer-overlay.drawer-closed {
+            opacity: 0 !important;
+            visibility: hidden !important;
+          }
+
+          /* Prevent body scroll when drawer is open */
+          body.drawer-open {
+            overflow: hidden !important;
+          }
+
           @media (max-width: 768px) {
             .topbar-root {
               min-height: 70px !important;
@@ -838,6 +1106,10 @@ export default function TopBar() {
             .topbar-root .logo-section {
               justify-content: center !important;
             }
+
+            .mobile-drawer {
+              width: 280px !important;
+            }
           }
 
           @media (max-width: 480px) {
@@ -849,6 +1121,11 @@ export default function TopBar() {
 
             .topbar-root .accessibility-controls {
               justify-content: center !important;
+            }
+
+            .mobile-drawer {
+              width: 100vw !important;
+              max-width: 300px !important;
             }
           }
         `

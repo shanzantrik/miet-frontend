@@ -389,6 +389,40 @@ export default function WelcomeBoard() {
             text-align: center !important;
           }
 
+          /* Fix floating labels for mobile viewport */
+          .welcome-board .labelFloat1 {
+            left: 50% !important;
+            top: 5px !important;
+            transform: translate(-50%, 0) !important;
+            min-width: 60px !important;
+            font-size: 14px !important;
+            padding: 2px 8px !important;
+          }
+          .welcome-board .labelFloat2 {
+            left: calc(100% - 70px) !important;
+            top: 50% !important;
+            transform: translate(0, -50%) !important;
+            min-width: 60px !important;
+            font-size: 14px !important;
+            padding: 2px 8px !important;
+          }
+          .welcome-board .labelFloat3 {
+            left: 50% !important;
+            top: calc(100% - 25px) !important;
+            transform: translate(-50%, 0) !important;
+            min-width: 60px !important;
+            font-size: 14px !important;
+            padding: 2px 8px !important;
+          }
+          .welcome-board .labelFloat4 {
+            left: 5px !important;
+            top: 50% !important;
+            transform: translate(0, -50%) !important;
+            min-width: 60px !important;
+            font-size: 14px !important;
+            padding: 2px 8px !important;
+          }
+
           /* Responsive font adjustments for mobile */
           .welcome-board .hero-title {
             font-size: clamp(2rem, 4vw, 3rem) !important;
@@ -408,6 +442,40 @@ export default function WelcomeBoard() {
         }
 
         @media (max-width: 480px) {
+          /* Further adjust floating labels for very small screens */
+          .welcome-board .labelFloat1 {
+            left: 50% !important;
+            top: 2px !important;
+            transform: translate(-50%, 0) !important;
+            min-width: 50px !important;
+            font-size: 12px !important;
+            padding: 1px 6px !important;
+          }
+          .welcome-board .labelFloat2 {
+            left: calc(100% - 60px) !important;
+            top: 50% !important;
+            transform: translate(0, -50%) !important;
+            min-width: 50px !important;
+            font-size: 12px !important;
+            padding: 1px 6px !important;
+          }
+          .welcome-board .labelFloat3 {
+            left: 50% !important;
+            top: calc(100% - 20px) !important;
+            transform: translate(-50%, 0) !important;
+            min-width: 50px !important;
+            font-size: 12px !important;
+            padding: 1px 6px !important;
+          }
+          .welcome-board .labelFloat4 {
+            left: 2px !important;
+            top: 50% !important;
+            transform: translate(0, -50%) !important;
+            min-width: 50px !important;
+            font-size: 12px !important;
+            padding: 1px 6px !important;
+          }
+
           .welcome-board .hero-title {
             font-size: clamp(1.8rem, 3.5vw, 2.5rem) !important;
             line-height: 1.2 !important;

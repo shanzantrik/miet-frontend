@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { GoogleAuth } from './GoogleAuth';
 
 type Consultant = {
   id: number;
@@ -44,6 +45,67 @@ export default function FeaturedSection() {
   const [bookingNotes, setBookingNotes] = useState('');
   const sliderRef = useRef<HTMLDivElement>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Authentication states
+  const [user, setUser] = useState<any>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingBookingConsultant, setPendingBookingConsultant] = useState<Consultant | null>(null);
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('user_jwt');
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem('user_jwt');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      localStorage.removeItem('user_jwt');
+      setUser(null);
+    }
+  };
+
+  const handleBookClick = (consultant: Consultant) => {
+    if (user) {
+      // Redirect to dashboard if user is logged in
+      window.location.href = '/dashboard';
+    } else {
+      setPendingBookingConsultant(consultant);
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginSuccess = (userData: any) => {
+    setUser(userData);
+    setShowLoginModal(false);
+    setPendingBookingConsultant(null);
+    // Redirect to dashboard after successful login
+    window.location.href = '/dashboard';
+  };
+
+  const handleLoginModalClose = () => {
+    setShowLoginModal(false);
+    setPendingBookingConsultant(null);
+  };
 
   // Fetch consultants from API
   useEffect(() => {
@@ -226,43 +288,43 @@ export default function FeaturedSection() {
             Featured Consultants
           </h3>
 
-          <div
-            ref={sliderRef}
-            style={{
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              position: 'relative',
+      <div
+        ref={sliderRef}
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          position: 'relative',
               maxWidth: '100%',
-              margin: '0 auto',
-              overflow: 'visible',
-            }}
-            onMouseEnter={() => setHovering(true)}
-            onMouseLeave={() => setHovering(false)}
-          >
-            {/* Left Arrow */}
-            <button
+          margin: '0 auto',
+          overflow: 'visible',
+        }}
+        onMouseEnter={() => setHovering(true)}
+        onMouseLeave={() => setHovering(false)}
+      >
+        {/* Left Arrow */}
+        <button
               className="arrow-left"
-              onClick={goLeft}
-              aria-label="Previous featured consultant"
+          onClick={goLeft}
+          aria-label="Previous featured consultant"
               disabled={consultants.length <= 1}
-              style={{
+          style={{
                 opacity: consultants.length > 1 ? 1 : 0.3,
-                position: 'absolute',
+            position: 'absolute',
                 left: '-2rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
+            top: '50%',
+            transform: 'translateY(-50%)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none',
-                borderRadius: '50%',
+            borderRadius: '50%',
                 width: '48px',
                 height: '48px',
                 fontSize: '20px',
                 color: '#fff',
                 cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
-                zIndex: 10,
+            zIndex: 10,
                 boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
-                outline: 'none',
+            outline: 'none',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
@@ -279,7 +341,7 @@ export default function FeaturedSection() {
               }}
             >
               ←
-            </button>
+        </button>
 
             {/* Single Consultant Card */}
             <div style={{
@@ -294,10 +356,10 @@ export default function FeaturedSection() {
                   className="consultant-card"
                   key={`${getCurrentConsultant()!.id}-${getCurrentConsultant()!.name}-${current}`}
                   onClick={() => window.location.href = `/consultants/${getCurrentConsultant()!.id}`}
-                  tabIndex={0}
-                  role="button"
+              tabIndex={0}
+              role="button"
                   aria-label={`View details for ${getCurrentConsultant()!.name}`}
-                  style={{
+              style={{
                     background: 'linear-gradient(135deg, #fff 0%, #f8fafc 100%)',
                     borderRadius: '24px',
                     boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
@@ -305,13 +367,13 @@ export default function FeaturedSection() {
                     width: '100%',
                     maxWidth: 'clamp(300px, 90vw, 500px)',
                     minHeight: 'clamp(300px, 60vh, 400px)',
-                    display: 'flex',
-                    flexDirection: 'column',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                    position: 'relative',
+                display: 'flex',
+                flexDirection: 'column',
+                alignItems: 'center',
+                justifyContent: 'center',
+                position: 'relative',
                     border: '2px solid rgba(99, 102, 241, 0.1)',
-                    cursor: 'pointer',
+                cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     overflow: 'hidden'
                   }}
@@ -347,22 +409,22 @@ export default function FeaturedSection() {
                       }}
                     />
                     {(getCurrentConsultant()!.mode === 'Online' || getCurrentConsultant()!.status === 'online') && (
-                      <span style={{
-                        position: 'absolute',
+                  <span style={{
+                    position: 'absolute',
                         bottom: '8px',
                         right: '8px',
                         width: '32px',
                         height: '32px',
-                        borderRadius: '50%',
+                    borderRadius: '50%',
                         background: 'radial-gradient(circle, #10b981 60%, #10b98188 100%)',
                         boxShadow: '0 0 16px 4px #10b98188, 0 0 0 4px #fff',
                         border: '3px solid #fff',
-                        display: 'block',
-                        zIndex: 2,
-                        animation: 'glow-green 1.2s infinite alternate',
-                      }} />
-                    )}
-                  </div>
+                    display: 'block',
+                    zIndex: 2,
+                    animation: 'glow-green 1.2s infinite alternate',
+                  }} />
+                )}
+              </div>
 
                   {/* Consultant Info */}
                   <div style={{ textAlign: 'center', flex: 1, width: '100%' }}>
@@ -434,7 +496,7 @@ export default function FeaturedSection() {
                       <button
                         onClick={(e) => {
                           e.stopPropagation();
-                          setBookingConsultant(getCurrentConsultant()!);
+                          handleBookClick(getCurrentConsultant()!);
                         }}
                         style={{
                           background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
@@ -461,33 +523,33 @@ export default function FeaturedSection() {
                       </button>
                     </div>
                   </div>
-                </div>
+              </div>
               )}
             </div>
 
-            {/* Right Arrow */}
-            <button
+        {/* Right Arrow */}
+        <button
               className="arrow-right"
-              onClick={goRight}
-              aria-label="Next featured consultant"
+          onClick={goRight}
+          aria-label="Next featured consultant"
               disabled={consultants.length <= 1}
-              style={{
+          style={{
                 opacity: consultants.length > 1 ? 1 : 0.3,
-                position: 'absolute',
+            position: 'absolute',
                 right: '-2rem',
-                top: '50%',
-                transform: 'translateY(-50%)',
+            top: '50%',
+            transform: 'translateY(-50%)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none',
-                borderRadius: '50%',
+            borderRadius: '50%',
                 width: '48px',
                 height: '48px',
                 fontSize: '20px',
                 color: '#fff',
                 cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
-                zIndex: 10,
+            zIndex: 10,
                 boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
-                outline: 'none',
+            outline: 'none',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
@@ -504,27 +566,27 @@ export default function FeaturedSection() {
               }}
             >
               →
-            </button>
-          </div>
+        </button>
+      </div>
 
           {/* Bullets - only show if we have more than one consultant */}
           {consultants.length > 1 && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.8rem', marginTop: '1.5rem' }}>
-              {consultants.map((_, idx) => (
-                <span
-                  key={idx}
-                  onClick={() => setCurrent(idx)}
-                  style={{
+          {consultants.map((_, idx) => (
+            <span
+              key={idx}
+              onClick={() => setCurrent(idx)}
+              style={{
                     width: '12px',
                     height: '12px',
-                    borderRadius: '50%',
+                borderRadius: '50%',
                     background: idx === current ? '#667eea' : 'rgba(99, 102, 241, 0.2)',
                     border: idx === current ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
                     boxShadow: idx === current ? '0 0 8px rgba(99, 102, 241, 0.4)' : 'none',
-                    cursor: 'pointer',
+                cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                    display: 'inline-block',
-                  }}
+                display: 'inline-block',
+              }}
                   onMouseEnter={(e) => {
                     if (idx !== current) {
                       e.currentTarget.style.background = 'rgba(99, 102, 241, 0.4)';
@@ -537,10 +599,10 @@ export default function FeaturedSection() {
                       e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
-                />
-              ))}
-            </div>
-          )}
+            />
+          ))}
+        </div>
+      )}
         </div>
 
         {/* Right: About MIET Section */}
@@ -871,6 +933,76 @@ export default function FeaturedSection() {
           }
         `
       }} />
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(34,37,77,0.32)',
+            zIndex: 3000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={e => { if (e.target === e.currentTarget) handleLoginModalClose(); }}
+        >
+          <div style={{
+            background: 'var(--card)',
+            borderRadius: 14,
+            padding: 32,
+            minWidth: 340,
+            maxWidth: 420,
+            boxShadow: '0 4px 32px rgba(90,103,216,0.13)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={handleLoginModalClose}
+              aria-label="Close login modal"
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: 'var(--accent)',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{
+              color: 'var(--text-accent-alt)',
+              fontWeight: 700,
+              fontSize: 22,
+              marginBottom: 10,
+              textAlign: 'center'
+            }}>
+              Login Required
+            </h2>
+            <p style={{
+              color: 'var(--text-accent)',
+              fontSize: 14,
+              marginBottom: 24,
+              textAlign: 'center',
+              lineHeight: 1.5
+            }}>
+              Please login with Google to book a consultation with {pendingBookingConsultant?.name}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleAuth onLogin={handleLoginSuccess} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Booking Modal */}
       {bookingConsultant && (

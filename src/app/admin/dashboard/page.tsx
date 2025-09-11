@@ -6,6 +6,7 @@ import Image from 'next/image';
 import { FaThLarge, FaList, FaTags, FaUserCircle, FaSignOutAlt, FaChevronLeft, FaChevronRight, FaUserMd, FaChevronDown, FaSearch, FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { getApiUrl } from "@/utils/api";
+import { useNotifications } from "@/components/NotificationSystem";
 
 interface Category {
   id: number;
@@ -148,8 +149,55 @@ interface Blog {
   updated_at?: string;
 }
 
+interface Webinar {
+  id?: number;
+  webinar_id?: string;
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  max_attendees?: number;
+  current_attendees?: number;
+  status: 'scheduled' | 'live' | 'ended' | 'cancelled';
+  google_meet_link?: string;
+  google_calendar_event_id?: string;
+  price?: number;
+  is_free?: boolean;
+  organizer_email?: string;
+  attendee_emails?: string[];
+  meeting_notes?: string;
+  recording_url?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
+interface Consultation {
+  id?: number;
+  appointment_id?: string;
+  consultant_id: number;
+  user_id?: number;
+  title: string;
+  description?: string;
+  start_time: string;
+  end_time: string;
+  duration_minutes: number;
+  meeting_type: 'consultation' | 'webinar';
+  status: 'scheduled' | 'confirmed' | 'cancelled' | 'completed' | 'no_show';
+  google_meet_link?: string;
+  google_calendar_event_id?: string;
+  price?: number;
+  payment_status: 'pending' | 'paid' | 'refunded';
+  payment_id?: string;
+  attendee_emails?: string[];
+  notes?: string;
+  created_at?: string;
+  updated_at?: string;
+}
+
 export default function AdminDashboard() {
   const router = useRouter();
+  const { addNotification } = useNotifications();
   const [categories, setCategories] = useState<Category[]>([]);
   const [subcategories, setSubcategories] = useState<Subcategory[]>([]);
   const [catName, setCatName] = useState("");
@@ -160,10 +208,21 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ailmentsExpanded, setAilmentsExpanded] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs' | 'webinars' | 'consultations'>('dashboard');
+  const [isClient, setIsClient] = useState(false);
   // Consultant state
   const [consultants, setConsultants] = useState<Consultant[]>([]);
-  const [consultantForm, setConsultantForm] = useState<ConsultantForm>({ category_ids: [], subcategory_ids: [] });
+  const [consultantForm, setConsultantForm] = useState<ConsultantForm>({
+    category_ids: [],
+    subcategory_ids: [],
+    username: '',
+    password: '',
+    name: '',
+    email: '',
+    city: '',
+    status: 'offline',
+    featured: false
+  });
   const [consultantEditId, setConsultantEditId] = useState<number | null>(null);
   const [consultantProfile, setConsultantProfile] = useState<Consultant | null>(null);
   const [showProfileModal, setShowProfileModal] = useState(false); // for superadmin
@@ -260,6 +319,46 @@ export default function AdminDashboard() {
   const [sortField, setSortField] = useState<string>('');
   const [sortDirection, setSortDirection] = useState<'asc' | 'desc'>('asc');
 
+  // Webinar state
+  const [webinars, setWebinars] = useState<Webinar[]>([]);
+  const [webinarForm, setWebinarForm] = useState<Webinar>({
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    duration_minutes: 60,
+    max_attendees: 100,
+    price: 0,
+    is_free: true,
+    attendee_emails: [],
+    meeting_notes: '',
+    status: 'scheduled'
+  });
+  const [showWebinarModal, setShowWebinarModal] = useState(false);
+  const [webinarEditId, setWebinarEditId] = useState<number | null>(null);
+
+  // Consultation state
+  const [consultations, setConsultations] = useState<Consultation[]>([]);
+  const [consultationForm, setConsultationForm] = useState<Consultation>({
+    consultant_id: 0,
+    title: '',
+    description: '',
+    start_time: '',
+    end_time: '',
+    duration_minutes: 60,
+    meeting_type: 'consultation',
+    price: 0,
+    attendee_emails: [],
+    notes: '',
+    status: 'scheduled',
+    payment_status: 'pending'
+  });
+  const [showConsultationModal, setShowConsultationModal] = useState(false);
+  const [consultationEditId, setConsultationEditId] = useState<number | null>(null);
+
+  // Google OAuth state
+  const [googleOAuthSetup, setGoogleOAuthSetup] = useState(false);
+
   // Modal states for all CRUD operations
   const [showCategoryModal, setShowCategoryModal] = useState(false);
   const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
@@ -282,13 +381,35 @@ export default function AdminDashboard() {
   const [deleteBlogId, setDeleteBlogId] = useState<number | null>(null);
   const [deleteBlogName, setDeleteBlogName] = useState<string>('');
 
+  // Client-side hydration fix
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Handle OAuth success message
+  useEffect(() => {
+    if (!isClient) return;
+
+    const urlParams = new URLSearchParams(window.location.search);
+    const oauthSuccess = urlParams.get('oauth_success');
+    const message = urlParams.get('message');
+
+    if (oauthSuccess === 'true' && message) {
+      alert(decodeURIComponent(message));
+      // Clean up URL parameters
+      window.history.replaceState({}, document.title, window.location.pathname);
+      setGoogleOAuthSetup(true);
+    }
+  }, [isClient]);
+
   // Auth check
   useEffect(() => {
+    if (!isClient) return;
     const token = localStorage.getItem("admin_jwt");
     if (!token) {
       router.replace("/admin/login");
     }
-  }, [router]);
+  }, [router, isClient]);
 
   // Fetch categories/subcategories
   useEffect(() => {
@@ -334,18 +455,20 @@ export default function AdminDashboard() {
   }
 
   async function fetchConsultants() {
-    const token = localStorage.getItem("admin_jwt");
-    const res = await fetch(getApiUrl("api/consultants"), {
-      headers: { Authorization: `Bearer ${token}` },
-    });
-    if (res.ok) {
-      const consultants = await res.json();
-      // For each consultant, fetch their slots from the backend
-      const consultantsWithSlots = await Promise.all(
-        consultants.map(async (c: Consultant) => {
-          const slotRes = await fetch(getApiUrl(`api/consultants/${c.id}/availability`), {
-            headers: { Authorization: `Bearer ${token}` },
-          });
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl("api/consultants"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const consultants = await res.json();
+        // For each consultant, fetch their slots from the backend
+        const consultantsWithSlots = await Promise.all(
+          consultants.map(async (c: Consultant) => {
+            try {
+              const slotRes = await fetch(getApiUrl(`api/consultants/${c.id}/availability`), {
+                headers: { Authorization: `Bearer ${token}` },
+              });
           if (slotRes.ok) {
             const slots = await slotRes.json();
             return {
@@ -355,9 +478,20 @@ export default function AdminDashboard() {
           } else {
             return { ...c, slots: [] };
           }
-        })
-      );
-      setConsultants(consultantsWithSlots);
+            } catch (error) {
+              console.error(`Error fetching slots for consultant ${c.id}:`, error);
+              return { ...c, slots: [] };
+            }
+          })
+        );
+        setConsultants(consultantsWithSlots);
+      } else {
+        console.error('Failed to fetch consultants:', res.status);
+        setConsultants([]);
+      }
+    } catch (error) {
+      console.error('Error fetching consultants:', error);
+      setConsultants([]);
     }
   }
 
@@ -411,6 +545,51 @@ export default function AdminDashboard() {
 
   useEffect(() => {
     if (activeMenu === 'products') fetchProducts();
+  }, [activeMenu]);
+
+  // Fetch webinars
+  async function fetchWebinars() {
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl("api/webinars"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setWebinars(data.webinars || []);
+      }
+    } catch (error) {
+      console.error('Error fetching webinars:', error);
+      setWebinars([]);
+    }
+  }
+
+  useEffect(() => {
+    if (activeMenu === 'webinars') fetchWebinars();
+  }, [activeMenu]);
+
+  // Fetch consultations
+  async function fetchConsultations() {
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl("api/admin/consultations"), {
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setConsultations(data.consultations || []);
+      }
+    } catch (error) {
+      console.error('Error fetching consultations:', error);
+      setConsultations([]);
+    }
+  }
+
+  useEffect(() => {
+    if (activeMenu === 'consultations') {
+      fetchConsultations();
+      fetchConsultants(); // Also fetch consultants for the dropdown
+    }
   }, [activeMenu]);
 
   // Debug: Log products state changes
@@ -541,6 +720,8 @@ export default function AdminDashboard() {
     { key: 'services', label: 'Services', icon: <FaTags size={20} /> },
     { key: 'products', label: 'Products', icon: <FaList size={20} /> },
     { key: 'blogs', label: 'Blogs & Media', icon: <FaList size={20} /> },
+    { key: 'webinars', label: 'Webinars', icon: <FaList size={20} /> },
+    { key: 'consultations', label: 'Consultations', icon: <FaUserMd size={20} /> },
   ];
 
   // Helper to save slots to backend
@@ -569,6 +750,12 @@ export default function AdminDashboard() {
   // Consultant CRUD
   async function handleConsultantSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
+
+    // Validate Gmail address
+    if (!consultantForm.email || !consultantForm.email.endsWith('@gmail.com')) {
+      alert('Please enter a valid Gmail address for the consultant. Gmail is required for Google Meet invitations and calendar integration.');
+      return;
+    }
 
     try {
       const token = localStorage.getItem("admin_jwt");
@@ -599,7 +786,17 @@ export default function AdminDashboard() {
         if (consultantId) {
           await saveConsultantSlots(consultantId, consultantSlots);
         }
-        setConsultantForm({ category_ids: [], subcategory_ids: [] });
+        setConsultantForm({
+          category_ids: [],
+          subcategory_ids: [],
+          username: '',
+          password: '',
+          name: '',
+          email: '',
+          city: '',
+          status: 'offline',
+          featured: false
+        });
         setConsultantEditId(null);
         setConsultantSlots([]);
         setConsultantFormLoaded(false);
@@ -670,7 +867,17 @@ export default function AdminDashboard() {
   }
   const handleConsultantFormCancel = () => {
     setConsultantEditId(null);
-    setConsultantForm({ category_ids: [], subcategory_ids: [] });
+    setConsultantForm({
+      category_ids: [],
+      subcategory_ids: [],
+      username: '',
+      password: '',
+      name: '',
+      email: '',
+      city: '',
+      status: 'offline',
+      featured: false
+    });
     setConsultantSlots([]);
     setConsultantFormLoaded(false);
   };
@@ -1159,14 +1366,26 @@ export default function AdminDashboard() {
         setBlogEditId(null);
         setShowBlogModal(false);
         fetchBlogs();
-        alert(blogEditId ? 'Blog updated successfully!' : 'Blog added successfully!');
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: blogEditId ? 'Blog updated successfully!' : 'Blog added successfully!'
+        });
       } else {
         const errorData = await res.text();
-        alert(`Failed to save blog: ${res.status} ${errorData}`);
+        addNotification({
+          type: 'error',
+          title: 'Error',
+          message: `Failed to save blog: ${res.status} ${errorData}`
+        });
       }
     } catch (error) {
       console.error('Error saving blog:', error);
-      alert('Error saving blog. Please try again.');
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Error saving blog. Please try again.'
+      });
     }
   }
 
@@ -1191,13 +1410,200 @@ export default function AdminDashboard() {
         setDeleteBlogId(null);
         setDeleteBlogName('');
         setShowDeleteModal(false);
-        alert('Blog deleted successfully!');
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Blog deleted successfully!'
+        });
       } else {
         alert('Failed to delete blog');
       }
     } catch (error) {
       console.error('Error deleting blog:', error);
       alert('Error deleting blog');
+    }
+  }
+
+  // Webinar form handlers
+  async function handleWebinarSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = webinarEditId ? "PUT" : "POST";
+      const url = webinarEditId
+        ? getApiUrl(`api/webinars/${webinarEditId}`)
+        : getApiUrl("api/webinars");
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(webinarForm),
+      });
+
+      if (res.ok) {
+        setWebinarForm({
+          title: '',
+          description: '',
+          start_time: '',
+          end_time: '',
+          duration_minutes: 60,
+          max_attendees: 100,
+          price: 0,
+          is_free: true,
+          attendee_emails: [],
+          meeting_notes: '',
+          status: 'scheduled'
+        });
+        setWebinarEditId(null);
+        setShowWebinarModal(false);
+        fetchWebinars();
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: webinarEditId ? 'Webinar updated successfully!' : 'Webinar scheduled successfully!'
+        });
+      } else {
+        const errorData = await res.text();
+        alert(`Failed to save webinar: ${res.status} ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error saving webinar:', error);
+      alert('Error saving webinar. Please try again.');
+    }
+  }
+
+  async function handleWebinarEdit(webinar: Webinar) {
+    setWebinarEditId(webinar.id ?? null);
+    setWebinarForm(webinar);
+    setShowWebinarModal(true);
+  }
+
+  async function handleWebinarDelete(webinarId: number) {
+    if (!confirm('Are you sure you want to delete this webinar?')) return;
+
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl(`api/webinars/${webinarId}`), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setWebinars(webinars.filter(w => w.id !== webinarId));
+        addNotification({
+          type: 'success',
+          title: 'Success',
+          message: 'Webinar deleted successfully!'
+        });
+      } else {
+        alert('Failed to delete webinar');
+      }
+    } catch (error) {
+      console.error('Error deleting webinar:', error);
+      alert('Error deleting webinar');
+    }
+  }
+
+  // Consultation form handlers
+  async function handleConsultationSubmit(e: React.FormEvent) {
+    e.preventDefault();
+
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = consultationEditId ? "PUT" : "POST";
+      const url = consultationEditId
+        ? getApiUrl(`api/admin/consultations/${consultationEditId}`)
+        : getApiUrl("api/admin/consultations");
+
+      const res = await fetch(url, {
+        method,
+        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
+        body: JSON.stringify(consultationForm),
+      });
+
+      if (res.ok) {
+        setConsultationForm({
+          consultant_id: 0,
+          title: '',
+          description: '',
+          start_time: '',
+          end_time: '',
+          duration_minutes: 60,
+          meeting_type: 'consultation',
+          price: 0,
+          attendee_emails: [],
+          notes: '',
+          status: 'scheduled',
+          payment_status: 'pending'
+        });
+        setConsultationEditId(null);
+        setShowConsultationModal(false);
+        fetchConsultations();
+        alert(consultationEditId ? 'Consultation updated successfully!' : 'Consultation scheduled successfully!');
+      } else {
+        const errorData = await res.text();
+        alert(`Failed to save consultation: ${res.status} ${errorData}`);
+      }
+    } catch (error) {
+      console.error('Error saving consultation:', error);
+      alert('Error saving consultation. Please try again.');
+    }
+  }
+
+  async function handleConsultationEdit(consultation: Consultation) {
+    setConsultationEditId(consultation.id ?? null);
+    setConsultationForm(consultation);
+    setShowConsultationModal(true);
+  }
+
+  async function handleConsultationDelete(consultation: any) {
+    const consultationId = consultation.id;
+    if (!consultationId) {
+      alert('Invalid consultation ID');
+      return;
+    }
+
+    if (!confirm('Are you sure you want to delete this consultation?')) return;
+
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl(`api/admin/consultations/${consultationId}`), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        setConsultations(consultations.filter(c => c.id !== consultationId));
+        alert('Consultation deleted successfully!');
+      } else {
+        alert('Failed to delete consultation');
+      }
+    } catch (error) {
+      console.error('Error deleting consultation:', error);
+      alert('Error deleting consultation');
+    }
+  }
+
+  // Google OAuth setup handler
+  async function handleGoogleOAuthSetup() {
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl("api/auth/admin/google"), {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+
+      if (res.ok) {
+        const data = await res.json();
+        window.open(data.authUrl, '_blank');
+        setGoogleOAuthSetup(true);
+        alert('Google OAuth setup initiated. Please complete the authorization in the popup window.');
+      } else {
+        alert('Failed to initiate Google OAuth setup');
+      }
+    } catch (error) {
+      console.error('Error setting up Google OAuth:', error);
+      alert('Error setting up Google OAuth');
     }
   }
 
@@ -1528,6 +1934,27 @@ export default function AdminDashboard() {
       </div>
     );
   };
+
+  // Show loading state during hydration
+  if (!isClient) {
+    return (
+      <div style={{
+        display: 'flex',
+        justifyContent: 'center',
+        alignItems: 'center',
+        minHeight: '100vh',
+        background: '#f8fafc'
+      }}>
+        <div style={{
+          fontSize: '18px',
+          color: '#667eea',
+          fontWeight: '600'
+        }}>
+          Loading Admin Dashboard...
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: '100vh', background: '#f7fafc', display: 'flex', flexDirection: 'column' }}>
@@ -2676,13 +3103,16 @@ export default function AdminDashboard() {
                         />
                     </div>
                       <div style={{ flex: '1', minWidth: '200px' }}>
-                        <label style={{ fontWeight: 600, color: '#374151', marginBottom: '8px', display: 'block' }}>Email</label>
+                        <label style={{ fontWeight: 600, color: '#374151', marginBottom: '8px', display: 'block' }}>Gmail Address *</label>
                         <input
                           name="email"
+                          type="email"
                           value={consultantForm.email || ''}
                           onChange={handleConsultantFormChange}
-                          placeholder="Email"
+                          placeholder="consultant@gmail.com"
                           required
+                          pattern="[a-zA-Z0-9._%+-]+@gmail\.com$"
+                          title="Please enter a valid Gmail address"
                           style={{
                             width: '100%',
                             padding: '12px 16px',
@@ -2694,6 +3124,9 @@ export default function AdminDashboard() {
                           onFocus={(e) => e.target.style.borderColor = '#667eea'}
                           onBlur={(e) => e.target.style.borderColor = 'rgba(102, 126, 234, 0.2)'}
                         />
+                        <small style={{ color: '#6b7280', fontSize: '12px', marginTop: '4px', display: 'block' }}>
+                          Gmail address is required for Google Meet invitations and calendar integration
+                        </small>
                     </div>
                   </div>
 
@@ -4724,13 +5157,14 @@ export default function AdminDashboard() {
                   <div style={{
                     background: '#fff',
                     borderRadius: '20px',
-                    padding: '40px',
+                    padding: 'clamp(20px, 4vw, 40px)',
                     minWidth: '90vw',
                     maxWidth: '1200px',
                     maxHeight: '90vh',
                     boxShadow: '0 20px 60px rgba(102, 126, 234, 0.2)',
                     position: 'relative',
-                    overflow: 'auto'
+                    overflow: 'auto',
+                    width: '100%'
                   }}>
                     <button
                       onClick={() => setShowProductModal(false)}
@@ -4892,9 +5326,10 @@ export default function AdminDashboard() {
                       }}
                       style={{
                         display: 'grid',
-                        gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))',
-                        gap: 24,
-                        maxWidth: '100%'
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+                        gap: '20px',
+                        maxWidth: '100%',
+                        width: '100%'
                       }}
                     >
                                               <div style={{ gridColumn: '1 / -1' }}>
@@ -4930,72 +5365,34 @@ export default function AdminDashboard() {
                         </div>
                       {/* Dynamic fields by type */}
                       {productForm.type === 'Course' && (
-                        <div style={{
-                          maxHeight: '50vh',
-                          overflowY: 'auto',
-                          padding: '1rem',
-                          border: '1px solid #e2e8f0',
-                          borderRadius: '8px',
-                          backgroundColor: '#fafafa',
-                          marginBottom: '1rem'
-                        }}>
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '1rem',
-                            marginBottom: '1rem'
-                          }}>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Title *</label>
-                              <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., A Mini Course on Time Management" />
-                            </div>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Price</label>
-                              <input type="text" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Free, $49.99" />
-                            </div>
-                          </div>
+                        <>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Course Title *</label>
+                          <input type="text" value={productForm.title || ''} onChange={e => setProductForm(f => ({ ...f, title: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., A Mini Course on Time Management" />
 
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Subtitle *</label>
-                          <input type="text" value={productForm.subtitle || ''} onChange={e => setProductForm(f => ({ ...f, subtitle: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 7 steps you can use immediately to become more productive and master time management" />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Price</label>
+                          <input type="text" value={productForm.price || ''} onChange={e => setProductForm(f => ({ ...f, price: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., Free, $49.99" />
 
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '1rem',
-                            marginBottom: '1rem'
-                          }}>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Duration</label>
-                              <input type="text" value={productForm.duration || ''} onChange={e => setProductForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 37min of on-demand video" />
-                            </div>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Lectures</label>
-                              <input type="number" value={productForm.total_lectures || ''} onChange={e => setProductForm(f => ({ ...f, total_lectures: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 11" />
-                            </div>
-                          </div>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Course Subtitle *</label>
+                          <input type="text" value={productForm.subtitle || ''} onChange={e => setProductForm(f => ({ ...f, subtitle: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 7 steps you can use immediately to become more productive and master time management" />
 
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '1rem',
-                            marginBottom: '1rem'
-                          }}>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Language</label>
-                              <input type="text" value={productForm.language || ''} onChange={e => setProductForm(f => ({ ...f, language: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., English, Arabic" />
-                            </div>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Level</label>
-                              <select value={productForm.level || 'Beginner'} onChange={e => setProductForm(f => ({ ...f, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }}>
-                                <option value="Beginner">Beginner</option>
-                                <option value="Intermediate">Intermediate</option>
-                                <option value="Advanced">Advanced</option>
-                              </select>
-                            </div>
-                          </div>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Duration</label>
+                          <input type="text" value={productForm.duration || ''} onChange={e => setProductForm(f => ({ ...f, duration: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 37min of on-demand video" />
 
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Description *</label>
-                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60, width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="Detailed description of what the course covers..." />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Total Lectures</label>
+                          <input type="number" value={productForm.total_lectures || ''} onChange={e => setProductForm(f => ({ ...f, total_lectures: parseInt(e.target.value) || 0 }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 11" />
+
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Language</label>
+                          <input type="text" value={productForm.language || ''} onChange={e => setProductForm(f => ({ ...f, language: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., English, Arabic" />
+
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Level</label>
+                          <select value={productForm.level || 'Beginner'} onChange={e => setProductForm(f => ({ ...f, level: e.target.value as 'Beginner' | 'Intermediate' | 'Advanced' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
+                            <option value="Beginner">Beginner</option>
+                            <option value="Intermediate">Intermediate</option>
+                            <option value="Advanced">Advanced</option>
+                          </select>
+
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Course Description *</label>
+                          <textarea value={productForm.description || ''} onChange={e => setProductForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} placeholder="Detailed description of what the course covers..." />
 
                           <div style={{ marginBottom: '1rem' }}>
                             <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.5rem', display: 'block', fontSize: '14px' }}>Learning Objectives *</label>
@@ -5188,65 +5585,41 @@ export default function AdminDashboard() {
                             </div>
                           </div>
 
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '1rem',
-                            marginBottom: '1rem'
-                          }}>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Name</label>
-                              <input type="text" value={productForm.instructor_name || ''} onChange={e => setProductForm(f => ({ ...f, instructor_name: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Brandon Hakim" />
-                            </div>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Title</label>
-                              <input type="text" value={productForm.instructor_title || ''} onChange={e => setProductForm(f => ({ ...f, instructor_title: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., Productivity Expert & Time Management Coach" />
-                            </div>
-                          </div>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Instructor Name</label>
+                          <input type="text" value={productForm.instructor_name || ''} onChange={e => setProductForm(f => ({ ...f, instructor_name: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., Brandon Hakim" />
 
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Bio</label>
-                          <textarea value={productForm.instructor_bio || ''} onChange={e => setProductForm(f => ({ ...f, instructor_bio: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 50, width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="Brief description of the instructor's background and expertise..." />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Instructor Title</label>
+                          <input type="text" value={productForm.instructor_title || ''} onChange={e => setProductForm(f => ({ ...f, instructor_title: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., Productivity Expert & Time Management Coach" />
 
-                          <div style={{ marginBottom: '1rem' }}>
-                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Instructor Image</label>
-                            <input type="file" accept="image/*" onChange={e => {
-                              const file = e.target.files?.[0];
-                              if (file) setProductForm(f => ({ ...f, instructor_image: URL.createObjectURL(file), instructorImageFile: file }));
-                            }} style={{ padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, width: '100%' }} />
-                            {productForm.instructor_image && <img src={productForm.instructor_image} alt="Instructor" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} />}
-                          </div>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Instructor Bio</label>
+                          <textarea value={productForm.instructor_bio || ''} onChange={e => setProductForm(f => ({ ...f, instructor_bio: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 50 }} placeholder="Brief description of the instructor's background and expertise..." />
 
-                          <div style={{
-                            display: 'grid',
-                            gridTemplateColumns: '1fr 1fr',
-                            gap: '1rem',
-                            marginBottom: '1rem'
-                          }}>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Rating</label>
-                              <input type="number" step="0.1" min="0" max="5" value={productForm.rating || ''} onChange={e => setProductForm(f => ({ ...f, rating: parseFloat(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 4.4" />
-                            </div>
-                            <div>
-                              <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Total Ratings</label>
-                              <input type="number" value={productForm.total_ratings || ''} onChange={e => setProductForm(f => ({ ...f, total_ratings: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px' }} placeholder="e.g., 47803" />
-                            </div>
-                          </div>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Instructor Image</label>
+                          <input type="file" accept="image/*" onChange={e => {
+                            const file = e.target.files?.[0];
+                            if (file) setProductForm(f => ({ ...f, instructor_image: URL.createObjectURL(file), instructorImageFile: file }));
+                          }} />
+                          {productForm.instructor_image && <img src={productForm.instructor_image} alt="Instructor" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
 
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Enrolled Students</label>
-                          <input type="number" value={productForm.enrolled_students || ''} onChange={e => setProductForm(f => ({ ...f, enrolled_students: parseInt(e.target.value) || 0 }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="e.g., 439950" />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Rating</label>
+                          <input type="number" step="0.1" min="0" max="5" value={productForm.rating || ''} onChange={e => setProductForm(f => ({ ...f, rating: parseFloat(e.target.value) || 0 }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 4.4" />
 
-                          <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Video URL</label>
-                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 8, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%', fontSize: '13px', marginBottom: '1rem' }} placeholder="URL to course preview video" />
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Total Ratings</label>
+                          <input type="number" value={productForm.total_ratings || ''} onChange={e => setProductForm(f => ({ ...f, total_ratings: parseInt(e.target.value) || 0 }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 47803" />
 
-                          <div style={{ marginBottom: '0.5rem' }}>
-                            <label style={{ fontWeight: 600, color: '#22543d', marginBottom: '0.25rem', display: 'block', fontSize: '13px' }}>Course Thumbnail</label>
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Enrolled Students</label>
+                          <input type="number" value={productForm.enrolled_students || ''} onChange={e => setProductForm(f => ({ ...f, enrolled_students: parseInt(e.target.value) || 0 }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="e.g., 439950" />
+
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Video URL</label>
+                          <input type="text" value={productForm.video_url || ''} onChange={e => setProductForm(f => ({ ...f, video_url: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} placeholder="URL to course preview video" />
+
+                          <label style={{ fontWeight: 600, color: '#22543d' }}>Course Thumbnail</label>
                           <input type="file" accept="image/*" onChange={e => {
                             const file = e.target.files?.[0];
                             if (file) setProductForm(f => ({ ...f, thumbnail: URL.createObjectURL(file), thumbnailFile: file }));
-                            }} style={{ padding: 6, border: '1px solid #e2e8f0', borderRadius: 4, width: '100%' }} />
-                            {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} />}
-                          </div>
-                        </div>
+                          }} />
+                          {productForm.thumbnail && <img src={productForm.thumbnail} alt="Thumbnail" style={{ width: 80, height: 80, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
+                        </>
                       )}
                       {productForm.type === 'E-book' && (
                         <>
@@ -5312,22 +5685,78 @@ export default function AdminDashboard() {
                           {productForm.icon && <img src={productForm.icon} alt="Icon" style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 8, marginTop: 8 }} />}
                         </>
                       )}
-                      <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
-                      <select value={productForm.status} onChange={e => setProductForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>
-                        <option value="active">Active</option>
-                        <option value="inactive">Inactive</option>
-                      </select>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                        <input
-                          type="checkbox"
-                          id="featured"
-                          checked={productForm.featured || false}
-                          onChange={e => setProductForm(f => ({ ...f, featured: e.target.checked }))}
-                          style={{ width: 16, height: 16 }}
-                        />
-                        <label htmlFor="featured" style={{ fontWeight: 600, color: productForm.featured ? '#22c55e' : '#ef4444', cursor: 'pointer' }}>
-                          {productForm.featured ? 'Featured' : 'Not Featured'}
-                        </label>
+
+                      {/* Status and Featured Section */}
+                      <div style={{
+                        gridColumn: '1 / -1',
+                        display: 'grid',
+                        gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))',
+                        gap: '16px',
+                        marginTop: '16px'
+                      }}>
+                        <div>
+                          <label style={{
+                            fontWeight: 600,
+                            color: '#667eea',
+                            fontSize: '14px',
+                            marginBottom: '8px',
+                            display: 'block'
+                          }}>Status</label>
+                          <select
+                            value={productForm.status}
+                            onChange={e => setProductForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' }))}
+                            style={{
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '14px',
+                              width: '100%',
+                              background: '#fff',
+                              transition: 'all 0.2s ease',
+                              outline: 'none'
+                            }}
+                            onFocus={(e) => e.target.style.borderColor = '#667eea'}
+                            onBlur={(e) => e.target.style.borderColor = 'rgba(102, 126, 234, 0.2)'}
+                          >
+                            <option value="active">Active</option>
+                            <option value="inactive">Inactive</option>
+                          </select>
+                        </div>
+
+                        <div style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '12px',
+                          padding: '12px 16px',
+                          borderRadius: '8px',
+                          border: '2px solid rgba(102, 126, 234, 0.2)',
+                          background: '#fff',
+                          transition: 'all 0.2s ease'
+                        }}>
+                          <input
+                            type="checkbox"
+                            id="featured"
+                            checked={productForm.featured || false}
+                            onChange={e => setProductForm(f => ({ ...f, featured: e.target.checked }))}
+                            style={{
+                              width: '18px',
+                              height: '18px',
+                              cursor: 'pointer'
+                            }}
+                          />
+                          <label
+                            htmlFor="featured"
+                            style={{
+                              fontWeight: 600,
+                              color: productForm.featured ? '#22c55e' : '#ef4444',
+                              cursor: 'pointer',
+                              fontSize: '14px',
+                              margin: 0
+                            }}
+                          >
+                            {productForm.featured ? 'Featured' : 'Not Featured'}
+                          </label>
+                        </div>
                       </div>
                       <button
                         type="submit"
@@ -5783,6 +6212,882 @@ export default function AdminDashboard() {
                         >
                           {blogEditId ? 'Update' : 'Add'} Blog
                         </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Webinars CRUD */}
+          {activeMenu === 'webinars' && (
+            <section>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 24,
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <h2 style={{
+                  fontSize: 'clamp(20px, 3vw, 28px)',
+                  fontWeight: 700,
+                  color: '#667eea',
+                  margin: 0,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>Manage Webinars</h2>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {!googleOAuthSetup && (
+                    <button
+                      onClick={handleGoogleOAuthSetup}
+                      style={{
+                        background: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '12px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      🔗 Setup Google OAuth
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setWebinarForm({
+                        title: '',
+                        description: '',
+                        start_time: '',
+                        end_time: '',
+                        duration_minutes: 60,
+                        max_attendees: 100,
+                        price: 0,
+                        is_free: true,
+                        attendee_emails: [],
+                        meeting_notes: '',
+                        status: 'scheduled'
+                      });
+                      setWebinarEditId(null);
+                      setShowWebinarModal(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 20px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <FaPlus size={16} />
+                    Schedule Webinar
+                  </button>
+                </div>
+              </div>
+
+              <DataTable
+                data={webinars}
+                columns={[
+                  { key: 'title', label: 'Title', sortable: true },
+                  { key: 'organizer_email', label: 'Organizer', sortable: true },
+                  { key: 'start_time', label: 'Start Time', sortable: true, render: (value) => new Date(value).toLocaleString() },
+                  { key: 'duration_minutes', label: 'Duration (min)', sortable: true },
+                  { key: 'max_attendees', label: 'Max Attendees', sortable: true },
+                  { key: 'price', label: 'Price', sortable: true, render: (value, row) => row.is_free ? 'Free' : `₹${value}` },
+                  { key: 'status', label: 'Status', sortable: true, render: (value) => (
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      background: value === 'scheduled' ? '#e3f2fd' : value === 'live' ? '#e8f5e8' : '#ffebee',
+                      color: value === 'scheduled' ? '#1976d2' : value === 'live' ? '#388e3c' : '#d32f2f'
+                    }}>
+                      {value}
+                    </span>
+                  )},
+                  { key: 'google_meet_link', label: 'Meet Link', render: (value) => value ? (
+                    <a href={value} target="_blank" rel="noopener noreferrer" style={{
+                      color: '#667eea',
+                      textDecoration: 'none',
+                      fontWeight: '600',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: '#e3f2fd',
+                      border: '1px solid #667eea'
+                    }}>
+                      🎥 Join Meeting
+                    </a>
+                  ) : 'Not available' },
+                                    { key: 'google_calendar_event_id', label: 'Calendar Event', render: (value, row) => {
+                    if (!value) return 'Not added';
+
+                    // Create Google Calendar URL with actual event data
+                    const startDate = new Date(row.start_time);
+                    const endDate = new Date(row.end_time);
+                    const startStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    const endStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(row.title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(row.description || '')}&location=Online&sf=true&output=xml`;
+
+                    return (
+                      <a href={calendarUrl} target="_blank" rel="noopener noreferrer" style={{
+                        color: '#4caf50',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '12px',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: '#e8f5e8',
+                        border: '1px solid #4caf50'
+                      }}>
+                        📅 View in Calendar
+                      </a>
+                    );
+                  }}
+                ]}
+                onEdit={handleWebinarEdit}
+                onDelete={handleWebinarDelete}
+              />
+
+              {/* Webinar Modal */}
+              {showWebinarModal && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: 'rgba(34,37,77,0.32)',
+                  zIndex: 3000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px'
+                }} onClick={e => { if (e.target === e.currentTarget) setShowWebinarModal(false); }}>
+                  <div style={{
+                    background: '#fff',
+                    borderRadius: '20px',
+                    padding: '40px',
+                    minWidth: '90vw',
+                    maxWidth: '800px',
+                    maxHeight: '90vh',
+                    boxShadow: '0 20px 60px rgba(102, 126, 234, 0.2)',
+                    position: 'relative',
+                    overflow: 'auto'
+                  }}>
+                    <button
+                      onClick={() => setShowWebinarModal(false)}
+                      aria-label="Close webinar modal"
+                      style={{
+                        position: 'absolute',
+                        top: 20,
+                        right: 20,
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        border: 'none',
+                        fontSize: 24,
+                        color: '#667eea',
+                        cursor: 'pointer',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      ×
+                    </button>
+                    <h2 style={{
+                      fontSize: 'clamp(24px, 4vw, 32px)',
+                      fontWeight: 700,
+                      color: '#667eea',
+                      marginBottom: 32,
+                      textAlign: 'center'
+                    }}>
+                      {webinarEditId ? 'Edit Webinar' : 'Schedule New Webinar'}
+                    </h2>
+                    <form onSubmit={handleWebinarSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Title *</label>
+                          <input
+                            type="text"
+                            value={webinarForm.title}
+                            onChange={e => setWebinarForm(f => ({ ...f, title: e.target.value }))}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px',
+                              transition: 'all 0.3s ease'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Start Date & Time *</label>
+                          <input
+                            type="datetime-local"
+                            value={webinarForm.start_time}
+                            onChange={e => {
+                              const startTime = new Date(e.target.value);
+                              const endTime = new Date(webinarForm.end_time);
+                              const duration = endTime && endTime > startTime ? Math.round((endTime.getTime() - startTime.getTime()) / 60000) : 60;
+                              setWebinarForm(f => ({
+                                ...f,
+                                start_time: e.target.value,
+                                duration_minutes: duration
+                              }));
+                            }}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>End Date & Time *</label>
+                          <input
+                            type="datetime-local"
+                            value={webinarForm.end_time}
+                            onChange={e => {
+                              const startTime = new Date(webinarForm.start_time);
+                              const endTime = new Date(e.target.value);
+                              const duration = startTime && endTime > startTime ? Math.round((endTime.getTime() - startTime.getTime()) / 60000) : 60;
+                              setWebinarForm(f => ({
+                                ...f,
+                                end_time: e.target.value,
+                                duration_minutes: duration
+                              }));
+                            }}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Duration (minutes)</label>
+                          <input
+                            type="number"
+                            value={webinarForm.duration_minutes}
+                            readOnly
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px',
+                              backgroundColor: '#f8f9fa',
+                              color: '#6c757d'
+                            }}
+                          />
+                          <small style={{ color: '#6c757d', fontSize: '12px' }}>Automatically calculated from start and end times</small>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Max Attendees</label>
+                          <input
+                            type="number"
+                            value={webinarForm.max_attendees}
+                            onChange={e => setWebinarForm(f => ({ ...f, max_attendees: parseInt(e.target.value) }))}
+                            min="1"
+                            max="1000"
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Price (₹)</label>
+                          <input
+                            type="number"
+                            value={webinarForm.price}
+                            onChange={e => setWebinarForm(f => ({ ...f, price: parseFloat(e.target.value) }))}
+                            min="0"
+                            step="0.01"
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                          <input
+                            type="checkbox"
+                            id="is_free"
+                            checked={webinarForm.is_free}
+                            onChange={e => setWebinarForm(f => ({ ...f, is_free: e.target.checked }))}
+                            style={{ width: 20, height: 20 }}
+                          />
+                          <label htmlFor="is_free" style={{ fontWeight: 600, color: '#333' }}>Free Webinar</label>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Description</label>
+                        <textarea
+                          value={webinarForm.description}
+                          onChange={e => setWebinarForm(f => ({ ...f, description: e.target.value }))}
+                          rows={4}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Attendee Emails (comma-separated)</label>
+                        <input
+                          type="text"
+                          value={webinarForm.attendee_emails?.join(', ') || ''}
+                          onChange={e => setWebinarForm(f => ({
+                            ...f,
+                            attendee_emails: e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                          }))}
+                          placeholder="email1@example.com, email2@example.com"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Meeting Notes</label>
+                        <textarea
+                          value={webinarForm.meeting_notes}
+                          onChange={e => setWebinarForm(f => ({ ...f, meeting_notes: e.target.value }))}
+                          rows={3}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '16px 32px',
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+                        }}
+                      >
+                        {webinarEditId ? 'Update' : 'Schedule'} Webinar
+                      </button>
+                    </form>
+                  </div>
+                </div>
+              )}
+            </section>
+          )}
+
+          {/* Consultations CRUD */}
+          {activeMenu === 'consultations' && (
+            <section>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 24,
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <h2 style={{
+                  fontSize: 'clamp(20px, 3vw, 28px)',
+                  fontWeight: 700,
+                  color: '#667eea',
+                  margin: 0,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>Manage Consultations</h2>
+                <div style={{ display: 'flex', gap: 16, alignItems: 'center', flexWrap: 'wrap' }}>
+                  {!googleOAuthSetup && (
+                    <button
+                      onClick={handleGoogleOAuthSetup}
+                      style={{
+                        background: 'linear-gradient(135deg, #4285f4 0%, #34a853 100%)',
+                        color: '#fff',
+                        border: 'none',
+                        borderRadius: '8px',
+                        padding: '12px 20px',
+                        fontSize: '14px',
+                        fontWeight: '600',
+                        cursor: 'pointer',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '8px',
+                        transition: 'all 0.3s ease'
+                      }}
+                    >
+                      🔗 Setup Google OAuth
+                    </button>
+                  )}
+                  <button
+                    onClick={() => {
+                      setConsultationForm({
+                        consultant_id: 0,
+                        title: '',
+                        description: '',
+                        start_time: '',
+                        end_time: '',
+                        duration_minutes: 60,
+                        meeting_type: 'consultation',
+                        price: 0,
+                        attendee_emails: [],
+                        notes: '',
+                        status: 'scheduled',
+                        payment_status: 'pending'
+                      });
+                      setConsultationEditId(null);
+                      setShowConsultationModal(true);
+                    }}
+                    style={{
+                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      color: '#fff',
+                      border: 'none',
+                      borderRadius: '8px',
+                      padding: '12px 20px',
+                      fontSize: '14px',
+                      fontWeight: '600',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      alignItems: 'center',
+                      gap: '8px',
+                      transition: 'all 0.3s ease'
+                    }}
+                  >
+                    <FaPlus size={16} />
+                    Schedule Consultation
+                  </button>
+                </div>
+              </div>
+
+              <DataTable
+                data={consultations}
+                columns={[
+                  { key: 'title', label: 'Title', sortable: true },
+                  { key: 'consultant_id', label: 'Consultant', sortable: true, render: (value) => {
+                    const consultant = consultants.find(c => c.id === value);
+                    return consultant ? consultant.name : 'Unknown';
+                  }},
+                  { key: 'user_info', label: 'Client Information', sortable: false, render: (value, row) => {
+                    // Show user information - either from account or external user
+                    if (row.user_name && row.user_email) {
+                      // External user
+                      return (
+                        <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                          <div style={{ fontWeight: '600', color: '#333' }}>{row.user_name}</div>
+                          <div style={{ color: '#666' }}>{row.user_email}</div>
+                          {row.user_phone && <div style={{ color: '#666' }}>{row.user_phone}</div>}
+                        </div>
+                      );
+                    } else if (row.first_name && row.last_name) {
+                      // Registered user
+                      return (
+                        <div style={{ fontSize: '12px', lineHeight: '1.4' }}>
+                          <div style={{ fontWeight: '600', color: '#333' }}>{row.first_name} {row.last_name}</div>
+                          <div style={{ color: '#666' }}>{row.user_account_email}</div>
+                        </div>
+                      );
+                    } else {
+                      return <span style={{ color: '#999' }}>No information</span>;
+                    }
+                  }},
+                  { key: 'start_time', label: 'Start Time', sortable: true, render: (value) => new Date(value).toLocaleString() },
+                  { key: 'duration_minutes', label: 'Duration (min)', sortable: true },
+                  { key: 'price', label: 'Price', sortable: true, render: (value) => `₹${value}` },
+                  { key: 'status', label: 'Status', sortable: true, render: (value) => (
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      background: value === 'scheduled' ? '#e3f2fd' : value === 'confirmed' ? '#e8f5e8' : value === 'completed' ? '#f3e5f5' : '#ffebee',
+                      color: value === 'scheduled' ? '#1976d2' : value === 'confirmed' ? '#388e3c' : value === 'completed' ? '#7b1fa2' : '#d32f2f'
+                    }}>
+                      {value}
+                    </span>
+                  )},
+                  { key: 'payment_status', label: 'Payment', sortable: true, render: (value) => (
+                    <span style={{
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      fontSize: '12px',
+                      fontWeight: '600',
+                      background: value === 'paid' ? '#e8f5e8' : value === 'pending' ? '#fff3e0' : '#ffebee',
+                      color: value === 'paid' ? '#388e3c' : value === 'pending' ? '#f57c00' : '#d32f2f'
+                    }}>
+                      {value}
+                    </span>
+                  )},
+                  { key: 'google_meet_link', label: 'Meet Link', render: (value) => value ? (
+                    <a href={value} target="_blank" rel="noopener noreferrer" style={{
+                      color: '#667eea',
+                      textDecoration: 'none',
+                      fontWeight: '600',
+                      padding: '4px 8px',
+                      borderRadius: '4px',
+                      backgroundColor: '#e3f2fd',
+                      border: '1px solid #667eea'
+                    }}>
+                      🎥 Join Meeting
+                    </a>
+                  ) : 'Not available' },
+                                    { key: 'google_calendar_event_id', label: 'Calendar Event', render: (value, row) => {
+                    if (!value) return 'Not added';
+
+                    // Create Google Calendar URL with actual event data
+                    const startDate = new Date(row.start_time);
+                    const endDate = new Date(row.end_time);
+                    const startStr = startDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+                    const endStr = endDate.toISOString().replace(/[-:]/g, '').split('.')[0] + 'Z';
+
+                    const calendarUrl = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(row.title)}&dates=${startStr}/${endStr}&details=${encodeURIComponent(row.description || '')}&location=Online&sf=true&output=xml`;
+
+                    return (
+                      <a href={calendarUrl} target="_blank" rel="noopener noreferrer" style={{
+                        color: '#4caf50',
+                        textDecoration: 'none',
+                        fontWeight: '600',
+                        fontSize: '12px',
+                        padding: '4px 8px',
+                        borderRadius: '4px',
+                        backgroundColor: '#e8f5e8',
+                        border: '1px solid #4caf50'
+                      }}>
+                        📅 View in Calendar
+                      </a>
+                    );
+                  }}
+                ]}
+                onEdit={handleConsultationEdit}
+                onDelete={handleConsultationDelete}
+              />
+
+              {/* Consultation Modal */}
+              {showConsultationModal && (
+                <div style={{
+                  position: 'fixed',
+                  top: 0,
+                  left: 0,
+                  width: '100vw',
+                  height: '100vh',
+                  background: 'rgba(34,37,77,0.32)',
+                  zIndex: 3000,
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  padding: '20px'
+                }} onClick={e => { if (e.target === e.currentTarget) setShowConsultationModal(false); }}>
+                  <div style={{
+                    background: '#fff',
+                    borderRadius: '20px',
+                    padding: '40px',
+                    minWidth: '90vw',
+                    maxWidth: '800px',
+                    maxHeight: '90vh',
+                    boxShadow: '0 20px 60px rgba(102, 126, 234, 0.2)',
+                    position: 'relative',
+                    overflow: 'auto'
+                  }}>
+                    <button
+                      onClick={() => setShowConsultationModal(false)}
+                      aria-label="Close consultation modal"
+                      style={{
+                        position: 'absolute',
+                        top: 20,
+                        right: 20,
+                        background: 'rgba(102, 126, 234, 0.1)',
+                        border: 'none',
+                        fontSize: 24,
+                        color: '#667eea',
+                        cursor: 'pointer',
+                        width: '40px',
+                        height: '40px',
+                        borderRadius: '50%',
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        transition: 'all 0.2s ease'
+                      }}
+                    >
+                      ×
+                    </button>
+                    <h2 style={{
+                      fontSize: 'clamp(24px, 4vw, 32px)',
+                      fontWeight: 700,
+                      color: '#667eea',
+                      marginBottom: 32,
+                      textAlign: 'center'
+                    }}>
+                      {consultationEditId ? 'Edit Consultation' : 'Schedule New Consultation'}
+                    </h2>
+                    <form onSubmit={handleConsultationSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 24 }}>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: 24 }}>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Consultant *</label>
+                          <select
+                            value={consultationForm.consultant_id}
+                            onChange={e => setConsultationForm(f => ({ ...f, consultant_id: parseInt(e.target.value) }))}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          >
+                            <option value={0}>Select Consultant</option>
+                            {consultants.map(consultant => (
+                              <option key={consultant.id} value={consultant.id}>
+                                {consultant.name}
+                              </option>
+                            ))}
+                          </select>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Title *</label>
+                          <input
+                            type="text"
+                            value={consultationForm.title}
+                            onChange={e => setConsultationForm(f => ({ ...f, title: e.target.value }))}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Start Date & Time *</label>
+                          <input
+                            type="datetime-local"
+                            value={consultationForm.start_time}
+                            onChange={e => {
+                              const startTime = new Date(e.target.value);
+                              const endTime = new Date(consultationForm.end_time);
+                              const duration = endTime && endTime > startTime ? Math.round((endTime.getTime() - startTime.getTime()) / 60000) : 60;
+                              setConsultationForm(f => ({
+                                ...f,
+                                start_time: e.target.value,
+                                duration_minutes: duration
+                              }));
+                            }}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>End Date & Time *</label>
+                          <input
+                            type="datetime-local"
+                            value={consultationForm.end_time}
+                            onChange={e => {
+                              const startTime = new Date(consultationForm.start_time);
+                              const endTime = new Date(e.target.value);
+                              const duration = startTime && endTime > startTime ? Math.round((endTime.getTime() - startTime.getTime()) / 60000) : 60;
+                              setConsultationForm(f => ({
+                                ...f,
+                                end_time: e.target.value,
+                                duration_minutes: duration
+                              }));
+                            }}
+                            required
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Duration (minutes)</label>
+                          <input
+                            type="number"
+                            value={consultationForm.duration_minutes}
+                            readOnly
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px',
+                              backgroundColor: '#f8f9fa',
+                              color: '#6c757d'
+                            }}
+                          />
+                          <small style={{ color: '#6c757d', fontSize: '12px' }}>Automatically calculated from start and end times</small>
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Price (₹)</label>
+                          <input
+                            type="number"
+                            value={consultationForm.price}
+                            onChange={e => setConsultationForm(f => ({ ...f, price: parseFloat(e.target.value) }))}
+                            min="0"
+                            step="0.01"
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          />
+                        </div>
+                        <div>
+                          <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Status</label>
+                          <select
+                            value={consultationForm.status}
+                            onChange={e => setConsultationForm(f => ({ ...f, status: e.target.value as any }))}
+                            style={{
+                              width: '100%',
+                              padding: '12px 16px',
+                              borderRadius: '8px',
+                              border: '2px solid rgba(102, 126, 234, 0.2)',
+                              fontSize: '16px'
+                            }}
+                          >
+                            <option value="scheduled">Scheduled</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="cancelled">Cancelled</option>
+                            <option value="completed">Completed</option>
+                            <option value="no_show">No Show</option>
+                          </select>
+                        </div>
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Description</label>
+                        <textarea
+                          value={consultationForm.description}
+                          onChange={e => setConsultationForm(f => ({ ...f, description: e.target.value }))}
+                          rows={4}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Attendee Emails (comma-separated)</label>
+                        <input
+                          type="text"
+                          value={consultationForm.attendee_emails?.join(', ') || ''}
+                          onChange={e => setConsultationForm(f => ({
+                            ...f,
+                            attendee_emails: e.target.value.split(',').map(email => email.trim()).filter(email => email)
+                          }))}
+                          placeholder="email1@example.com, email2@example.com"
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px'
+                          }}
+                        />
+                      </div>
+                      <div>
+                        <label style={{ display: 'block', marginBottom: 8, fontWeight: 600, color: '#333' }}>Notes</label>
+                        <textarea
+                          value={consultationForm.notes}
+                          onChange={e => setConsultationForm(f => ({ ...f, notes: e.target.value }))}
+                          rows={3}
+                          style={{
+                            width: '100%',
+                            padding: '12px 16px',
+                            borderRadius: '8px',
+                            border: '2px solid rgba(102, 126, 234, 0.2)',
+                            fontSize: '16px',
+                            resize: 'vertical'
+                          }}
+                        />
+                      </div>
+                      <button
+                        type="submit"
+                        style={{
+                          background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                          color: '#fff',
+                          border: 'none',
+                          borderRadius: '12px',
+                          padding: '16px 32px',
+                          fontSize: '18px',
+                          fontWeight: '700',
+                          cursor: 'pointer',
+                          transition: 'all 0.2s ease',
+                          boxShadow: '0 8px 25px rgba(102, 126, 234, 0.3)'
+                        }}
+                      >
+                        {consultationEditId ? 'Update' : 'Schedule'} Consultation
+                      </button>
                     </form>
                   </div>
                 </div>

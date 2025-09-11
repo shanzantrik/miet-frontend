@@ -1,6 +1,7 @@
 import React, { useState, useRef, useEffect, useCallback } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { FaMicrophone } from 'react-icons/fa';
+import { GoogleAuth } from './GoogleAuth';
 
 type Consultant = {
   id: number;
@@ -48,6 +49,11 @@ export default function SearchPanel() {
   const [city, setCity] = useState('Delhi');
   const [cityLoading, setCityLoading] = useState(false);
   const leftRef = useRef<HTMLDivElement>(null);
+
+  // Authentication states
+  const [user, setUser] = useState<any>(null);
+  const [showLoginModal, setShowLoginModal] = useState(false);
+  const [pendingBookingConsultant, setPendingBookingConsultant] = useState<Consultant | null>(null);
   const [mapHeight, setMapHeight] = useState(500);
   const { isLoaded } = useJsApiLoader({
     googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
@@ -65,6 +71,62 @@ export default function SearchPanel() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const [geoAddresses, setGeoAddresses] = useState<{ [id: number]: string }>({});
+
+  // Check authentication status on component mount
+  useEffect(() => {
+    checkAuthStatus();
+  }, []);
+
+  const checkAuthStatus = async () => {
+    try {
+      const token = localStorage.getItem('user_jwt');
+      if (!token) {
+        setUser(null);
+        return;
+      }
+
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/profile`, {
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (response.ok) {
+        const userData = await response.json();
+        setUser(userData);
+      } else {
+        localStorage.removeItem('user_jwt');
+        setUser(null);
+      }
+    } catch (error) {
+      console.error('Error checking auth status:', error);
+      localStorage.removeItem('user_jwt');
+      setUser(null);
+    }
+  };
+
+  const handleBookClick = (consultant: Consultant) => {
+    if (user) {
+      // Redirect to dashboard if user is logged in
+      window.location.href = '/dashboard';
+    } else {
+      setPendingBookingConsultant(consultant);
+      setShowLoginModal(true);
+    }
+  };
+
+  const handleLoginSuccess = (userData: any) => {
+    setUser(userData);
+    setShowLoginModal(false);
+    setPendingBookingConsultant(null);
+    // Redirect to dashboard after successful login
+    window.location.href = '/dashboard';
+  };
+
+  const handleLoginModalClose = () => {
+    setShowLoginModal(false);
+    setPendingBookingConsultant(null);
+  };
 
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   let SpeechRecognition: any = undefined;
@@ -187,6 +249,31 @@ export default function SearchPanel() {
       setMapHeight(leftRef.current.offsetHeight);
     }
   }, [search, mode, filteredConsultants.length, nearby]);
+
+  // Set initial map height to match the left column
+  useEffect(() => {
+    if (leftRef.current) {
+      const leftHeight = leftRef.current.offsetHeight;
+      setMapHeight(leftHeight);
+    }
+  }, []);
+
+  // Add resize observer to update map height when left column changes
+  useEffect(() => {
+    if (!leftRef.current) return;
+
+    const resizeObserver = new ResizeObserver(() => {
+      if (leftRef.current) {
+        setMapHeight(leftRef.current.offsetHeight);
+      }
+    });
+
+    resizeObserver.observe(leftRef.current);
+
+    return () => {
+      resizeObserver.disconnect();
+    };
+  }, []);
 
   // Reverse geocode city name when userLocation changes
   useEffect(() => {
@@ -378,13 +465,15 @@ export default function SearchPanel() {
               placeholder={searchPlaceholder}
               style={{
                 width: '100%',
-                padding: 'clamp(1rem, 3vw, 1.2rem) clamp(2.5rem, 6vw, 3.5rem) clamp(1rem, 3vw, 1.2rem) clamp(1rem, 3vw, 1.5rem)',
-                borderRadius: '15px',
+                padding: 'clamp(1.4rem, 4vw, 1.8rem) clamp(2.5rem, 6vw, 3.5rem) clamp(1.4rem, 4vw, 1.8rem) clamp(1.2rem, 3.5vw, 1.8rem)',
+                borderRadius: '18px',
                 border: '2px solid rgba(99, 102, 241, 0.3)',
-                fontSize: 'clamp(1rem, 2.5vw, 1.1rem)',
-                background: 'rgba(255,255,255,0.9)',
+                fontSize: 'clamp(1.1rem, 2.8vw, 1.3rem)',
+                background: 'rgba(255,255,255,0.95)',
                 transition: 'all 0.3s ease',
-                boxShadow: '0 4px 15px rgba(0,0,0,0.1)'
+                boxShadow: '0 6px 20px rgba(0,0,0,0.12)',
+                minHeight: 'clamp(60px, 12vw, 70px)',
+                lineHeight: '1.4'
               }}
               onFocus={(e) => {
                 e.target.style.borderColor = 'rgba(99, 102, 241, 0.8)';
@@ -510,9 +599,9 @@ export default function SearchPanel() {
           className="consultant-cards-container"
           style={{
             marginTop: 12,
-            display: 'flex',
-            flexDirection: 'column',
-            gap: 16,
+            display: 'grid',
+            gridTemplateColumns: 'repeat(2, 1fr)',
+            gap: 'clamp(12px, 3vw, 16px)',
             height: 400,
             overflowY: 'auto',
             /* Hide scrollbar but keep functionality */
@@ -534,22 +623,26 @@ export default function SearchPanel() {
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  gap: 'clamp(12px, 3vw, 16px)',
+                  gap: 'clamp(10px, 2.5vw, 14px)',
                   background: 'rgba(255, 255, 255, 0.95)',
                   borderRadius: 16,
-                  padding: 'clamp(16px, 4vw, 20px)',
+                  padding: 'clamp(14px, 3.5vw, 18px)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   border: selectedConsultant?.id === c.id ? '2px solid #667eea' : '2px solid rgba(99, 102, 241, 0.1)',
                   boxShadow: selectedConsultant?.id === c.id ? '0 8px 25px rgba(99, 102, 241, 0.2)' : '0 4px 15px rgba(0, 0, 0, 0.08)',
                   backdropFilter: 'blur(10px)',
-                  textAlign: 'center'
+                  textAlign: 'center',
+                  minHeight: 'clamp(200px, 25vw, 240px)',
+                  width: '100%'
                 }}
                 onClick={() => {
                   if (c.lat && c.lng) {
                     setMapCenter({ lat: c.lat, lng: c.lng });
                     setSelectedConsultant(c);
                   }
+                  // Handle booking when card is clicked
+                  handleBookClick(c);
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-3px) scale(1.02)';
@@ -562,7 +655,7 @@ export default function SearchPanel() {
                   e.currentTarget.style.borderColor = selectedConsultant?.id === c.id ? '#667eea' : 'rgba(99, 102, 241, 0.1)';
                 }}
               >
-                <div className="consultant-image" style={{ position: 'relative', width: 'clamp(60px, 15vw, 80px)', height: 'clamp(60px, 15vw, 80px)', display: 'inline-block' }}>
+                <div className="consultant-image" style={{ position: 'relative', width: 'clamp(50px, 12vw, 65px)', height: 'clamp(50px, 12vw, 65px)', display: 'inline-block' }}>
                   <img
                     src={imageUrl || '/brain-miet.png'}
                     alt={c.name}
@@ -658,36 +751,21 @@ export default function SearchPanel() {
                   {c.email && <div style={{ color: '#ffffff', fontSize: 'clamp(0.9rem, 1vw, 1rem)', marginTop: 4, fontWeight: 500 }}>✉️ {c.email}</div>}
                   {c.phone && <div style={{ color: '#ffffff', fontSize: 'clamp(0.9rem, 1vw, 1rem)', marginTop: 4, fontWeight: 500 }}>📞 {c.phone}</div>}
                 </div>
-                <button
-                  onClick={(e) => {
-                    e.stopPropagation(); // Prevent triggering the card click
-                    setBookingConsultant(c);
-                  }}
+                <div
                   style={{
-                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
-                    color: '#fff',
-                    border: 'none',
-                    borderRadius: 12,
-                    padding: 'clamp(0.7rem, 2vw, 1.4rem) clamp(1rem, 3vw, 1.4rem)',
-                    fontWeight: 700,
-                    fontSize: 'clamp(0.9rem, 2vw, 1rem)',
-                    cursor: 'pointer',
-                    transition: 'all 0.3s ease',
-                    boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)',
-                    width: 'clamp(120px, 40vw, 150px)',
-                    minHeight: 'clamp(40px, 10vw, 44px)'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+                    color: '#667eea',
+                    fontSize: 'clamp(0.8rem, 1.5vw, 0.9rem)',
+                    fontWeight: 600,
+                    textAlign: 'center',
+                    marginTop: '8px',
+                    padding: '8px 12px',
+                    background: 'rgba(102, 126, 234, 0.1)',
+                    borderRadius: 8,
+                    border: '1px solid rgba(102, 126, 234, 0.2)'
                   }}
                 >
-                  Book
-                </button>
+                  Click card to book consultation
+                </div>
               </div>
             );
           })}
@@ -698,7 +776,7 @@ export default function SearchPanel() {
           flex: '1.5',
           minWidth: '320',
           maxWidth: '540',
-          height: mapHeight,
+          height: mapHeight || 500,
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '20px',
           overflow: 'hidden',
@@ -866,7 +944,7 @@ export default function SearchPanel() {
                     })()}
 
                     <button
-                      onClick={() => setBookingConsultant(selectedConsultant)}
+                      onClick={() => handleBookClick(selectedConsultant)}
                       style={{
                         background: 'var(--accent)',
                         color: '#fff',
@@ -952,6 +1030,7 @@ export default function SearchPanel() {
             }
 
             .consultant-cards-container {
+              grid-template-columns: 1fr !important;
               gap: 12px !important;
               padding: 0 1rem !important;
             }
@@ -959,6 +1038,7 @@ export default function SearchPanel() {
             .consultant-card {
               padding: 14px 16px !important;
               gap: 12px !important;
+              min-height: auto !important;
             }
 
             .consultant-image {
@@ -988,9 +1068,14 @@ export default function SearchPanel() {
               font-size: clamp(0.9rem, 2.5vw, 1.1rem) !important;
             }
 
+            .consultant-cards-container {
+              grid-template-columns: 1fr !important;
+            }
+
             .consultant-card {
               padding: clamp(10px, 3vw, 16px) clamp(12px, 4vw, 20px) !important;
               gap: clamp(8px, 2vw, 16px) !important;
+              min-height: auto !important;
             }
 
             .consultant-image {
@@ -1020,9 +1105,14 @@ export default function SearchPanel() {
               font-size: 0.9rem !important;
             }
 
+            .consultant-cards-container {
+              grid-template-columns: 1fr !important;
+            }
+
             .consultant-card {
               padding: 12px 14px !important;
               gap: 10px !important;
+              min-height: auto !important;
             }
 
             .consultant-image {
@@ -1044,6 +1134,76 @@ export default function SearchPanel() {
           }
         `
       }} />
+
+      {/* Login Modal */}
+      {showLoginModal && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          tabIndex={-1}
+          style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(34,37,77,0.32)',
+            zIndex: 3000,
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center'
+          }}
+          onClick={e => { if (e.target === e.currentTarget) handleLoginModalClose(); }}
+        >
+          <div style={{
+            background: 'var(--card)',
+            borderRadius: 14,
+            padding: 32,
+            minWidth: 340,
+            maxWidth: 420,
+            boxShadow: '0 4px 32px rgba(90,103,216,0.13)',
+            position: 'relative'
+          }}>
+            <button
+              onClick={handleLoginModalClose}
+              aria-label="Close login modal"
+              style={{
+                position: 'absolute',
+                top: 12,
+                right: 12,
+                background: 'none',
+                border: 'none',
+                fontSize: 22,
+                color: 'var(--accent)',
+                cursor: 'pointer'
+              }}
+            >
+              ×
+            </button>
+            <h2 style={{
+              color: 'var(--text-accent-alt)',
+              fontWeight: 700,
+              fontSize: 22,
+              marginBottom: 10,
+              textAlign: 'center'
+            }}>
+              Login Required
+            </h2>
+            <p style={{
+              color: 'var(--text-accent)',
+              fontSize: 14,
+              marginBottom: 24,
+              textAlign: 'center',
+              lineHeight: 1.5
+            }}>
+              Please login with Google to book a consultation with {pendingBookingConsultant?.name}
+            </p>
+            <div style={{ display: 'flex', justifyContent: 'center' }}>
+              <GoogleAuth onLogin={handleLoginSuccess} />
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Booking Modal */}
       {bookingConsultant && (() => {

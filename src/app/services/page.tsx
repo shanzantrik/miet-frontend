@@ -16,7 +16,7 @@ const serviceCards = [
       'Online sessions via secure video call; offline sessions at our accessible centers.'
     ],
     cta: 'Book Appointment',
-    ctaLink: '/consultants',
+    ctaLink: '/services/consultations',
     color: '#5a67d8',
   },
   {
