@@ -24,15 +24,15 @@ export default function BlogsPage() {
   const [loading, setLoading] = useState(true);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [activeMenu, setActiveMenu] = useState<'blogs'>('blogs');
-  
+
   // Blog state
-  const [blogForm, setBlogForm] = useState<Partial<Blog>>({ 
-    title: '', 
-    description: '', 
-    category: 'Therapy', 
-    thumbnail: '', 
-    author: '', 
-    status: 'active' 
+  const [blogForm, setBlogForm] = useState<Partial<Blog>>({
+    title: '',
+    description: '',
+    category: 'Therapy',
+    thumbnail: '',
+    author: '',
+    status: 'active'
   });
   const [blogEditId, setBlogEditId] = useState<number | null>(null);
   const [showBlogModal, setShowBlogModal] = useState(false);
@@ -76,20 +76,20 @@ export default function BlogsPage() {
 
   async function handleBlogSubmit(e?: React.FormEvent) {
     if (e) e.preventDefault();
-    
+
     try {
       const token = localStorage.getItem("admin_jwt");
       const method = blogEditId ? "PUT" : "POST";
-      const url = blogEditId 
+      const url = blogEditId
         ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs/${blogEditId}`
         : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs`;
-      
+
       const res = await fetch(url, {
         method,
         headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
         body: JSON.stringify(blogForm),
       });
-      
+
       if (res.ok) {
         setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' });
         setBlogEditId(null);
@@ -114,14 +114,14 @@ export default function BlogsPage() {
 
   async function handleBlogDelete() {
     if (!deleteBlogId) return;
-    
+
     try {
       const token = localStorage.getItem("admin_jwt");
       const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs/${deleteBlogId}`, {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` }
       });
-      
+
       if (res.ok) {
         setBlogs(blogs.filter(b => b.id !== deleteBlogId));
         setDeleteBlogId(null);
@@ -172,9 +172,9 @@ export default function BlogsPage() {
   return (
     <div style={{ display: 'flex', minHeight: '100vh', background: 'var(--background)' }}>
       {/* Sidebar */}
-      <div style={{ 
-        width: sidebarOpen ? 280 : 80, 
-        background: 'var(--card)', 
+      <div style={{
+        width: sidebarOpen ? 280 : 80,
+        background: 'var(--card)',
         borderRight: '1px solid var(--border)',
         transition: 'width 0.3s ease',
         position: 'fixed',
@@ -188,10 +188,10 @@ export default function BlogsPage() {
             )}
             <button
               onClick={() => setSidebarOpen(!sidebarOpen)}
-              style={{ 
-                background: 'none', 
-                border: 'none', 
-                color: 'var(--text-secondary)', 
+              style={{
+                background: 'none',
+                border: 'none',
+                color: 'var(--text-secondary)',
                 cursor: 'pointer',
                 padding: '8px'
               }}
@@ -200,7 +200,7 @@ export default function BlogsPage() {
             </button>
           </div>
         </div>
-        
+
         <nav style={{ padding: '16px 0' }}>
           {menu.map(item => (
             <div key={item.key}>
@@ -227,7 +227,7 @@ export default function BlogsPage() {
             </div>
           ))}
         </nav>
-        
+
         <div style={{ marginTop: 'auto', padding: '16px' }}>
           <button
             onClick={handleLogout}
@@ -254,8 +254,8 @@ export default function BlogsPage() {
       </div>
 
       {/* Main Content */}
-      <main style={{ 
-        flex: 1, 
+      <main style={{
+        flex: 1,
         marginLeft: sidebarOpen ? 280 : 80,
         padding: '32px',
         transition: 'margin-left 0.3s ease'
@@ -282,7 +282,7 @@ export default function BlogsPage() {
               + Add Blog
             </button>
           </div>
-          
+
           {/* Blog Table */}
           <table style={{ width: '100%', borderCollapse: 'collapse', background: '#fff', marginBottom: 24 }}>
             <thead>
@@ -300,22 +300,22 @@ export default function BlogsPage() {
                 <tr key={blog.id ?? blog.title} style={{ borderBottom: '1px solid #e2e8f0' }}>
                   <td style={{ padding: 10 }}>
                     {blog.thumbnail ? (
-                      <img 
-                        src={blog.thumbnail} 
-                        alt="Thumbnail" 
-                        style={{ 
-                          width: 50, 
-                          height: 50, 
-                          objectFit: 'cover', 
+                      <img
+                        src={blog.thumbnail}
+                        alt="Thumbnail"
+                        style={{
+                          width: 50,
+                          height: 50,
+                          objectFit: 'cover',
                           borderRadius: 6,
                           border: '1px solid #e2e8f0'
-                        }} 
+                        }}
                       />
                     ) : (
-                      <div style={{ 
-                        width: 50, 
-                        height: 50, 
-                        background: '#f1f5f9', 
+                      <div style={{
+                        width: 50,
+                        height: 50,
+                        background: '#f1f5f9',
                         borderRadius: 6,
                         display: 'flex',
                         alignItems: 'center',
@@ -343,7 +343,7 @@ export default function BlogsPage() {
               ))}
             </tbody>
           </table>
-          
+
           {/* Blog Modal */}
           {showBlogModal && (
             <div style={{ position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh', background: 'rgba(34,37,77,0.32)', zIndex: 3000, display: 'flex', alignItems: 'center', justifyContent: 'center' }} onClick={e => { if (e.target === e.currentTarget) setShowBlogModal(false); }}>
@@ -374,18 +374,18 @@ export default function BlogsPage() {
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Author</label>
                   <input type="text" value={blogForm.author || ''} onChange={e => setBlogForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
-                  <input 
-                    type="text" 
-                    value={blogForm.thumbnail || ''} 
-                    onChange={e => setBlogForm(f => ({ ...f, thumbnail: e.target.value }))} 
+                  <input
+                    type="text"
+                    value={blogForm.thumbnail || ''}
+                    onChange={e => setBlogForm(f => ({ ...f, thumbnail: e.target.value }))}
                     placeholder="Enter thumbnail URL"
-                    style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} 
+                    style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
                   />
                   {blogForm.thumbnail && (
-                    <img 
-                      src={blogForm.thumbnail} 
-                      alt="Thumbnail" 
-                      style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }} 
+                    <img
+                      src={blogForm.thumbnail}
+                      alt="Thumbnail"
+                      style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }}
                       onError={(e) => {
                         e.currentTarget.style.display = 'none';
                       }}
@@ -414,26 +414,26 @@ export default function BlogsPage() {
               </div>
             </div>
           )}
-          
+
           {/* Delete Confirmation Modal */}
           {deleteBlogId && (
-            <div style={{ 
-              position: 'fixed', 
-              top: 0, 
-              left: 0, 
-              width: '100vw', 
-              height: '100vh', 
-              background: 'rgba(0,0,0,0.5)', 
-              zIndex: 4000, 
-              display: 'flex', 
-              alignItems: 'center', 
-              justifyContent: 'center' 
+            <div style={{
+              position: 'fixed',
+              top: 0,
+              left: 0,
+              width: '100vw',
+              height: '100vh',
+              background: 'rgba(0,0,0,0.5)',
+              zIndex: 4000,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center'
             }}>
-              <div style={{ 
-                background: 'white', 
-                borderRadius: '12px', 
-                padding: '32px', 
-                maxWidth: '400px', 
+              <div style={{
+                background: 'white',
+                borderRadius: '12px',
+                padding: '32px',
+                maxWidth: '400px',
                 textAlign: 'center',
                 boxShadow: '0 20px 25px -5px rgba(0,0,0,0.1)'
               }}>
@@ -442,28 +442,28 @@ export default function BlogsPage() {
                   Are you sure you want to delete <strong>{deleteBlogName}</strong>? This action cannot be undone.
                 </p>
                 <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
-                  <button 
+                  <button
                     onClick={() => { setDeleteBlogId(null); setDeleteBlogName(''); }}
-                    style={{ 
-                      background: '#6b7280', 
-                      color: 'white', 
-                      border: 'none', 
-                      padding: '10px 20px', 
-                      borderRadius: '6px', 
+                    style={{
+                      background: '#6b7280',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
                       cursor: 'pointer',
                       fontWeight: '600'
                     }}
                   >
                     Cancel
                   </button>
-                  <button 
+                  <button
                     onClick={handleBlogDelete}
-                    style={{ 
-                      background: '#dc2626', 
-                      color: 'white', 
-                      border: 'none', 
-                      padding: '10px 20px', 
-                      borderRadius: '6px', 
+                    style={{
+                      background: '#dc2626',
+                      color: 'white',
+                      border: 'none',
+                      padding: '10px 20px',
+                      borderRadius: '6px',
                       cursor: 'pointer',
                       fontWeight: '600'
                     }}

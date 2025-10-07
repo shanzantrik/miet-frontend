@@ -86,8 +86,8 @@ export default function FeaturedSection() {
 
   const handleBookClick = (consultant: Consultant) => {
     if (user) {
-      // Redirect to dashboard if user is logged in
-      window.location.href = '/dashboard';
+      // Redirect to consultations page if user is logged in
+      window.location.href = '/services/consultations';
     } else {
       setPendingBookingConsultant(consultant);
       setShowLoginModal(true);
@@ -98,8 +98,8 @@ export default function FeaturedSection() {
     setUser(userData);
     setShowLoginModal(false);
     setPendingBookingConsultant(null);
-    // Redirect to dashboard after successful login
-    window.location.href = '/dashboard';
+    // Redirect to consultations page after successful login
+    window.location.href = '/services/consultations';
   };
 
   const handleLoginModalClose = () => {

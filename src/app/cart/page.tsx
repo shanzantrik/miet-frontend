@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { FaTimes, FaCreditCard, FaMapMarkerAlt, FaPhone, FaEnvelope, FaUser, FaSpinner, FaShoppingCart, FaTrash, FaLock, FaUnlock, FaPaypal, FaGooglePay, FaApplePay } from 'react-icons/fa';
 import TopBar from '../../components/TopBar';
 import Footer from '../../components/Footer';
+import RazorpayPayment from '../../components/RazorpayPayment';
 
 interface CartItem {
   id: string | number;
@@ -77,12 +78,12 @@ export default function CartPage() {
     const loadCart = () => {
       const savedCart = localStorage.getItem('cart');
       console.log('🛒 Loading cart from localStorage:', savedCart);
-      
+
       if (savedCart) {
         try {
           const parsedCart = JSON.parse(savedCart);
           console.log('🛒 Parsed cart data:', parsedCart);
-          
+
           // Ensure all cart items have required fields
           const validatedCart = parsedCart.map((item: any) => ({
             id: item.id,
@@ -118,7 +119,7 @@ export default function CartPage() {
     };
 
     window.addEventListener('storage', handleStorageChange);
-    
+
     return () => {
       window.removeEventListener('storage', handleStorageChange);
     };
@@ -155,7 +156,7 @@ export default function CartPage() {
   // Handle checkout button click
   const handleCheckoutClick = () => {
     if (cartItems.length === 0) return;
-    
+
     setShowCheckoutModal(true);
     setCheckoutStep('auth');
     setError('');
@@ -170,7 +171,7 @@ export default function CartPage() {
     try {
       // Simulate login API call
       await new Promise(resolve => setTimeout(resolve, 1000));
-      
+
       // For demo purposes, accept any email/password
       if (loginForm.email && loginForm.password) {
         // Store user token and email
@@ -217,13 +218,13 @@ export default function CartPage() {
     try {
       // Simulate payment processing
       await new Promise(resolve => setTimeout(resolve, 2000));
-      
+
       // Clear cart and show success
       localStorage.removeItem('cart');
       setCartItems([]);
       setShowCheckoutModal(false);
       setCheckoutStep('auth');
-      
+
       // Show success message (you can implement a toast notification here)
       alert('Order placed successfully! Thank you for your purchase.');
     } catch (err) {
@@ -521,9 +522,9 @@ export default function CartPage() {
                     justifyContent: 'center',
                     fontSize: '14px',
                     fontWeight: '600',
-                    background: checkoutStep === step ? '#8b5cf6' : 
+                    background: checkoutStep === step ? '#8b5cf6' :
                                ['auth', 'details', 'payment', 'confirmation'].indexOf(checkoutStep) > index ? '#10b981' : '#e5e7eb',
-                    color: checkoutStep === step ? 'white' : 
+                    color: checkoutStep === step ? 'white' :
                            ['auth', 'details', 'payment', 'confirmation'].indexOf(checkoutStep) > index ? 'white' : '#6b7280'
                   }}>
                     {['auth', 'details', 'payment', 'confirmation'].indexOf(checkoutStep) > index ? '✓' : index + 1}
@@ -568,7 +569,7 @@ export default function CartPage() {
                       Please login to continue with your purchase
                     </p>
                   </div>
-                  
+
                   <form onSubmit={handleLogin} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -589,7 +590,7 @@ export default function CartPage() {
                         placeholder="Enter your email"
                       />
                     </div>
-                    
+
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                         Password
@@ -609,7 +610,7 @@ export default function CartPage() {
                         placeholder="Enter your password"
                       />
                     </div>
-                    
+
                     <button
                       type="submit"
                       disabled={checkoutLoading}
@@ -633,7 +634,7 @@ export default function CartPage() {
                       {checkoutLoading ? 'Logging in...' : 'Login & Continue'}
                     </button>
                   </form>
-                  
+
                   <div style={{ textAlign: 'center', marginTop: '1rem' }}>
                     <p style={{ color: '#6b7280', fontSize: '14px' }}>
                       Don't have an account?{' '}
@@ -667,7 +668,7 @@ export default function CartPage() {
                       Please provide your details for delivery
                     </p>
                   </div>
-                  
+
                   <form onSubmit={handleDetailsSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div>
@@ -689,7 +690,7 @@ export default function CartPage() {
                           placeholder="First Name"
                         />
                       </div>
-                      
+
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                           Last Name *
@@ -710,7 +711,7 @@ export default function CartPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -731,7 +732,7 @@ export default function CartPage() {
                           placeholder="Email Address"
                         />
                       </div>
-                      
+
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                           Phone *
@@ -752,7 +753,7 @@ export default function CartPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                         Address *
@@ -772,7 +773,7 @@ export default function CartPage() {
                         placeholder="Street Address"
                       />
                     </div>
-                    
+
                     <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr 1fr', gap: '1rem' }}>
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
@@ -793,7 +794,7 @@ export default function CartPage() {
                           placeholder="City"
                         />
                       </div>
-                      
+
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                           State *
@@ -813,7 +814,7 @@ export default function CartPage() {
                           placeholder="State"
                         />
                       </div>
-                      
+
                       <div>
                         <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                           ZIP Code *
@@ -834,7 +835,7 @@ export default function CartPage() {
                         />
                       </div>
                     </div>
-                    
+
                     <div>
                       <label style={{ display: 'block', fontSize: '14px', fontWeight: '500', color: '#374151', marginBottom: '0.5rem' }}>
                         Country
@@ -857,7 +858,7 @@ export default function CartPage() {
                         <option value="Australia">Australia</option>
                       </select>
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                       <button
                         type="button"
@@ -876,7 +877,7 @@ export default function CartPage() {
                       >
                         Back
                       </button>
-                      
+
                       <button
                         type="submit"
                         style={{
@@ -910,10 +911,11 @@ export default function CartPage() {
                       Select your preferred payment option
                     </p>
                   </div>
-                  
+
                   <form onSubmit={handlePaymentSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                       {[
+                        { id: 'razorpay', label: 'Razorpay', icon: <FaCreditCard />, description: 'Secure payment gateway - UPI, Cards, Net Banking' },
                         { id: 'credit_card', label: 'Credit/Debit Card', icon: <FaCreditCard />, description: 'Visa, Mastercard, American Express' },
                         { id: 'paypal', label: 'PayPal', icon: <FaPaypal />, description: 'Pay with your PayPal account' },
                         { id: 'google_pay', label: 'Google Pay', icon: <FaGooglePay />, description: 'Fast and secure mobile payment' },
@@ -955,7 +957,7 @@ export default function CartPage() {
                         </label>
                       ))}
                     </div>
-                    
+
                     <div style={{ display: 'flex', gap: '1rem', marginTop: '1rem' }}>
                       <button
                         type="button"
@@ -974,7 +976,7 @@ export default function CartPage() {
                       >
                         Back
                       </button>
-                      
+
                       <button
                         type="submit"
                         disabled={!selectedPaymentMethod}
@@ -1009,7 +1011,7 @@ export default function CartPage() {
                       Review your order details and confirm your purchase
                     </p>
                   </div>
-                  
+
                   <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
                     <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '0.75rem' }}>
                       Order Summary
@@ -1033,7 +1035,7 @@ export default function CartPage() {
                       </div>
                     </div>
                   </div>
-                  
+
                   <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
                     <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '0.75rem' }}>
                       Delivery Information
@@ -1049,59 +1051,93 @@ export default function CartPage() {
                       </div>
                     </div>
                   </div>
-                  
-                  <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
-                    <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '0.75rem' }}>
-                      Payment Method
-                    </h4>
-                    <div style={{ fontSize: '14px', color: '#6b7280' }}>
-                      {selectedPaymentMethod === 'credit_card' && 'Credit/Debit Card'}
-                      {selectedPaymentMethod === 'paypal' && 'PayPal'}
-                      {selectedPaymentMethod === 'google_pay' && 'Google Pay'}
-                      {selectedPaymentMethod === 'apple_pay' && 'Apple Pay'}
+
+                  {selectedPaymentMethod === 'razorpay' ? (
+                    <div style={{ marginBottom: '1.5rem' }}>
+                      <RazorpayPayment
+                        amount={calculateTotal()}
+                        currency="INR"
+                        onSuccess={(paymentData) => {
+                          console.log('Payment successful:', paymentData);
+                          // Clear cart and show success
+                          localStorage.removeItem('cart');
+                          setCartItems([]);
+                          setShowCheckoutModal(false);
+                          setCheckoutStep('auth');
+                          alert('Payment successful! Order placed successfully. Thank you for your purchase.');
+                        }}
+                        onFailure={(error) => {
+                          console.error('Payment failed:', error);
+                          setError('Payment failed. Please try again.');
+                        }}
+                        onClose={() => {
+                          setShowCheckoutModal(false);
+                          setCheckoutStep('auth');
+                        }}
+                        userDetails={{
+                          name: `${userDetails.firstName} ${userDetails.lastName}`,
+                          email: userDetails.email,
+                          contact: userDetails.phone
+                        }}
+                      />
                     </div>
-                  </div>
-                  
-                  <div style={{ display: 'flex', gap: '1rem' }}>
-                    <button
-                      onClick={goBack}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        background: '#f3f4f6',
-                        color: '#374151',
-                        border: '1px solid #d1d5db',
-                        borderRadius: '6px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        cursor: 'pointer'
-                      }}
-                    >
-                      Back
-                    </button>
-                    
-                    <button
-                      onClick={handleCheckoutConfirm}
-                      disabled={checkoutLoading}
-                      style={{
-                        flex: 1,
-                        padding: '12px',
-                        background: '#10b981',
-                        color: 'white',
-                        border: 'none',
-                        borderRadius: '6px',
-                        fontSize: '16px',
-                        fontWeight: '600',
-                        cursor: checkoutLoading ? 'not-allowed' : 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.5rem'
-                      }}
-                    >
-                      {checkoutLoading ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : 'Confirm Order'}
-                    </button>
-                  </div>
+                  ) : (
+                    <>
+                      <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', marginBottom: '1.5rem' }}>
+                        <h4 style={{ fontSize: '16px', fontWeight: '600', color: '#374151', marginBottom: '0.75rem' }}>
+                          Payment Method
+                        </h4>
+                        <div style={{ fontSize: '14px', color: '#6b7280' }}>
+                          {selectedPaymentMethod === 'razorpay' && 'Razorpay'}
+                          {selectedPaymentMethod === 'credit_card' && 'Credit/Debit Card'}
+                          {selectedPaymentMethod === 'paypal' && 'PayPal'}
+                          {selectedPaymentMethod === 'google_pay' && 'Google Pay'}
+                          {selectedPaymentMethod === 'apple_pay' && 'Apple Pay'}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', gap: '1rem' }}>
+                        <button
+                          onClick={goBack}
+                          style={{
+                            flex: 1,
+                            padding: '12px',
+                            background: '#f3f4f6',
+                            color: '#374151',
+                            border: '1px solid #d1d5db',
+                            borderRadius: '6px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Back
+                        </button>
+
+                        <button
+                          onClick={handleCheckoutConfirm}
+                          disabled={checkoutLoading}
+                          style={{
+                            flex: 1,
+                            padding: '12px',
+                            background: '#10b981',
+                            color: 'white',
+                            border: 'none',
+                            borderRadius: '6px',
+                            fontSize: '16px',
+                            fontWeight: '600',
+                            cursor: checkoutLoading ? 'not-allowed' : 'pointer',
+                            display: 'flex',
+                            alignItems: 'center',
+                            justifyContent: 'center',
+                            gap: '0.5rem'
+                          }}
+                        >
+                          {checkoutLoading ? <FaSpinner style={{ animation: 'spin 1s linear infinite' }} /> : 'Confirm Order'}
+                        </button>
+                      </div>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -1110,7 +1146,7 @@ export default function CartPage() {
       )}
 
       <Footer />
-      
+
       <style jsx>{`
         @keyframes spin {
           0% { transform: rotate(0deg); }

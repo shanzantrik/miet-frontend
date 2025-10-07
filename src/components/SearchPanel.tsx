@@ -24,6 +24,7 @@ type Consultant = {
 const MODES = ['All', 'Online', 'Offline'];
 const PAGE_SIZE = 5;
 const defaultCenter = { lat: 23.5937, lng: 78.9629 }; // Center of India
+const GOOGLE_MAPS_LIBRARIES = ['places']; // Static array to prevent re-renders
 
 // Add the haversine function back above the SearchPanel component
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -41,6 +42,7 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
 export default function SearchPanel() {
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [search, setSearch] = useState('');
   const [searchPlaceholder, setSearchPlaceholder] = useState('Search Special Education and Mental Health Professionals, Services, Schools, etc.');
   const [mode, setMode] = useState('All');
@@ -55,9 +57,27 @@ export default function SearchPanel() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingBookingConsultant, setPendingBookingConsultant] = useState<Consultant | null>(null);
   const [mapHeight, setMapHeight] = useState(500);
-  const { isLoaded } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || '',
+  const { isLoaded, loadError } = useJsApiLoader({
+    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAmpa3H1449VHQeOA7cJ1h1fp5WUu5d4pM',
+    libraries: GOOGLE_MAPS_LIBRARIES as any,
+    id: 'google-map-script',
+    version: 'weekly',
   });
+
+  // Debug Google Maps loading
+  useEffect(() => {
+    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
+    console.log('Google Maps loading status:', {
+      isLoaded,
+      loadError,
+      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_SET',
+      apiKeyLength: apiKey?.length || 0
+    });
+
+    if (!apiKey) {
+      console.error('Google Maps API key is not configured! Please check your .env.local file.');
+    }
+  }, [isLoaded, loadError]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
@@ -107,8 +127,8 @@ export default function SearchPanel() {
 
   const handleBookClick = (consultant: Consultant) => {
     if (user) {
-      // Redirect to dashboard if user is logged in
-      window.location.href = '/dashboard';
+      // Redirect to consultations page if user is logged in
+      window.location.href = '/services/consultations';
     } else {
       setPendingBookingConsultant(consultant);
       setShowLoginModal(true);
@@ -119,8 +139,8 @@ export default function SearchPanel() {
     setUser(userData);
     setShowLoginModal(false);
     setPendingBookingConsultant(null);
-    // Redirect to dashboard after successful login
-    window.location.href = '/dashboard';
+    // Redirect to consultations page after successful login
+    window.location.href = '/services/consultations';
   };
 
   const handleLoginModalClose = () => {
@@ -150,25 +170,67 @@ export default function SearchPanel() {
   useEffect(() => {
     const fetchConsultants = async () => {
       setLoading(true);
+      setError(null);
       try {
-        const res = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`);
+        const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+        if (!backendUrl) {
+          throw new Error('Backend URL not configured');
+        }
+
+        const controller = new AbortController();
+        const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
+
+        const res = await fetch(`${backendUrl}/api/consultants/public`, {
+          signal: controller.signal,
+          headers: {
+            'Content-Type': 'application/json',
+          }
+        });
+
+        clearTimeout(timeoutId);
+
+        if (!res.ok) {
+          throw new Error(`Backend responded with status: ${res.status}`);
+        }
+
         const data = await res.json();
         console.log('API response for consultants:', data); // Debug backend data
+
         // Parse lat/lng if present in location string
         const parsed = data.map((c: any) => {
           let lat, lng;
           if (c.location && typeof c.location === 'string' && c.location.includes(',')) {
             const [latStr, lngStr] = c.location.split(',');
-            lat = parseFloat(latStr);
-            lng = parseFloat(lngStr);
+            lat = parseFloat(latStr.trim());
+            lng = parseFloat(lngStr.trim());
+
+            // Validate coordinates
+            if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
+              console.warn(`Invalid coordinates for ${c.name}: lat=${lat}, lng=${lng}`);
+              lat = undefined;
+              lng = undefined;
+            } else {
+              console.log(`Valid coordinates for ${c.name}: lat=${lat}, lng=${lng}`);
+            }
           }
           const consultant = { ...c, lat: lat ?? undefined, lng: lng ?? undefined };
-          console.log('Consultant data:', consultant); // Debug individual consultant
           return consultant;
         });
         setConsultants(parsed);
       } catch (e) {
+        console.error('Error fetching consultants:', e);
         setConsultants([]);
+
+        // Show user-friendly error message
+        if (e instanceof Error) {
+          if (e.name === 'AbortError') {
+            setError('Request timed out. Please check your connection and try again.');
+          } else {
+            setError(`Failed to load consultants: ${e.message}`);
+          }
+        } else {
+          setError('Failed to load consultants. Please try again.');
+        }
       } finally {
         setLoading(false);
       }
@@ -246,7 +308,10 @@ export default function SearchPanel() {
   // Sync map height to left section
   useEffect(() => {
     if (leftRef.current) {
-      setMapHeight(leftRef.current.offsetHeight);
+      const height = leftRef.current.offsetHeight;
+      if (height > 0) {
+        setMapHeight(height);
+      }
     }
   }, [search, mode, filteredConsultants.length, nearby]);
 
@@ -254,13 +319,15 @@ export default function SearchPanel() {
   useEffect(() => {
     if (leftRef.current) {
       const leftHeight = leftRef.current.offsetHeight;
-      setMapHeight(leftHeight);
+      if (leftHeight > 0) {
+        setMapHeight(leftHeight);
+      }
     }
   }, []);
 
   // Add resize observer to update map height when left column changes
   useEffect(() => {
-    if (!leftRef.current) return;
+    if (!leftRef.current || typeof ResizeObserver === 'undefined') return;
 
     const resizeObserver = new ResizeObserver(() => {
       if (leftRef.current) {
@@ -268,10 +335,18 @@ export default function SearchPanel() {
       }
     });
 
-    resizeObserver.observe(leftRef.current);
+    try {
+      resizeObserver.observe(leftRef.current);
+    } catch (error) {
+      console.warn('ResizeObserver failed:', error);
+    }
 
     return () => {
-      resizeObserver.disconnect();
+      try {
+        resizeObserver.disconnect();
+      } catch (error) {
+        console.warn('ResizeObserver disconnect failed:', error);
+      }
     };
   }, []);
 
@@ -590,10 +665,96 @@ export default function SearchPanel() {
           </div>
         </form>
         <div style={{ fontSize: 16, color: 'var(--text-secondary)', margin: '8px 0 0 2px', fontWeight: 500 }}>
-          Showing search result for{' '}
-          <span style={{ color: 'var(--accent)', fontWeight: 700 }}>
-            {cityLoading ? '...' : city}
-          </span>
+          {error ? (
+            <div style={{
+              background: '#fef2f2',
+              border: '1px solid #fecaca',
+              borderRadius: '8px',
+              padding: '12px',
+              color: '#dc2626',
+              fontSize: '14px',
+              marginBottom: '12px'
+            }}>
+              <div style={{ fontWeight: 'bold', marginBottom: '4px' }}>⚠️ Error Loading Data</div>
+              <div style={{ marginBottom: '8px' }}>{error}</div>
+              <button
+                onClick={() => {
+                  setError(null);
+                  const fetchConsultants = async () => {
+                    setLoading(true);
+                    try {
+                      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
+                      if (!backendUrl) {
+                        throw new Error('Backend URL not configured');
+                      }
+
+                      const controller = new AbortController();
+                      const timeoutId = setTimeout(() => controller.abort(), 10000);
+
+                      const res = await fetch(`${backendUrl}/api/consultants/public`, {
+                        signal: controller.signal,
+                        headers: {
+                          'Content-Type': 'application/json',
+                        }
+                      });
+
+                      clearTimeout(timeoutId);
+
+                      if (!res.ok) {
+                        throw new Error(`Backend responded with status: ${res.status}`);
+                      }
+
+                      const data = await res.json();
+                      const parsed = data.map((c: any) => {
+                        let lat, lng;
+                        if (c.location && typeof c.location === 'string' && c.location.includes(',')) {
+                          const [latStr, lngStr] = c.location.split(',');
+                          lat = parseFloat(latStr.trim());
+                          lng = parseFloat(lngStr.trim());
+                        }
+                        return { ...c, lat: lat ?? undefined, lng: lng ?? undefined };
+                      });
+                      setConsultants(parsed);
+                      setError(null);
+                    } catch (e) {
+                      console.error('Error fetching consultants:', e);
+                      setConsultants([]);
+                      if (e instanceof Error) {
+                        if (e.name === 'AbortError') {
+                          setError('Request timed out. Please check your connection and try again.');
+                        } else {
+                          setError(`Failed to load consultants: ${e.message}`);
+                        }
+                      } else {
+                        setError('Failed to load consultants. Please try again.');
+                      }
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+                  fetchConsultants();
+                }}
+                style={{
+                  background: '#dc2626',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '6px',
+                  padding: '6px 12px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          ) : (
+            <>
+              Showing search result for{' '}
+              <span style={{ color: 'var(--accent)', fontWeight: 700 }}>
+                {cityLoading ? '...' : city}
+              </span>
+            </>
+          )}
         </div>
         <div
           className="consultant-cards-container"
@@ -609,6 +770,22 @@ export default function SearchPanel() {
             msOverflowStyle: 'none', /* Internet Explorer 10+ */
           }}
         >
+          {loading && (
+            <div style={{
+              gridColumn: '1 / -1',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
+              color: '#666',
+              fontSize: '14px'
+            }}>
+              <div style={{ marginBottom: '10px', fontSize: '24px' }}>⏳</div>
+              <div style={{ fontWeight: 'bold' }}>Loading Consultants...</div>
+              <div>Please wait while we fetch the latest data.</div>
+            </div>
+          )}
           {filteredConsultants.map(c => {
             // Determine the correct image URL
             let imageUrl = c.image;
@@ -629,19 +806,15 @@ export default function SearchPanel() {
                   padding: 'clamp(14px, 3.5vw, 18px)',
                   cursor: 'pointer',
                   transition: 'all 0.3s ease',
-                  border: selectedConsultant?.id === c.id ? '2px solid #667eea' : '2px solid rgba(99, 102, 241, 0.1)',
-                  boxShadow: selectedConsultant?.id === c.id ? '0 8px 25px rgba(99, 102, 241, 0.2)' : '0 4px 15px rgba(0, 0, 0, 0.08)',
+                  border: '2px solid rgba(99, 102, 241, 0.1)',
+                  boxShadow: '0 4px 15px rgba(0, 0, 0, 0.08)',
                   backdropFilter: 'blur(10px)',
                   textAlign: 'center',
                   minHeight: 'clamp(200px, 25vw, 240px)',
                   width: '100%'
                 }}
                 onClick={() => {
-                  if (c.lat && c.lng) {
-                    setMapCenter({ lat: c.lat, lng: c.lng });
-                    setSelectedConsultant(c);
-                  }
-                  // Handle booking when card is clicked
+                  // Only handle booking when card is clicked - no map interaction
                   handleBookClick(c);
                 }}
                 onMouseEnter={(e) => {
@@ -651,8 +824,8 @@ export default function SearchPanel() {
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = selectedConsultant?.id === c.id ? '0 8px 25px rgba(99, 102, 241, 0.2)' : '0 4px 15px rgba(0, 0, 0, 0.08)';
-                  e.currentTarget.style.borderColor = selectedConsultant?.id === c.id ? '#667eea' : 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.08)';
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.1)';
                 }}
               >
                 <div className="consultant-image" style={{ position: 'relative', width: 'clamp(50px, 12vw, 65px)', height: 'clamp(50px, 12vw, 65px)', display: 'inline-block' }}>
@@ -774,8 +947,8 @@ export default function SearchPanel() {
         {/* Right: Google Map */}
         <div style={{
           flex: '1.5',
-          minWidth: '320',
-          maxWidth: '540',
+          minWidth: '320px',
+          maxWidth: '540px',
           height: mapHeight || 500,
           background: 'rgba(255,255,255,0.95)',
           borderRadius: '20px',
@@ -783,13 +956,101 @@ export default function SearchPanel() {
           boxShadow: '0 20px 60px rgba(0,0,0,0.2)',
           transition: 'all 0.3s ease',
           backdropFilter: 'blur(10px)',
-          border: '1px solid rgba(255,255,255,0.2)'
+          border: '1px solid rgba(255,255,255,0.2)',
+          position: 'relative'
         }}>
-        {isLoaded && (
+        {loadError && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#666',
+            fontSize: '14px',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '10px', fontSize: '24px' }}>🗺️</div>
+            <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>Map failed to load</div>
+            <div style={{ marginBottom: '15px' }}>
+              {loadError?.message?.includes('ApiNotActivatedMapError')
+                ? 'Google Maps JavaScript API is not enabled for this API key.'
+                : 'Please check your internet connection and try again.'
+              }
+            </div>
+            {loadError && (
+              <div style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
+                Error: {loadError.message || 'Unknown error'}
+              </div>
+            )}
+            {loadError?.message?.includes('ApiNotActivatedMapError') && (
+              <div style={{ fontSize: '12px', color: '#666', marginBottom: '15px', textAlign: 'left' }}>
+                <strong>To fix this:</strong><br/>
+                1. Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" style={{color: '#6366f1'}}>Google Cloud Console</a><br/>
+                2. Enable "Google Maps JavaScript API"<br/>
+                3. Enable "Places API" and "Geocoding API"<br/>
+                4. Refresh this page
+              </div>
+            )}
+            <button
+              onClick={() => window.location.reload()}
+              style={{
+                background: '#6366f1',
+                color: 'white',
+                border: 'none',
+                borderRadius: '8px',
+                padding: '8px 16px',
+                cursor: 'pointer',
+                fontSize: '14px'
+              }}
+            >
+              Reload Page
+            </button>
+          </div>
+        )}
+        {!isLoaded && !loadError && (
+          <div style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            height: '100%',
+            color: '#666',
+            fontSize: '14px',
+            padding: '20px',
+            textAlign: 'center'
+          }}>
+            <div style={{ marginBottom: '10px', fontSize: '24px' }}>⏳</div>
+            <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>Loading Map...</div>
+            <div>Please wait while we load the interactive map.</div>
+          </div>
+        )}
+        {isLoaded && !loadError && (
           <GoogleMap
+            key={`map-${isLoaded}-${mapCenter.lat}-${mapCenter.lng}`}
             mapContainerStyle={{ width: '100%', height: '100%' }}
             center={mapCenter}
             zoom={nearby ? 11 : 5} // Zoom out to show India when not in nearby mode
+            options={{
+              disableDefaultUI: false,
+              zoomControl: true,
+              streetViewControl: false,
+              mapTypeControl: true,
+              fullscreenControl: true,
+              gestureHandling: 'greedy',
+              clickableIcons: false,
+            }}
+            onLoad={(map) => {
+              console.log('Google Map loaded successfully:', map);
+            }}
+            onUnmount={() => {
+              console.log('Google Map unmounted');
+            }}
+            onClick={() => {
+              // Close any open InfoWindow when clicking on the map
+              setSelectedConsultant(null);
+            }}
           >
             {filteredConsultants.map(c => {
               let imageUrl = c.image;
@@ -804,8 +1065,10 @@ export default function SearchPanel() {
                   anchor: new window.google.maps.Point(22, 22)
                 };
               }
-              // Only render marker if lat/lng are valid numbers
-              if (typeof c.lat !== 'number' || isNaN(c.lat) || typeof c.lng !== 'number' || isNaN(c.lng)) {
+              // Only render marker if lat/lng are valid numbers and within valid ranges
+              if (typeof c.lat !== 'number' || isNaN(c.lat) || typeof c.lng !== 'number' || isNaN(c.lng) ||
+                  c.lat < -90 || c.lat > 90 || c.lng < -180 || c.lng > 180) {
+                console.warn(`Skipping marker for ${c.name} due to invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
                 return null;
               }
               return (
@@ -814,13 +1077,29 @@ export default function SearchPanel() {
                   position={{ lat: c.lat, lng: c.lng }}
                   icon={markerIcon}
                   title={c.name}
-                  onClick={() => setSelectedConsultant(c)}
+                  onClick={() => {
+                    console.log('Marker clicked for consultant:', c.name, 'with coordinates:', { lat: c.lat, lng: c.lng });
+                    setSelectedConsultant(c);
+                  }}
                 />
               );
             })}
-            {selectedConsultant && selectedConsultant.lat && selectedConsultant.lng && (
+            {selectedConsultant &&
+             selectedConsultant.lat !== undefined &&
+             selectedConsultant.lng !== undefined &&
+             typeof selectedConsultant.lat === 'number' &&
+             typeof selectedConsultant.lng === 'number' &&
+             !isNaN(selectedConsultant.lat) &&
+             !isNaN(selectedConsultant.lng) &&
+             selectedConsultant.lat >= -90 &&
+             selectedConsultant.lat <= 90 &&
+             selectedConsultant.lng >= -180 &&
+             selectedConsultant.lng <= 180 && (
               <InfoWindow
-                position={{ lat: selectedConsultant.lat, lng: selectedConsultant.lng }}
+                position={{
+                  lat: selectedConsultant.lat,
+                  lng: selectedConsultant.lng
+                }}
                 onCloseClick={() => setSelectedConsultant(null)}
               >
                 <div style={{ minWidth: 280, maxWidth: 320, padding: 8, position: 'relative' }}>

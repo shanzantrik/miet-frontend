@@ -8,6 +8,7 @@ import { getApiUrl } from '@/utils/api';
 import { FaUserMd, FaClock, FaMapMarkerAlt, FaPhone, FaEnvelope, FaStar, FaCalendarAlt } from 'react-icons/fa';
 import TopBar from '@/components/TopBar';
 import Footer from '@/components/Footer';
+import AppointmentPayment from '@/components/AppointmentPayment';
 
 interface Consultant {
   id: number;
@@ -54,6 +55,11 @@ export default function ConsultationsPage() {
   const [loading, setLoading] = useState(true);
   const [bookingLoading, setBookingLoading] = useState(false);
 
+  // Payment-related states
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [appointmentData, setAppointmentData] = useState<any>(null);
+  const [paymentStep, setPaymentStep] = useState<'booking' | 'payment'>('booking');
+
   // Authentication states
   const [user, setUser] = useState<any>(null);
   const [showLoginModal, setShowLoginModal] = useState(false);
@@ -92,7 +98,7 @@ export default function ConsultationsPage() {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/profile`, {
+      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000'}/api/auth/profile`, {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -248,46 +254,93 @@ export default function ConsultationsPage() {
       return;
     }
 
+    // Validate price
+    if (!consultationForm.price || consultationForm.price <= 0) {
+      addNotification({
+        type: 'error',
+        title: 'Error',
+        message: 'Please enter a valid consultation price.'
+      });
+      return;
+    }
+
     setBookingLoading(true);
 
     try {
-      const response = await fetch(`${getApiUrl('api/consultations/public')}`, {
+      // Use payment-first appointment booking endpoint
+      const token = localStorage.getItem('user_jwt');
+      const response = await fetch(`${getApiUrl('api/appointments/payment-first')}`, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json'
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
         },
         body: JSON.stringify(consultationForm)
       });
 
       if (response.ok) {
         const data = await response.json();
+
+        // Store appointment data and move to payment step
+        setAppointmentData(data);
+        setPaymentStep('payment');
+        setShowPaymentModal(true);
+        setShowBookingModal(false);
+
         addNotification({
           type: 'success',
-          title: 'Success',
-          message: 'Consultation booked successfully! You will receive an email confirmation with the Google Meet link.'
+          title: 'Appointment Created',
+          message: 'Please complete payment to confirm your appointment.'
         });
-        setShowBookingModal(false);
-        setSelectedConsultant(null);
-        // Redirect to dashboard to show the new consultation
-        router.push('/dashboard');
       } else {
         const errorData = await response.json();
         addNotification({
           type: 'error',
           title: 'Error',
-          message: `Failed to book consultation: ${errorData.message || 'Unknown error'}`
+          message: `Failed to create appointment: ${errorData.message || 'Unknown error'}`
         });
       }
     } catch (error) {
-      console.error('Error booking consultation:', error);
+      console.error('Error creating appointment:', error);
       addNotification({
         type: 'error',
         title: 'Error',
-        message: 'Failed to book consultation. Please try again.'
+        message: 'Failed to create appointment. Please try again.'
       });
     } finally {
       setBookingLoading(false);
     }
+  };
+
+  const handlePaymentSuccess = (paymentData: any) => {
+    addNotification({
+      type: 'success',
+      title: 'Payment Successful!',
+      message: 'Your appointment has been confirmed! You will receive an email with the Google Meet link.'
+    });
+
+    setShowPaymentModal(false);
+    setSelectedConsultant(null);
+    setPaymentStep('booking');
+    setAppointmentData(null);
+
+    // Redirect to dashboard
+    router.push('/dashboard');
+  };
+
+  const handlePaymentFailure = (error: any) => {
+    addNotification({
+      type: 'error',
+      title: 'Payment Failed',
+      message: 'Payment could not be completed. Please try again or contact support.'
+    });
+  };
+
+  const handlePaymentClose = () => {
+    setShowPaymentModal(false);
+    setPaymentStep('booking');
+    setAppointmentData(null);
+    setShowBookingModal(true);
   };
 
   if (loading) {
@@ -920,6 +973,52 @@ export default function ConsultationsPage() {
                   </button>
                 </div>
               </form>
+            </div>
+          </div>
+        )}
+
+        {/* Payment Modal */}
+        {showPaymentModal && appointmentData && (
+          <div style={{
+            position: 'fixed',
+            top: 0,
+            left: 0,
+            width: '100vw',
+            height: '100vh',
+            background: 'rgba(0, 0, 0, 0.5)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            zIndex: 1000,
+            padding: '20px'
+          }}>
+            <div style={{
+              background: 'white',
+              borderRadius: '12px',
+              padding: '0',
+              maxWidth: '600px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflow: 'auto',
+              position: 'relative'
+            }}>
+              <AppointmentPayment
+                appointmentData={appointmentData}
+                appointmentDetails={{
+                  title: consultationForm.title,
+                  description: consultationForm.description,
+                  start_time: consultationForm.start_time,
+                  end_time: consultationForm.end_time,
+                  duration_minutes: consultationForm.duration_minutes,
+                  price: consultationForm.price,
+                  user_name: consultationForm.user_name,
+                  user_email: consultationForm.user_email,
+                  user_phone: consultationForm.user_phone
+                }}
+                onSuccess={handlePaymentSuccess}
+                onFailure={handlePaymentFailure}
+                onClose={handlePaymentClose}
+              />
             </div>
           </div>
         )}
