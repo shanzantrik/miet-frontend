@@ -1,8 +1,34 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+This is a [Next.js](https://nextjs.org) project for MIET - The Explorer platform for Special Education, Mental Health, and Counselling services.
+
+## Prerequisites
+
+- Node.js 18+ and npm
+- Google Maps API key (see [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md))
+- Backend server running (see miet-backend)
 
 ## Getting Started
 
-First, run the development server:
+### 1. Install Dependencies
+
+```bash
+npm install
+```
+
+### 2. Configure Environment Variables
+
+Create a `.env.local` file in the root directory:
+
+```bash
+# Google Maps API Configuration
+NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_google_maps_api_key_here
+
+# Backend API URL
+NEXT_PUBLIC_BACKEND_URL=http://localhost:5000
+```
+
+**Important**: See [GOOGLE_MAPS_SETUP.md](./GOOGLE_MAPS_SETUP.md) for detailed instructions on setting up Google Maps API.
+
+### 3. Run the Development Server
 
 ```bash
 npm run dev

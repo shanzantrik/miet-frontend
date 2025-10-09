@@ -24,7 +24,8 @@ type Consultant = {
 const MODES = ['All', 'Online', 'Offline'];
 const PAGE_SIZE = 5;
 const defaultCenter = { lat: 23.5937, lng: 78.9629 }; // Center of India
-const GOOGLE_MAPS_LIBRARIES = ['places']; // Static array to prevent re-renders
+// Static array to prevent re-renders and performance warnings
+const GOOGLE_MAPS_LIBRARIES = ['places'] as const;
 
 // Add the haversine function back above the SearchPanel component
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -57,27 +58,63 @@ export default function SearchPanel() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [pendingBookingConsultant, setPendingBookingConsultant] = useState<Consultant | null>(null);
   const [mapHeight, setMapHeight] = useState(500);
+
+  // Get API key from environment or use fallback
+  const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAmpa3H1449VHQeOA7cJ1h1fp5WUu5d4pM';
+
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAmpa3H1449VHQeOA7cJ1h1fp5WUu5d4pM',
+    googleMapsApiKey: googleMapsApiKey,
     libraries: GOOGLE_MAPS_LIBRARIES as any,
     id: 'google-map-script',
     version: 'weekly',
+    preventGoogleFontsLoading: false,
   });
 
   // Debug Google Maps loading
   useEffect(() => {
-    const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
     console.log('Google Maps loading status:', {
       isLoaded,
-      loadError,
-      apiKey: apiKey ? `${apiKey.substring(0, 10)}...` : 'NOT_SET',
-      apiKeyLength: apiKey?.length || 0
+      loadError: loadError ? {
+        message: loadError.message,
+        name: loadError.name,
+        stack: loadError.stack
+      } : null,
+      apiKey: googleMapsApiKey ? `${googleMapsApiKey.substring(0, 10)}...` : 'NOT_SET',
+      apiKeyLength: googleMapsApiKey?.length || 0,
+      windowGoogleExists: typeof window !== 'undefined' && !!(window as any).google,
+      googleMapsExists: typeof window !== 'undefined' && !!(window as any).google?.maps
     });
 
-    if (!apiKey) {
-      console.error('Google Maps API key is not configured! Please check your .env.local file.');
+    if (!googleMapsApiKey) {
+      console.error('❌ Google Maps API key is not configured! Please check your .env.local file.');
+      console.error('📝 Create a .env.local file with: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here');
     }
-  }, [isLoaded, loadError]);
+
+    if (loadError) {
+      console.error('❌ Google Maps Load Error Details:', loadError);
+
+      // Provide specific guidance based on error type
+      if (loadError.message?.includes('ApiNotActivatedMapError')) {
+        console.error('🔧 FIX: Enable Maps JavaScript API in Google Cloud Console');
+        console.error('🔗 Go to: https://console.cloud.google.com/google/maps-apis/api-list');
+        console.error('📋 Steps:');
+        console.error('   1. Select your project');
+        console.error('   2. Click "Maps JavaScript API"');
+        console.error('   3. Click "ENABLE" button');
+        console.error('   4. Also enable "Places API" and "Geocoding API"');
+        console.error('   5. Refresh this page');
+      } else if (loadError.message?.includes('RefererNotAllowedMapError')) {
+        console.error('🔧 FIX: Add your domain to API key restrictions');
+        console.error('🔗 Go to: https://console.cloud.google.com/apis/credentials');
+      } else if (loadError.message?.includes('InvalidKeyMapError')) {
+        console.error('🔧 FIX: Check your API key in .env.local file');
+      }
+    }
+
+    if (isLoaded) {
+      console.log('✅ Google Maps loaded successfully!');
+    }
+  }, [isLoaded, loadError, googleMapsApiKey]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
   const [mapCenter, setMapCenter] = useState(defaultCenter);
   const [bookingConsultant, setBookingConsultant] = useState<Consultant | null>(null);
@@ -91,6 +128,7 @@ export default function SearchPanel() {
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   const recognitionRef = useRef<any>(null);
   const [geoAddresses, setGeoAddresses] = useState<{ [id: number]: string }>({});
+  const [mapRetryCount, setMapRetryCount] = useState(0);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -971,42 +1009,146 @@ export default function SearchPanel() {
             padding: '20px',
             textAlign: 'center'
           }}>
-            <div style={{ marginBottom: '10px', fontSize: '24px' }}>🗺️</div>
-            <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>Map failed to load</div>
-            <div style={{ marginBottom: '15px' }}>
-              {loadError?.message?.includes('ApiNotActivatedMapError')
-                ? 'Google Maps JavaScript API is not enabled for this API key.'
-                : 'Please check your internet connection and try again.'
+            <div style={{ marginBottom: '10px', fontSize: '48px' }}>🗺️</div>
+            <div style={{ marginBottom: '10px', fontWeight: 'bold', color: '#dc2626', fontSize: '18px' }}>Google Maps Not Loading</div>
+            <div style={{
+              marginBottom: '15px',
+              fontSize: '14px',
+              lineHeight: '1.6',
+              padding: '12px 16px',
+              background: '#fef2f2',
+              borderRadius: '8px',
+              border: '2px solid #fecaca',
+              color: '#991b1b',
+              fontWeight: '600'
+            }}>
+              {loadError?.message?.includes('ApiNotActivatedMapError') || loadError?.message?.includes('ApiTargetBlockedMapError')
+                ? '⚠️ Maps JavaScript API is NOT ENABLED in Google Cloud Console'
+                : loadError?.message?.includes('InvalidKeyMapError')
+                ? '⚠️ The Google Maps API key is INVALID or EXPIRED'
+                : loadError?.message?.includes('RefererNotAllowedMapError')
+                ? '⚠️ This domain is NOT AUTHORIZED to use this API key'
+                : '⚠️ Unable to load Google Maps. Check your internet connection.'
               }
             </div>
             {loadError && (
-              <div style={{ fontSize: '12px', color: '#999', marginBottom: '10px' }}>
+              <div style={{
+                fontSize: '11px',
+                color: '#999',
+                marginBottom: '15px',
+                padding: '8px 12px',
+                background: '#f5f5f5',
+                borderRadius: '6px',
+                fontFamily: 'monospace',
+                maxWidth: '100%',
+                overflow: 'auto'
+              }}>
                 Error: {loadError.message || 'Unknown error'}
               </div>
             )}
-            {loadError?.message?.includes('ApiNotActivatedMapError') && (
-              <div style={{ fontSize: '12px', color: '#666', marginBottom: '15px', textAlign: 'left' }}>
-                <strong>To fix this:</strong><br/>
-                1. Go to <a href="https://console.cloud.google.com/" target="_blank" rel="noopener noreferrer" style={{color: '#6366f1'}}>Google Cloud Console</a><br/>
-                2. Enable "Google Maps JavaScript API"<br/>
-                3. Enable "Places API" and "Geocoding API"<br/>
-                4. Refresh this page
-              </div>
-            )}
-            <button
-              onClick={() => window.location.reload()}
-              style={{
-                background: '#6366f1',
-                color: 'white',
-                border: 'none',
-                borderRadius: '8px',
-                padding: '8px 16px',
-                cursor: 'pointer',
-                fontSize: '14px'
-              }}
-            >
-              Reload Page
-            </button>
+            <div style={{ fontSize: '13px', color: '#333', marginBottom: '15px', textAlign: 'left', lineHeight: '1.7', background: '#fff', padding: '16px', borderRadius: '8px', border: '1px solid #e5e7eb' }}>
+              <strong style={{ display: 'block', marginBottom: '12px', color: '#1f2937', fontSize: '14px' }}>
+                {loadError?.message?.includes('ApiNotActivatedMapError')
+                  ? '🔧 Quick Fix - Enable Maps JavaScript API:'
+                  : '🔧 Steps to Fix:'}
+              </strong>
+              {loadError?.message?.includes('ApiNotActivatedMapError') ? (
+                <ol style={{ margin: 0, paddingLeft: '20px', color: '#4b5563' }}>
+                  <li style={{ marginBottom: '8px' }}>
+                    <strong>Open Google Cloud Console:</strong><br/>
+                    <a href="https://console.cloud.google.com/google/maps-apis/api-list" target="_blank" rel="noopener noreferrer" style={{color: '#6366f1', textDecoration: 'underline', fontSize: '12px'}}>
+                      Click here to go directly to Maps APIs
+                    </a>
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                    <strong>Select your project</strong> (top bar)
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                    Find and click <strong>"Maps JavaScript API"</strong>
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                    Click the <strong style={{ color: '#059669' }}>"ENABLE"</strong> button
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                    Also enable: <strong>"Places API"</strong> and <strong>"Geocoding API"</strong>
+                  </li>
+                  <li style={{ marginBottom: '8px' }}>
+                    <strong style={{ color: '#dc2626' }}>Important:</strong> Enable billing (you get $200 free/month)
+                  </li>
+                  <li>
+                    Come back and <strong>refresh this page</strong>
+                  </li>
+                </ol>
+              ) : (
+                <ol style={{ margin: 0, paddingLeft: '20px' }}>
+                  <li>Go to <a href="https://console.cloud.google.com/google/maps-apis/" target="_blank" rel="noopener noreferrer" style={{color: '#6366f1', textDecoration: 'underline'}}>Google Cloud Console</a></li>
+                  <li>Enable required APIs (Maps JavaScript, Places, Geocoding)</li>
+                  <li>Check API key restrictions</li>
+                  <li>Verify billing is enabled</li>
+                  <li>Refresh this page</li>
+                </ol>
+              )}
+            </div>
+            <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', justifyContent: 'center' }}>
+              <button
+                onClick={() => {
+                  setMapRetryCount(prev => prev + 1);
+                  window.location.reload();
+                }}
+                style={{
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  boxShadow: '0 4px 12px rgba(99, 102, 241, 0.3)',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 6px 16px rgba(99, 102, 241, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.3)';
+                }}
+              >
+                🔄 Reload Page
+              </button>
+              <a
+                href="https://console.cloud.google.com/google/maps-apis/"
+                target="_blank"
+                rel="noopener noreferrer"
+                style={{
+                  background: 'white',
+                  color: '#6366f1',
+                  border: '2px solid #6366f1',
+                  borderRadius: '8px',
+                  padding: '10px 20px',
+                  cursor: 'pointer',
+                  fontSize: '14px',
+                  fontWeight: '600',
+                  textDecoration: 'none',
+                  display: 'inline-block',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.background = '#6366f1';
+                  e.currentTarget.style.color = 'white';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.background = 'white';
+                  e.currentTarget.style.color = '#6366f1';
+                }}
+              >
+                🔧 Fix in Console
+              </a>
+            </div>
           </div>
         )}
         {!isLoaded && !loadError && (
@@ -1040,18 +1182,26 @@ export default function SearchPanel() {
               fullscreenControl: true,
               gestureHandling: 'greedy',
               clickableIcons: false,
+              mapId: 'DEMO_MAP_ID', // Using mapId for better performance and future compatibility
             }}
             onLoad={(map) => {
-              console.log('Google Map loaded successfully:', map);
+              console.log('✅ Google Map loaded successfully:', map);
             }}
             onUnmount={() => {
-              console.log('Google Map unmounted');
+              console.log('🗺️ Google Map unmounted');
             }}
             onClick={() => {
               // Close any open InfoWindow when clicking on the map
               setSelectedConsultant(null);
             }}
           >
+            {/*
+              Note: Google Maps Marker is deprecated as of Feb 2024.
+              We're using the legacy Marker component from @react-google-maps/api.
+              For future migration to AdvancedMarkerElement, see:
+              https://developers.google.com/maps/documentation/javascript/advanced-markers/migration
+              The current implementation will continue to work with 12+ months notice before discontinuation.
+            */}
             {filteredConsultants.map(c => {
               let imageUrl = c.image;
               if (imageUrl && imageUrl.startsWith('/')) {
@@ -1068,7 +1218,7 @@ export default function SearchPanel() {
               // Only render marker if lat/lng are valid numbers and within valid ranges
               if (typeof c.lat !== 'number' || isNaN(c.lat) || typeof c.lng !== 'number' || isNaN(c.lng) ||
                   c.lat < -90 || c.lat > 90 || c.lng < -180 || c.lng > 180) {
-                console.warn(`Skipping marker for ${c.name} due to invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
+                console.warn(`⚠️ Skipping marker for ${c.name} due to invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
                 return null;
               }
               return (
@@ -1078,7 +1228,7 @@ export default function SearchPanel() {
                   icon={markerIcon}
                   title={c.name}
                   onClick={() => {
-                    console.log('Marker clicked for consultant:', c.name, 'with coordinates:', { lat: c.lat, lng: c.lng });
+                    console.log('📍 Marker clicked for consultant:', c.name, 'with coordinates:', { lat: c.lat, lng: c.lng });
                     setSelectedConsultant(c);
                   }}
                 />
