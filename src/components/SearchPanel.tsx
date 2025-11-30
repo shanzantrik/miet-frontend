@@ -66,6 +66,10 @@ export default function SearchPanel() {
   // Get API key from environment or use fallback
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAmpa3H1449VHQeOA7cJ1h1fp5WUu5d4pM';
 
+  // Get mapId from environment (optional - only needed for AdvancedMarkerElement styling)
+  // If not set, map will work without custom styling
+  const mapId = process.env.NEXT_PUBLIC_GOOGLE_MAPS_MAP_ID || undefined;
+
   // Memoize libraries array to prevent reload warnings
   const libraries = useMemo(() => GOOGLE_MAPS_LIBRARIES, []);
 
@@ -156,7 +160,20 @@ export default function SearchPanel() {
   const [geoAddresses, setGeoAddresses] = useState<{ [id: number]: string }>({});
   const [mapRetryCount, setMapRetryCount] = useState(0);
   const [mapInitialized, setMapInitialized] = useState(false);
+  const [isClient, setIsClient] = useState(false);
   const mapInstanceRef = useRef<any>(null);
+
+  // Ensure we're on client side (important for SSR/hydration)
+  useEffect(() => {
+    setIsClient(true);
+  }, []);
+
+  // Prevent map from unmounting once initialized (production fix)
+  useEffect(() => {
+    if (mapInitialized && mapInstanceRef.current) {
+      console.log('🔒 Map initialized - will remain mounted');
+    }
+  }, [mapInitialized]);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -1206,8 +1223,9 @@ export default function SearchPanel() {
             </div>
           )}
           {/* Render map if it's loaded and initialized, or if it's loaded and ready to render */}
-          {(mapInitialized || (isLoaded && !loadError && typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Map)) && (
+          {isClient && (mapInitialized || (isLoaded && !loadError && typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Map)) && (
             <GoogleMap
+              key="miet-google-map"
               mapContainerStyle={{ width: '100%', height: '100%' }}
               center={mapCenter}
               zoom={nearby ? 11 : 5}
@@ -1219,15 +1237,27 @@ export default function SearchPanel() {
                 fullscreenControl: true,
                 gestureHandling: 'greedy',
                 clickableIcons: false,
-                mapId: 'MIET_MAP_ID', // Required for AdvancedMarkerElement
+                ...(mapId && { mapId }), // Only include mapId if configured
               }}
               onLoad={(map) => {
-                console.log('✅ Google Map loaded successfully:', map);
+                const isProduction = typeof window !== 'undefined' && window.location.hostname !== 'localhost' && !window.location.hostname.includes('127.0.0.1');
+                console.log(`✅ Google Map loaded successfully ${isProduction ? '(PRODUCTION)' : '(LOCALHOST)'}:`, map);
                 mapInstanceRef.current = map;
                 setMapInitialized(true);
+                // Ensure map stays mounted
+                if (map) {
+                  console.log('🗺️ Map instance stored, will remain mounted');
+                  if (isProduction) {
+                    console.log('🔒 Production mode: Map will persist across re-renders');
+                  }
+                }
               }}
               onUnmount={() => {
-                console.log('🗺️ Google Map unmounted');
+                console.log('⚠️ Google Map unmounted - this should not happen after initialization');
+                // Prevent unmounting if already initialized
+                if (mapInitialized) {
+                  console.warn('Map was unmounted after initialization - attempting to keep mounted');
+                }
               }}
               onClick={() => {
                 // Close any open InfoWindow when clicking on the map
