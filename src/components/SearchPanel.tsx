@@ -1,4 +1,4 @@
-import React, { useState, useRef, useEffect, useCallback } from 'react';
+import React, { useState, useRef, useEffect, useCallback, useMemo } from 'react';
 import { GoogleMap, Marker, InfoWindow, useJsApiLoader } from '@react-google-maps/api';
 import { FaMicrophone } from 'react-icons/fa';
 import { GoogleAuth } from './GoogleAuth';
@@ -25,7 +25,10 @@ const MODES = ['All', 'Online', 'Offline'];
 const PAGE_SIZE = 5;
 const defaultCenter = { lat: 23.5937, lng: 78.9629 }; // Center of India
 // Static array to prevent re-renders and performance warnings
-const GOOGLE_MAPS_LIBRARIES = ['places'] as const;
+// Must be defined outside component to prevent LoadScript reload warnings
+// Using 'as const' assertion to make it truly immutable
+// Include 'marker' library for AdvancedMarkerElement support
+const GOOGLE_MAPS_LIBRARIES = ['places', 'marker'] as const;
 
 // Add the haversine function back above the SearchPanel component
 function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
@@ -39,6 +42,7 @@ function haversine(lat1: number, lng1: number, lat2: number, lng2: number) {
   const c = 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
   return R * c;
 }
+
 
 export default function SearchPanel() {
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -62,57 +66,79 @@ export default function SearchPanel() {
   // Get API key from environment or use fallback
   const googleMapsApiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY || 'AIzaSyAmpa3H1449VHQeOA7cJ1h1fp5WUu5d4pM';
 
+  // Memoize libraries array to prevent reload warnings
+  const libraries = useMemo(() => GOOGLE_MAPS_LIBRARIES, []);
+
   const { isLoaded, loadError } = useJsApiLoader({
-    googleMapsApiKey: googleMapsApiKey,
-    libraries: GOOGLE_MAPS_LIBRARIES as any,
     id: 'google-map-script',
+    googleMapsApiKey: googleMapsApiKey,
+    libraries: libraries as any,
     version: 'weekly',
-    preventGoogleFontsLoading: false,
   });
 
   // Debug Google Maps loading
   useEffect(() => {
-    console.log('Google Maps loading status:', {
-      isLoaded,
-      loadError: loadError ? {
-        message: loadError.message,
-        name: loadError.name,
-        stack: loadError.stack
-      } : null,
-      apiKey: googleMapsApiKey ? `${googleMapsApiKey.substring(0, 10)}...` : 'NOT_SET',
-      apiKeyLength: googleMapsApiKey?.length || 0,
-      windowGoogleExists: typeof window !== 'undefined' && !!(window as any).google,
-      googleMapsExists: typeof window !== 'undefined' && !!(window as any).google?.maps
-    });
+    const checkGoogleMaps = () => {
+      const googleExists = typeof window !== 'undefined' && !!(window as any).google;
+      const mapsExists = googleExists && !!(window as any).google?.maps;
+      const mapExists = mapsExists && !!(window as any).google?.maps?.Map;
 
-    if (!googleMapsApiKey) {
-      console.error('❌ Google Maps API key is not configured! Please check your .env.local file.');
-      console.error('📝 Create a .env.local file with: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here');
-    }
+      console.log('Google Maps loading status:', {
+        isLoaded,
+        loadError: loadError ? {
+          message: loadError.message,
+          name: loadError.name,
+        } : null,
+        apiKey: googleMapsApiKey ? `${googleMapsApiKey.substring(0, 10)}...` : 'NOT_SET',
+        apiKeyLength: googleMapsApiKey?.length || 0,
+        windowGoogleExists: googleExists,
+        googleMapsExists: mapsExists,
+        googleMapsMapExists: mapExists
+      });
 
-    if (loadError) {
-      console.error('❌ Google Maps Load Error Details:', loadError);
-
-      // Provide specific guidance based on error type
-      if (loadError.message?.includes('ApiNotActivatedMapError')) {
-        console.error('🔧 FIX: Enable Maps JavaScript API in Google Cloud Console');
-        console.error('🔗 Go to: https://console.cloud.google.com/google/maps-apis/api-list');
-        console.error('📋 Steps:');
-        console.error('   1. Select your project');
-        console.error('   2. Click "Maps JavaScript API"');
-        console.error('   3. Click "ENABLE" button');
-        console.error('   4. Also enable "Places API" and "Geocoding API"');
-        console.error('   5. Refresh this page');
-      } else if (loadError.message?.includes('RefererNotAllowedMapError')) {
-        console.error('🔧 FIX: Add your domain to API key restrictions');
-        console.error('🔗 Go to: https://console.cloud.google.com/apis/credentials');
-      } else if (loadError.message?.includes('InvalidKeyMapError')) {
-        console.error('🔧 FIX: Check your API key in .env.local file');
+      if (!googleMapsApiKey) {
+        console.error('❌ Google Maps API key is not configured! Please check your .env.local file.');
+        console.error('📝 Create a .env.local file with: NEXT_PUBLIC_GOOGLE_MAPS_API_KEY=your_key_here');
       }
-    }
 
-    if (isLoaded) {
-      console.log('✅ Google Maps loaded successfully!');
+      if (loadError) {
+        console.error('❌ Google Maps Load Error Details:', loadError);
+
+        // Provide specific guidance based on error type
+        if (loadError.message?.includes('ApiNotActivatedMapError')) {
+          console.error('🔧 FIX: Enable Maps JavaScript API in Google Cloud Console');
+          console.error('🔗 Go to: https://console.cloud.google.com/google/maps-apis/api-list');
+          console.error('📋 Steps:');
+          console.error('   1. Select your project');
+          console.error('   2. Click "Maps JavaScript API"');
+          console.error('   3. Click "ENABLE" button');
+          console.error('   4. Also enable "Places API" and "Geocoding API"');
+          console.error('   5. Refresh this page');
+        } else if (loadError.message?.includes('RefererNotAllowedMapError')) {
+          console.error('🔧 FIX: Add your domain to API key restrictions');
+          console.error('🔗 Go to: https://console.cloud.google.com/apis/credentials');
+        } else if (loadError.message?.includes('InvalidKeyMapError')) {
+          console.error('🔧 FIX: Check your API key in .env.local file');
+        }
+      }
+
+      if (isLoaded && !mapsExists) {
+        console.warn('⚠️ Google Maps script loaded but maps object not available yet. Waiting...');
+      }
+
+      if (isLoaded && mapsExists && mapExists) {
+        console.log('✅ Google Maps fully loaded and ready!');
+      }
+    };
+
+    checkGoogleMaps();
+
+    // Check again after a short delay in case of async loading
+    if (isLoaded && !loadError) {
+      const timer = setTimeout(() => {
+        checkGoogleMaps();
+      }, 1000);
+      return () => clearTimeout(timer);
     }
   }, [isLoaded, loadError, googleMapsApiKey]);
   const [userLocation, setUserLocation] = useState<{ lat: number; lng: number } | null>(null);
@@ -129,6 +155,8 @@ export default function SearchPanel() {
   const recognitionRef = useRef<any>(null);
   const [geoAddresses, setGeoAddresses] = useState<{ [id: number]: string }>({});
   const [mapRetryCount, setMapRetryCount] = useState(0);
+  const [mapInitialized, setMapInitialized] = useState(false);
+  const mapInstanceRef = useRef<any>(null);
 
   // Check authentication status on component mount
   useEffect(() => {
@@ -195,15 +223,20 @@ export default function SearchPanel() {
   // Helper to fetch address from lat/lng
   const fetchAddress = useCallback(async (id: number, lat: string, lng: string) => {
     try {
-      const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${apiKey}`;
+      if (!googleMapsApiKey) {
+        console.warn('Google Maps API key not available for geocoding');
+        return;
+      }
+      const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${lat},${lng}&key=${googleMapsApiKey}`;
       const res = await fetch(url);
       const data = await res.json();
       if (data.status === 'OK' && data.results.length > 0) {
         setGeoAddresses(prev => ({ ...prev, [id]: data.results[0].formatted_address }));
       }
-    } catch {}
-  }, []);
+    } catch (error) {
+      console.warn(`Failed to fetch address for consultant ${id}:`, error);
+    }
+  }, [googleMapsApiKey]);
 
   useEffect(() => {
     const fetchConsultants = async () => {
@@ -236,11 +269,11 @@ export default function SearchPanel() {
 
         // Parse lat/lng if present in location string
         const parsed = data.map((c: any) => {
-          let lat, lng;
-          if (c.location && typeof c.location === 'string' && c.location.includes(',')) {
-            const [latStr, lngStr] = c.location.split(',');
-            lat = parseFloat(latStr.trim());
-            lng = parseFloat(lngStr.trim());
+            let lat, lng;
+            if (c.location && typeof c.location === 'string' && c.location.includes(',')) {
+              const [latStr, lngStr] = c.location.split(',');
+              lat = parseFloat(latStr.trim());
+              lng = parseFloat(lngStr.trim());
 
             // Validate coordinates
             if (isNaN(lat) || isNaN(lng) || lat < -90 || lat > 90 || lng < -180 || lng > 180) {
@@ -264,7 +297,7 @@ export default function SearchPanel() {
           if (e.name === 'AbortError') {
             setError('Request timed out. Please check your connection and try again.');
           } else {
-            setError(`Failed to load consultants: ${e.message}`);
+          setError(`Failed to load consultants: ${e.message}`);
           }
         } else {
           setError('Failed to load consultants. Please try again.');
@@ -394,8 +427,12 @@ export default function SearchPanel() {
       setCityLoading(true);
       const fetchCity = async () => {
         try {
-          const apiKey = process.env.NEXT_PUBLIC_GOOGLE_MAPS_API_KEY;
-          const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${userLocation.lat},${userLocation.lng}&key=${apiKey}`;
+          if (!googleMapsApiKey) {
+            setCity('Your Area');
+            setCityLoading(false);
+            return;
+          }
+          const url = `https://maps.googleapis.com/maps/api/geocode/json?latlng=${userLocation.lat},${userLocation.lng}&key=${googleMapsApiKey}`;
           const res = await fetch(url);
           const data = await res.json();
           if (data.status === 'OK') {
@@ -417,7 +454,7 @@ export default function SearchPanel() {
     } else {
       setCity('Delhi');
     }
-  }, [userLocation]);
+  }, [userLocation, googleMapsApiKey]);
 
   // Helper for marker icon
   const getMarkerIcon = (url: string) => {
@@ -667,12 +704,12 @@ export default function SearchPanel() {
             >
               Nearby
             </button>
-            {MODES.map(m => (
-              <button
-                key={m}
-                type="button"
+              {MODES.map(m => (
+                <button
+                  key={m}
+                  type="button"
                 onClick={() => { setMode(m); setNearby(false); }}
-                style={{
+                  style={{
                   background: mode === m && !nearby ? 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)' : 'rgba(99, 102, 241, 0.1)',
                   color: mode === m && !nearby ? '#fff' : '#6366f1',
                   border: mode === m && !nearby ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
@@ -680,7 +717,7 @@ export default function SearchPanel() {
                   padding: 'clamp(0.6rem, 2vw, 0.8rem) clamp(1rem, 3vw, 1.5rem)',
                   fontWeight: '600',
                   fontSize: 'clamp(0.85rem, 2.5vw, 0.95rem)',
-                  cursor: 'pointer',
+                    cursor: 'pointer',
                   transition: 'all 0.3s ease',
                   boxShadow: mode === m && !nearby ? '0 4px 15px rgba(99, 102, 241, 0.3)' : 'none'
                 }}
@@ -695,13 +732,13 @@ export default function SearchPanel() {
                     e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
                     e.currentTarget.style.transform = 'translateY(0)';
                   }
-                }}
-              >
-                {m}
-              </button>
-            ))}
-          </div>
-        </form>
+                  }}
+                >
+                  {m}
+                </button>
+              ))}
+            </div>
+          </form>
         <div style={{ fontSize: 16, color: 'var(--text-secondary)', margin: '8px 0 0 2px', fontWeight: 500 }}>
           {error ? (
             <div style={{
@@ -898,8 +935,8 @@ export default function SearchPanel() {
                       zIndex: 2,
                       animation: 'glow-green 1.2s infinite alternate',
                     }} />
-                  )}
-                </div>
+          )}
+        </div>
                 <div style={{ flex: 1, textAlign: 'center', width: '100%' }}>
                   <div
                     className="consultant-name"
@@ -997,13 +1034,13 @@ export default function SearchPanel() {
           border: '1px solid rgba(255,255,255,0.2)',
           position: 'relative'
         }}>
-        {loadError && (
-          <div style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
+          {loadError && !mapInitialized && (
+            <div style={{
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
             color: '#666',
             fontSize: '14px',
             padding: '20px',
@@ -1029,8 +1066,8 @@ export default function SearchPanel() {
                 : loadError?.message?.includes('RefererNotAllowedMapError')
                 ? '⚠️ This domain is NOT AUTHORIZED to use this API key'
                 : '⚠️ Unable to load Google Maps. Check your internet connection.'
-              }
-            </div>
+                }
+              </div>
             {loadError && (
               <div style={{
                 fontSize: '11px',
@@ -1149,15 +1186,15 @@ export default function SearchPanel() {
                 🔧 Fix in Console
               </a>
             </div>
-          </div>
-        )}
-        {!isLoaded && !loadError && (
-          <div style={{
-            display: 'flex',
+            </div>
+          )}
+          {!isLoaded && !loadError && !mapInitialized && (
+            <div style={{
+              display: 'flex',
             flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            height: '100%',
+              alignItems: 'center',
+              justifyContent: 'center',
+              height: '100%',
             color: '#666',
             fontSize: '14px',
             padding: '20px',
@@ -1166,61 +1203,68 @@ export default function SearchPanel() {
             <div style={{ marginBottom: '10px', fontSize: '24px' }}>⏳</div>
             <div style={{ marginBottom: '10px', fontWeight: 'bold' }}>Loading Map...</div>
             <div>Please wait while we load the interactive map.</div>
-          </div>
-        )}
-        {isLoaded && !loadError && (
-          <GoogleMap
-            key={`map-${isLoaded}-${mapCenter.lat}-${mapCenter.lng}`}
-            mapContainerStyle={{ width: '100%', height: '100%' }}
-            center={mapCenter}
-            zoom={nearby ? 11 : 5} // Zoom out to show India when not in nearby mode
-            options={{
-              disableDefaultUI: false,
-              zoomControl: true,
-              streetViewControl: false,
-              mapTypeControl: true,
-              fullscreenControl: true,
-              gestureHandling: 'greedy',
-              clickableIcons: false,
-              mapId: 'DEMO_MAP_ID', // Using mapId for better performance and future compatibility
-            }}
-            onLoad={(map) => {
-              console.log('✅ Google Map loaded successfully:', map);
-            }}
-            onUnmount={() => {
-              console.log('🗺️ Google Map unmounted');
-            }}
-            onClick={() => {
-              // Close any open InfoWindow when clicking on the map
-              setSelectedConsultant(null);
-            }}
-          >
+            </div>
+          )}
+          {/* Render map if it's loaded and initialized, or if it's loaded and ready to render */}
+          {(mapInitialized || (isLoaded && !loadError && typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Map)) && (
+            <GoogleMap
+              mapContainerStyle={{ width: '100%', height: '100%' }}
+              center={mapCenter}
+              zoom={nearby ? 11 : 5}
+              options={{
+                disableDefaultUI: false,
+                zoomControl: true,
+                streetViewControl: false,
+                mapTypeControl: true,
+                fullscreenControl: true,
+                gestureHandling: 'greedy',
+                clickableIcons: false,
+                mapId: 'MIET_MAP_ID', // Required for AdvancedMarkerElement
+              }}
+              onLoad={(map) => {
+                console.log('✅ Google Map loaded successfully:', map);
+                mapInstanceRef.current = map;
+                setMapInitialized(true);
+              }}
+              onUnmount={() => {
+                console.log('🗺️ Google Map unmounted');
+              }}
+              onClick={() => {
+                // Close any open InfoWindow when clicking on the map
+                setSelectedConsultant(null);
+              }}
+            >
             {/*
-              Note: Google Maps Marker is deprecated as of Feb 2024.
-              We're using the legacy Marker component from @react-google-maps/api.
-              For future migration to AdvancedMarkerElement, see:
-              https://developers.google.com/maps/documentation/javascript/advanced-markers/migration
-              The current implementation will continue to work with 12+ months notice before discontinuation.
+              Note: mapId and 'marker' library are configured for AdvancedMarkerElement support.
+              Currently using legacy Marker component which is still fully functional.
+              The deprecation warning is informational only and does not affect functionality.
+              Map will remain mounted once initialized to prevent disappearing issues.
             */}
             {filteredConsultants.map(c => {
-              let imageUrl = c.image;
-              if (imageUrl && imageUrl.startsWith('/')) {
-                imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
-              }
-              let markerIcon = undefined;
-              if (imageUrl && typeof window !== 'undefined' && window.google && window.google.maps) {
-                markerIcon = {
-                  url: imageUrl,
-                  scaledSize: new window.google.maps.Size(44, 44),
-                  anchor: new window.google.maps.Point(22, 22)
-                };
-              }
               // Only render marker if lat/lng are valid numbers and within valid ranges
               if (typeof c.lat !== 'number' || isNaN(c.lat) || typeof c.lng !== 'number' || isNaN(c.lng) ||
                   c.lat < -90 || c.lat > 90 || c.lng < -180 || c.lng > 180) {
                 console.warn(`⚠️ Skipping marker for ${c.name} due to invalid coordinates: lat=${c.lat}, lng=${c.lng}`);
                 return null;
               }
+
+              let markerIcon = undefined;
+              if (c.image && typeof window !== 'undefined' && window.google && window.google.maps && window.google.maps.Size) {
+                try {
+                  let imageUrl = c.image;
+                  if (imageUrl && imageUrl.startsWith('/')) {
+                    imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
+                  }
+                  markerIcon = {
+                    url: imageUrl,
+                    scaledSize: new window.google.maps.Size(44, 44),
+                    anchor: new window.google.maps.Point(22, 22)
+                  };
+                } catch (error) {
+                  console.warn(`Failed to create marker icon for ${c.name}:`, error);
+                }
+              }
+
               return (
                 <Marker
                   key={c.id}
@@ -1245,13 +1289,13 @@ export default function SearchPanel() {
              selectedConsultant.lat <= 90 &&
              selectedConsultant.lng >= -180 &&
              selectedConsultant.lng <= 180 && (
-              <InfoWindow
-                position={{
+                <InfoWindow
+                  position={{
                   lat: selectedConsultant.lat,
                   lng: selectedConsultant.lng
-                }}
-                onCloseClick={() => setSelectedConsultant(null)}
-              >
+                  }}
+                  onCloseClick={() => setSelectedConsultant(null)}
+                >
                 <div style={{ minWidth: 280, maxWidth: 320, padding: 8, position: 'relative' }}>
                   {/* Close button */}
                   <button
@@ -1281,27 +1325,27 @@ export default function SearchPanel() {
                   <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
                     <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                       <div style={{ position: 'relative', width: 60, height: 60 }}>
-                        <img
-                          src={(() => {
-                            let imageUrl = selectedConsultant.image;
-                            if (imageUrl && imageUrl.startsWith('/')) {
-                              imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
-                            }
-                            return imageUrl || '/brain-miet.png';
-                          })()}
-                          alt={selectedConsultant.name}
-                          style={{
+                      <img
+                        src={(() => {
+                          let imageUrl = selectedConsultant.image;
+                          if (imageUrl && imageUrl.startsWith('/')) {
+                            imageUrl = `${process.env.NEXT_PUBLIC_BACKEND_URL}${imageUrl}`;
+                          }
+                          return imageUrl || '/brain-miet.png';
+                        })()}
+                        alt={selectedConsultant.name}
+                        style={{
                             width: 60,
                             height: 60,
-                            borderRadius: '50%',
+                          borderRadius: '50%',
                             objectFit: 'cover',
                             border: '2px solid var(--border)'
-                          }}
-                          onError={e => {
-                            e.currentTarget.onerror = null;
-                            e.currentTarget.src = '/brain-miet.png';
-                          }}
-                        />
+                        }}
+                        onError={e => {
+                          e.currentTarget.onerror = null;
+                          e.currentTarget.src = '/brain-miet.png';
+                        }}
+                      />
                         {(selectedConsultant.mode === 'Online' || selectedConsultant.status === 'online') && (
                           <span style={{
                             position: 'absolute',
@@ -1390,12 +1434,12 @@ export default function SearchPanel() {
                       Book Appointment
                     </button>
                   </div>
-                </div>
-              </InfoWindow>
-            )}
-          </GoogleMap>
-        )}
-      </div>
+                  </div>
+                </InfoWindow>
+              )}
+            </GoogleMap>
+          )}
+        </div>
       </div> {/* Close main content container */}
 
             {/* CSS Animations */}
@@ -1629,7 +1673,7 @@ export default function SearchPanel() {
             </p>
             <div style={{ display: 'flex', justifyContent: 'center' }}>
               <GoogleAuth onLogin={handleLoginSuccess} />
-            </div>
+      </div>
           </div>
         </div>
       )}
