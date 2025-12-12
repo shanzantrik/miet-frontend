@@ -128,3 +128,4 @@ After setting up:
 
 Check the browser console on Railway for specific error messages. The code now includes detailed logging for production debugging.
 
+
