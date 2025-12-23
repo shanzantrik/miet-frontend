@@ -3,18 +3,32 @@
 
 import React, { useState } from 'react';
 import { FaHome, FaAdjust, FaGlobe, FaBars, FaTimes, FaShoppingCart } from 'react-icons/fa';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartContext';
 import { GoogleAuth } from './GoogleAuth';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
-  <span style={{ fontSize: 18, marginRight: 4 }}>{code === 'en' ? '🇬🇧' : '🇮🇳'}</span>
+  <Image
+    src={code === 'en' ? '/flag-en.svg' : '/flag-hi.svg'}
+    alt={code === 'en' ? 'UK Flag' : 'India Flag'}
+    width={24}
+    height={16}
+    style={{ marginRight: 8, borderRadius: 2, objectFit: 'cover' }}
+  />
 );
 
 export default function TopBar() {
-  const [lang, setLang] = useState<'en' | 'hi'>('en');
+  const t = useTranslations('TopBar');
+  const locale = useLocale();
+  const router = useRouter();
+  const pathname = usePathname();
+  // const [lang, setLang] = useState<'en' | 'hi'>('en'); // Removed manual state
   const [showLang, setShowLang] = useState(false);
+  const [showCurrency, setShowCurrency] = useState(false);
+  const [currency, setCurrency] = useState('INR');
   const [fontSize, setFontSize] = useState(1);
   const [highContrast, setHighContrast] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
@@ -64,7 +78,7 @@ export default function TopBar() {
   return (
     <header className="topbar-root" style={{ width: '100%', background: highContrast ? '#222' : '#fff', borderBottom: '1px solid #e2e8f0', fontSize: `${fontSize}em`, color: highContrast ? '#fff' : '#22543d', position: 'sticky', top: 0, left: 0, zIndex: 1200, boxShadow: '0 2px 8px rgba(90,103,216,0.04)', minHeight: 80 }}>
       {/* Utility Row */}
-              <div className="utility-row" style={{
+      <div className="utility-row" style={{
         display: 'flex',
         justifyContent: 'space-between',
         alignItems: 'center',
@@ -73,16 +87,16 @@ export default function TopBar() {
         background: highContrast ? '#000' : 'linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%)',
         borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
       }}>
-          <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
-            <Link href="/" aria-label="Home" style={{
-              color: highContrast ? '#fff' : '#667eea',
-              textDecoration: 'none',
-              display: 'flex',
-              alignItems: 'center',
-              fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
-              fontWeight: '500',
-              transition: 'all 0.3s ease'
-            }}
+        <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
+          <Link href={`/${locale}`} aria-label="Home" style={{
+            color: highContrast ? '#fff' : '#667eea',
+            textDecoration: 'none',
+            display: 'flex',
+            alignItems: 'center',
+            fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
+            fontWeight: '500',
+            transition: 'all 0.3s ease'
+          }}
             onMouseEnter={(e) => {
               e.currentTarget.style.color = highContrast ? '#fff' : '#764ba2';
               e.currentTarget.style.transform = 'translateY(-1px)';
@@ -91,38 +105,38 @@ export default function TopBar() {
               e.currentTarget.style.color = highContrast ? '#fff' : '#667eea';
               e.currentTarget.style.transform = 'translateY(0)';
             }}
-            >
-              <FaHome style={{ marginRight: '0.5rem' }} />
-              Home
-            </Link>
-            <Link
-              href="/sitemap"
+          >
+            <FaHome style={{ marginRight: '0.5rem' }} />
+            {t('home')}
+          </Link>
+          <Link
+            href={`/${locale}/sitemap`}
             aria-label="Sitemap"
-              style={{
-                color: highContrast ? '#fff' : '#667eea',
-                textDecoration: 'none',
-                fontWeight: '500',
-                transition: 'all 0.3s ease',
-                padding: '0.25rem 0.75rem',
-                borderRadius: '6px',
-                border: '1px solid transparent'
-              }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.color = highContrast ? '#fff' : '#764ba2';
-                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-                e.currentTarget.style.borderColor = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-                e.currentTarget.style.transform = 'translateY(-1px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.color = highContrast ? '#fff' : '#667eea';
-                e.currentTarget.style.background = 'transparent';
-                e.currentTarget.style.borderColor = 'transparent';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
-            >
-              Sitemap
-            </Link>
-          </div>
+            style={{
+              color: highContrast ? '#fff' : '#667eea',
+              textDecoration: 'none',
+              fontWeight: '500',
+              transition: 'all 0.3s ease',
+              padding: '0.25rem 0.75rem',
+              borderRadius: '6px',
+              border: '1px solid transparent'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.color = highContrast ? '#fff' : '#764ba2';
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.borderColor = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-1px)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.color = highContrast ? '#fff' : '#667eea';
+              e.currentTarget.style.background = 'transparent';
+              e.currentTarget.style.borderColor = 'transparent';
+              e.currentTarget.style.transform = 'translateY(0)';
+            }}
+          >
+            {t('sitemap')}
+          </Link>
+        </div>
         <div style={{ display: 'flex', gap: '1rem', alignItems: 'center' }}>
           {/* Accessibility Controls */}
           <div className="accessibility-controls" style={{
@@ -264,8 +278,8 @@ export default function TopBar() {
                 e.currentTarget.style.boxShadow = 'none';
               }}
             >
-              <Flag code={lang} />
-              {lang.toUpperCase()}
+              <Flag code={locale as 'en' | 'hi'} />
+              {locale.toUpperCase()}
               <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showLang ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
             </button>
             {showLang && (
@@ -283,7 +297,11 @@ export default function TopBar() {
                 overflow: 'hidden'
               }}>
                 <button
-                  onClick={() => { setLang('en'); setShowLang(false); }}
+                  onClick={() => {
+                    const newPath = pathname.replace(new RegExp(`^/${locale}`), '/en');
+                    router.replace(newPath);
+                    setShowLang(false);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -306,7 +324,11 @@ export default function TopBar() {
                   <Flag code="en" /> EN
                 </button>
                 <button
-                  onClick={() => { setLang('hi'); setShowLang(false); }}
+                  onClick={() => {
+                    const newPath = pathname.replace(new RegExp(`^/${locale}`), '/hi');
+                    router.replace(newPath);
+                    setShowLang(false);
+                  }}
                   style={{
                     display: 'flex',
                     alignItems: 'center',
@@ -332,36 +354,107 @@ export default function TopBar() {
           </div>
 
           {/* Currency Switch */}
-          <button
-            aria-label="Switch currency"
-            style={{
-              background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
-              border: '1px solid rgba(99, 102, 241, 0.2)',
-              borderRadius: '8px',
-              color: highContrast ? '#fff' : '#667eea',
-              padding: '0.5rem 0.75rem',
-              fontWeight: '600',
-              cursor: 'pointer',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              transition: 'all 0.3s ease',
-              backdropFilter: 'blur(10px)'
-            }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
-              e.currentTarget.style.transform = 'translateY(-1px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
-          >
-            <FaGlobe style={{ fontSize: 'clamp(0.9rem, 1vw, 1rem)' }} />
-            ₹
-          </button>
+          <div style={{ position: 'relative' }}>
+            <button
+              aria-label="Switch currency"
+              onClick={() => setShowCurrency(c => !c)}
+              style={{
+                background: highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '8px',
+                color: highContrast ? '#fff' : '#667eea',
+                padding: '0.5rem 0.75rem',
+                fontWeight: '600',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.5rem',
+                transition: 'all 0.3s ease',
+                backdropFilter: 'blur(10px)'
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(255,255,255,1)';
+                e.currentTarget.style.transform = 'translateY(-1px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(255,255,255,0.9)';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
+            >
+              <FaGlobe style={{ fontSize: 'clamp(0.9rem, 1vw, 1rem)' }} />
+              {currency === 'INR' ? '₹' : '$'}
+              <span style={{ fontSize: '0.8em', transition: 'transform 0.3s ease', transform: showCurrency ? 'rotate(180deg)' : 'rotate(0deg)' }}>▼</span>
+            </button>
+            {showCurrency && (
+              <div style={{
+                position: 'absolute',
+                top: 'calc(100% + 0.5rem)',
+                left: 0,
+                background: highContrast ? '#222' : 'rgba(255,255,255,0.95)',
+                border: '1px solid rgba(99, 102, 241, 0.2)',
+                borderRadius: '8px',
+                zIndex: 10,
+                minWidth: '100px',
+                boxShadow: '0 8px 25px rgba(0,0,0,0.15)',
+                backdropFilter: 'blur(10px)',
+                overflow: 'hidden'
+              }}>
+                <button
+                  onClick={() => {
+                    setCurrency('INR');
+                    setShowCurrency(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    color: highContrast ? '#fff' : '#667eea',
+                    padding: '0.75rem 1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    borderBottom: '1px solid rgba(99, 102, 241, 0.1)'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  <span style={{ marginRight: '8px' }}>₹</span> Rupees
+                </button>
+                <button
+                  onClick={() => {
+                    setCurrency('USD');
+                    setShowCurrency(false);
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    width: '100%',
+                    background: 'none',
+                    border: 'none',
+                    color: highContrast ? '#fff' : '#667eea',
+                    padding: '0.75rem 1rem',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = 'none';
+                  }}
+                >
+                  <span style={{ marginRight: '8px' }}>$</span> Dollars
+                </button>
+              </div>
+            )}
+          </div>
         </div>
       </div>
       {/* Main Row: Logo, Navigation, Login/Signup, Social, Hamburger for mobile */}
@@ -376,7 +469,7 @@ export default function TopBar() {
         gap: 'clamp(0.5rem, 2vw, 1rem)'
       }}>
         <div className="logo-section" style={{ display: 'flex', alignItems: 'center', gap: 'clamp(12px, 3vw, 16px)' }}>
-          <Link href="/">
+          <Link href={`/${locale}`}>
             <Image
               src="/miet-main.webp"
               alt="MieT Logo"
@@ -411,7 +504,7 @@ export default function TopBar() {
             color: highContrast ? '#fff' : '#1e1b4b',
             position: 'relative'
           }}>
-            <Link href="/" style={{
+            <Link href={`/${locale}`} style={{
               color: highContrast ? '#fff' : '#667eea',
               textDecoration: 'none',
               display: 'flex',
@@ -423,22 +516,22 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               background: 'transparent'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
               <FaHome style={{ marginRight: '0.5rem' }} />
-              Home
+              {t('home')}
             </Link>
 
-            <Link href="/about" style={{
+            <Link href={`/${locale}/about`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -446,21 +539,21 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              About Us
+              {t('about')}
             </Link>
 
-            <Link href="/services" style={{
+            <Link href={`/${locale}/services`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -468,21 +561,21 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              Services
+              {t('services')}
             </Link>
 
-            <Link href="/consultants" style={{
+            <Link href={`/${locale}/consultants`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -490,21 +583,21 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              Consultants
+              {t('consultants')}
             </Link>
 
-            <Link href="/marketplace" style={{
+            <Link href={`/${locale}/marketplace`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -512,21 +605,21 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              Marketplace
+              {t('marketplace')}
             </Link>
 
-            <Link href="/courses" style={{
+            <Link href={`/${locale}/courses`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -534,21 +627,21 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              Courses
+              {t('courses')}
             </Link>
 
-            <Link href="/contact" style={{
+            <Link href={`/${locale}/contact`} style={{
               color: highContrast ? '#fff' : '#1e1b4b',
               textDecoration: 'none',
               padding: '0.5rem 1rem',
@@ -556,18 +649,18 @@ export default function TopBar() {
               transition: 'all 0.3s ease',
               fontWeight: '600'
             }}
-            onMouseEnter={(e) => {
-              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-              e.currentTarget.style.transform = 'translateY(-2px)';
-              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-            }}
-            onMouseLeave={(e) => {
-              e.currentTarget.style.background = 'transparent';
-              e.currentTarget.style.transform = 'translateY(0)';
-              e.currentTarget.style.boxShadow = 'none';
-            }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+                e.currentTarget.style.transform = 'translateY(-2px)';
+                e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = 'transparent';
+                e.currentTarget.style.transform = 'translateY(0)';
+                e.currentTarget.style.boxShadow = 'none';
+              }}
             >
-              Contact Us
+              {t('contact')}
             </Link>
           </nav>
         )}
@@ -585,8 +678,8 @@ export default function TopBar() {
           marginLeft: 'clamp(1rem, 3vw, 2rem)',
           flexWrap: 'wrap'
         }}>
-            {/* Cart Icon */}
-          <Link href="/cart" style={{
+          {/* Cart Icon */}
+          <Link href={`/${locale}/cart`} style={{
             position: 'relative',
             textDecoration: 'none',
             color: highContrast ? '#fff' : '#667eea',
@@ -601,43 +694,43 @@ export default function TopBar() {
             minWidth: 'clamp(40px, 10vw, 48px)',
             minHeight: 'clamp(40px, 10vw, 48px)'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = 'none';
-          }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.2)' : 'rgba(99, 102, 241, 0.2)';
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 4px 12px rgba(99, 102, 241, 0.2)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.background = highContrast ? 'rgba(255,255,255,0.1)' : 'rgba(99, 102, 241, 0.1)';
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = 'none';
+            }}
           >
             <FaShoppingCart style={{
               fontSize: 'clamp(1.1rem, 1.2vw, 1.2rem)',
               cursor: 'pointer'
             }} />
-              {itemCount > 0 && (
-                <span style={{
-                  position: 'absolute',
-                  top: '-8px',
-                  right: '-8px',
+            {itemCount > 0 && (
+              <span style={{
+                position: 'absolute',
+                top: '-8px',
+                right: '-8px',
                 background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)',
-                  color: 'white',
-                  borderRadius: '50%',
+                color: 'white',
+                borderRadius: '50%',
                 width: '24px',
                 height: '24px',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
                 fontSize: 'clamp(0.7rem, 0.8vw, 0.8rem)',
                 fontWeight: '700',
                 boxShadow: '0 2px 8px rgba(239, 68, 68, 0.4)',
                 border: '2px solid #ffffff'
-                }}>
-                  {itemCount}
-                </span>
-              )}
-            </Link>
+              }}>
+                {itemCount}
+              </span>
+            )}
+          </Link>
 
           {/* Google Auth Login */}
           <GoogleAuth />
@@ -733,11 +826,11 @@ export default function TopBar() {
                 fontWeight: '600',
                 color: highContrast ? '#fff' : '#1e1b4b',
                 marginBottom: '12px'
-              }}>Search Consultants</h3>
+              }}>{t('searchHeading')}</h3>
               <div style={{ position: 'relative' }}>
                 <input
                   type="text"
-                  placeholder="Search consultants..."
+                  placeholder={t('searchPlaceholder')}
                   style={{
                     width: '100%',
                     padding: '12px 16px',
@@ -764,7 +857,7 @@ export default function TopBar() {
             {/* Navigation Menu */}
             <nav aria-label="Mobile navigation" style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
               <Link
-                href="/"
+                href={`/${locale}`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -787,11 +880,11 @@ export default function TopBar() {
                 }}
               >
                 <FaHome style={{ marginRight: '12px', fontSize: '16px' }} />
-                Home
+                {t('home')}
               </Link>
 
               <Link
-                href="/about"
+                href={`/${locale}/about`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -811,11 +904,11 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                About Us
+                {t('about')}
               </Link>
 
               <Link
-                href="/services"
+                href={`/${locale}/services`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -835,11 +928,11 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                Services
+                {t('services')}
               </Link>
 
               <Link
-                href="/consultants"
+                href={`/${locale}/consultants`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -859,11 +952,11 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                Consultants
+                {t('consultants')}
               </Link>
 
               <Link
-                href="/marketplace"
+                href={`/${locale}/marketplace`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -883,11 +976,11 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                Marketplace
+                {t('marketplace')}
               </Link>
 
               <Link
-                href="/courses"
+                href={`/${locale}/courses`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -907,11 +1000,11 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                Courses
+                {t('courses')}
               </Link>
 
               <Link
-                href="/contact"
+                href={`/${locale}/contact`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -931,14 +1024,14 @@ export default function TopBar() {
                   e.currentTarget.style.transform = 'translateX(0)';
                 }}
               >
-                Contact Us
+                {t('contact')}
               </Link>
             </nav>
 
             {/* Cart Section */}
             <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(99, 102, 241, 0.1)' }}>
               <Link
-                href="/cart"
+                href={`/${locale}/cart`}
                 onClick={() => setMobileMenu(false)}
                 style={{
                   color: highContrast ? '#fff' : '#1e1b4b',
@@ -962,9 +1055,9 @@ export default function TopBar() {
                 }}
               >
                 <FaShoppingCart style={{ marginRight: '12px', fontSize: '16px' }} />
-                Cart {itemCount > 0 && `(${itemCount})`}
+                {t('cart')} {itemCount > 0 && `(${itemCount})`}
               </Link>
-                </div>
+            </div>
 
             {/* Utility Controls */}
             <div style={{ marginTop: '2rem', paddingTop: '1.5rem', borderTop: '1px solid rgba(99, 102, 241, 0.1)' }}>
@@ -973,7 +1066,7 @@ export default function TopBar() {
                 fontWeight: '600',
                 color: highContrast ? '#fff' : '#1e1b4b',
                 marginBottom: '12px'
-              }}>Accessibility</h3>
+              }}>{t('accessibility')}</h3>
 
               <div style={{ display: 'flex', gap: '8px', marginBottom: '12px' }}>
                 <button
@@ -1024,7 +1117,7 @@ export default function TopBar() {
                 >
                   A+
                 </button>
-          </div>
+              </div>
 
               <button
                 onClick={() => setHighContrast(h => !h)}
@@ -1045,7 +1138,7 @@ export default function TopBar() {
                 }}
               >
                 <FaAdjust />
-                High Contrast
+                {t('highContrast')}
               </button>
             </div>
           </div>

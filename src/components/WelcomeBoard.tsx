@@ -1,9 +1,10 @@
 import React from 'react';
 import styles from './WelcomeBoard.module.css';
-
+import { useTranslations } from 'next-intl';
 
 
 export default function WelcomeBoard() {
+  const t = useTranslations('WelcomeBoard');
   // Use public/brain-miet.svg as the center icon, floating, with animated concentric circles and 4 floating labels
   return (
     <section
@@ -89,7 +90,7 @@ export default function WelcomeBoard() {
           zIndex: 2,
           boxSizing: 'border-box',
         }}>
-                    <div
+          <div
             className="hero-title"
             style={{
               fontSize: 'clamp(2.5rem, 3vw, 2rem)',
@@ -101,9 +102,9 @@ export default function WelcomeBoard() {
               letterSpacing: '0.5px'
             }}
           >
-            Comprehensive Support for Special Education and Mental Health Challenges
+            {t('title')}
           </div>
-                    <div
+          <div
             className="hero-subtitle"
             style={{
               fontSize: 'clamp(1.3rem, 1.5vw, 1rem)',
@@ -114,9 +115,9 @@ export default function WelcomeBoard() {
               maxWidth: '600px'
             }}
           >
-            We provide best specialized education services for children with unique needs &amp; services to address Mental Health Challenges.
+            {t('subtitle')}
           </div>
-                    <div
+          <div
             className="hero-welcome"
             style={{
               fontSize: 'clamp(1.5rem, 2.5vw, 2rem)',
@@ -127,8 +128,10 @@ export default function WelcomeBoard() {
               textShadow: '0 1px 5px rgba(0,0,0,0.1)'
             }}
           >
-            Welcome to <b style={{ color: '#5a67d8' }}>MieT</b>! <br />
-                        <span
+            {t.rich('welcome', {
+              b: (chunks) => <b style={{ color: '#5a67d8' }}>{chunks}</b>
+            })} <br />
+            <span
               className="hero-description"
               style={{
                 fontSize: 'clamp(1.1rem, 2vw, 1.3rem)',
@@ -137,12 +140,13 @@ export default function WelcomeBoard() {
                 lineHeight: 1.6
               }}
             >
-              Book sessions, get support, and thrive with MieT.<br />
-              Your trusted platform for connecting with Special Education and Mental Health Professionals, and accessing inclusive resources.
+              {t.rich('description', {
+                br: () => <br />
+              })}
             </span>
           </div>
 
-                    <button
+          <button
             onClick={() => window.location.href = '/about'}
             style={{
               background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
@@ -167,11 +171,11 @@ export default function WelcomeBoard() {
               e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
             }}
           >
-            Learn More
+            {t('learnMore')}
           </button>
-        </div>
+        </div >
         {/* Right: Animated Brain Hero */}
-        <div style={{
+        < div style={{
           flex: 1,
           minWidth: 320,
           maxWidth: 700,
@@ -183,7 +187,8 @@ export default function WelcomeBoard() {
           minHeight: 320,
           zIndex: 1,
           boxSizing: 'border-box',
-        }}>
+        }
+        }>
           <div style={{ position: 'relative', width: 320, height: 320, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
             {/* Rotating Concentric Circles */}
             <div className={styles.rotatingCircles} style={{ position: 'absolute', left: 0, top: 0, width: 320, height: 320, zIndex: 1, pointerEvents: 'none' }}>
@@ -313,8 +318,8 @@ export default function WelcomeBoard() {
               minWidth: 110,
             }}>Technology</div>
           </div>
-        </div>
-      </div>
+        </div >
+      </div >
       <style
         dangerouslySetInnerHTML={{
           __html: `
@@ -495,6 +500,6 @@ export default function WelcomeBoard() {
       `,
         }}
       />
-    </section>
+    </section >
   );
 }

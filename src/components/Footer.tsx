@@ -1,7 +1,11 @@
+"use client";
 import React from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { FaFacebookF, FaInstagram, FaLinkedinIn, FaYoutube, FaTwitter, FaGoogle } from 'react-icons/fa';
 
 export default function Footer() {
+  const t = useTranslations('Footer');
+  const locale = useLocale();
   return (
     <>
       <footer className="footer" style={{
@@ -59,7 +63,7 @@ export default function Footer() {
                 marginBottom: '1rem',
                 textShadow: '0 2px 10px rgba(0,0,0,0.3)'
               }}>
-                MieT
+                {t('brandName')}
               </div>
               <p style={{
                 fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
@@ -68,7 +72,7 @@ export default function Footer() {
                 marginBottom: '1.5rem',
                 fontWeight: '400'
               }}>
-                Mind Inclusion Education Technology. Empowering children and families through inclusive education, mental health, and technology.
+                {t('description')}
               </p>
 
               {/* Social Media Icons */}
@@ -130,7 +134,7 @@ export default function Footer() {
                 marginBottom: '1.5rem',
                 textShadow: '0 1px 3px rgba(0,0,0,0.3)'
               }}>
-                Quick Links
+                {t('quickLinks')}
               </h3>
               <div style={{
                 display: 'flex',
@@ -138,16 +142,16 @@ export default function Footer() {
                 gap: '0.8rem'
               }}>
                 {[
-                  { name: 'About Us', href: '/about' },
-                  { name: 'Our Services', href: '/services' },
-                  { name: 'Find Consultants', href: '/consultants' },
-                  { name: 'Marketplace', href: '/marketplace' },
-                  { name: 'Courses', href: '/courses' },
-                  { name: 'Contact Us', href: '/contact' }
+                  { name: t('links.about'), href: '/about' },
+                  { name: t('links.services'), href: '/services' },
+                  { name: t('links.consultants'), href: '/consultants' },
+                  { name: t('links.marketplace'), href: '/marketplace' },
+                  { name: t('links.courses'), href: '/courses' },
+                  { name: t('links.contact'), href: '/contact' }
                 ].map((link) => (
                   <a
                     key={link.name}
-                    href={link.href}
+                    href={`/${locale}${link.href}`}
                     style={{
                       color: 'rgba(255,255,255,0.8)',
                       fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
@@ -182,7 +186,7 @@ export default function Footer() {
                 marginBottom: '1.5rem',
                 textShadow: '0 1px 3px rgba(0,0,0,0.3)'
               }}>
-                Get in Touch
+                {t('getInTouch')}
               </h3>
               <div style={{
                 display: 'flex',
@@ -195,7 +199,7 @@ export default function Footer() {
                   fontWeight: '500',
                   lineHeight: '1.6'
                 }}>
-                  📍 Gurgaon, Haryana, India
+                  📍 {t('address')}
                 </div>
                 <div style={{
                   fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
@@ -222,7 +226,7 @@ export default function Footer() {
                     marginBottom: '0.8rem',
                     fontWeight: '500'
                   }}>
-                    Subscribe to our newsletter
+                    {t('subscribeText')}
                   </p>
                   <div style={{
                     display: 'flex',
@@ -231,7 +235,7 @@ export default function Footer() {
                   }}>
                     <input
                       type="email"
-                      placeholder="Enter your email"
+                      placeholder={t('emailPlaceholder')}
                       style={{
                         flex: 1,
                         minWidth: '200px',
@@ -257,21 +261,21 @@ export default function Footer() {
                       transition: 'all 0.3s ease',
                       boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
                     }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-                    }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+                      }}
                     >
-                      Subscribe
+                      {t('subscribeButton')}
                     </button>
                   </div>
                 </div>
               </div>
-          </div>
+            </div>
           </div>
 
           {/* Footer Bottom */}
@@ -286,7 +290,7 @@ export default function Footer() {
               fontWeight: '500',
               lineHeight: '1.6'
             }}>
-              &copy; {new Date().getFullYear()} MieT (Mind Inclusion Education Technology). All rights reserved.
+              &copy; {t('copyright', { year: new Date().getFullYear() })}
             </p>
             <p style={{
               color: 'rgba(255,255,255,0.6)',
@@ -294,7 +298,7 @@ export default function Footer() {
               marginTop: '0.5rem',
               fontWeight: '400'
             }}>
-              Designed with ❤️ for inclusive education and mental health support
+              {t('designedBy')}
             </p>
           </div>
         </div>
@@ -356,8 +360,8 @@ export default function Footer() {
         }}
       >
         <svg width="34" height="34" viewBox="0 0 32 32" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <circle cx="16" cy="16" r="16" fill="#25d366"/>
-          <path d="M23.472 19.339c-.355-.177-2.104-1.037-2.43-1.155-.326-.119-.563-.177-.8.177-.237.355-.914 1.155-1.122 1.392-.207.237-.414.266-.769.089-.355-.178-1.5-.553-2.858-1.763-1.056-.944-1.77-2.108-1.98-2.463-.207-.355-.022-.546.155-.723.159-.158.355-.414.533-.621.178-.207.237-.355.355-.592.119-.237.06-.444-.03-.621-.089-.178-.8-1.924-1.096-2.637-.289-.693-.583-.597-.8-.608-.207-.009-.444-.011-.681-.011-.237 0-.621.089-.946.444-.326.355-1.24 1.211-1.24 2.955 0 1.744 1.268 3.429 1.445 3.667.178.237 2.5 3.82 6.055 5.209.847.291 1.507.464 2.023.594.85.203 1.624.174 2.236.106.682-.075 2.104-.859 2.402-1.689.296-.83.296-1.541.207-1.689-.089-.148-.326-.237-.681-.414z" fill="#fff"/>
+          <circle cx="16" cy="16" r="16" fill="#25d366" />
+          <path d="M23.472 19.339c-.355-.177-2.104-1.037-2.43-1.155-.326-.119-.563-.177-.8.177-.237.355-.914 1.155-1.122 1.392-.207.237-.414.266-.769.089-.355-.178-1.5-.553-2.858-1.763-1.056-.944-1.77-2.108-1.98-2.463-.207-.355-.022-.546.155-.723.159-.158.355-.414.533-.621.178-.207.237-.355.355-.592.119-.237.06-.444-.03-.621-.089-.178-.8-1.924-1.096-2.637-.289-.693-.583-.597-.8-.608-.207-.009-.444-.011-.681-.011-.237 0-.621.089-.946.444-.326.355-1.24 1.211-1.24 2.955 0 1.744 1.268 3.429 1.445 3.667.178.237 2.5 3.82 6.055 5.209.847.291 1.507.464 2.023.594.85.203 1.624.174 2.236.106.682-.075 2.104-.859 2.402-1.689.296-.83.296-1.541.207-1.689-.089-.148-.326-.237-.681-.414z" fill="#fff" />
         </svg>
       </a>
       {/* Move to Top Floating Button */}
@@ -385,7 +389,7 @@ export default function Footer() {
         }}
       >
         <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true" focusable="false">
-          <path d="M12 4l-8 8h6v8h4v-8h6z" fill="#fff"/>
+          <path d="M12 4l-8 8h6v8h4v-8h6z" fill="#fff" />
         </svg>
       </button>
     </>
