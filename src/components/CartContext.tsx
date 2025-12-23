@@ -4,16 +4,20 @@ import React, { createContext, useContext, useState, useEffect } from 'react';
 interface CartItem {
   id: string | number;
   title: string;
+  name?: string;
   price: string | number;
   thumbnail?: string;
   instructor_name?: string;
+  description?: string;
   type: string;
+  quantity: number;
 }
 
 interface CartContextType {
   cartItems: CartItem[];
   addToCart: (item: CartItem) => void;
   removeFromCart: (id: string | number) => void;
+  updateQuantity: (id: string | number, quantity: number) => void;
   clearCart: () => void;
   isInCart: (id: string | number) => boolean;
   cartTotal: number;
@@ -53,15 +57,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const addToCart = (item: CartItem) => {
     setCartItems(prev => {
       // Check if item is already in cart
-      if (prev.find(cartItem => cartItem.id === item.id)) {
-        return prev; // Item already exists
+      const existingItem = prev.find(cartItem => cartItem.id === item.id);
+      if (existingItem) {
+        return prev.map(cartItem =>
+          cartItem.id === item.id
+            ? { ...cartItem, quantity: cartItem.quantity + (item.quantity || 1) }
+            : cartItem
+        );
       }
-      return [...prev, item];
+      return [...prev, { ...item, quantity: item.quantity || 1 }];
     });
   };
 
   const removeFromCart = (id: string | number) => {
     setCartItems(prev => prev.filter(item => item.id !== id));
+  };
+
+  const updateQuantity = (id: string | number, quantity: number) => {
+    if (quantity < 1) return;
+    setCartItems(prev => prev.map(item =>
+      item.id === id ? { ...item, quantity } : item
+    ));
   };
 
   const clearCart = () => {
@@ -74,15 +90,16 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
 
   const cartTotal = cartItems.reduce((total, item) => {
     const price = typeof item.price === 'string' ? parseFloat(item.price.replace(/[^0-9.]/g, '')) : Number(item.price);
-    return total + (isNaN(price) ? 0 : price);
+    return total + ((isNaN(price) ? 0 : price) * (item.quantity || 1));
   }, 0);
 
-  const itemCount = cartItems.length;
+  const itemCount = cartItems.reduce((count, item) => count + (item.quantity || 1), 0);
 
   const value: CartContextType = {
     cartItems,
     addToCart,
     removeFromCart,
+    updateQuantity,
     clearCart,
     isInCart,
     cartTotal,

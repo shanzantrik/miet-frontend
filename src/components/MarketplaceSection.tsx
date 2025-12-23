@@ -1,5 +1,6 @@
 'use client';
 import React, { useState, useEffect } from 'react';
+import { useTranslations, useLocale } from 'next-intl';
 import { categories } from './marketplaceData';
 
 interface Product {
@@ -18,6 +19,8 @@ interface Product {
 const PAGE_SIZE = 6; // Increased from 5 to 6 for better grid layout
 
 export default function MarketplaceSection() {
+  const t = useTranslations('MarketplaceSection');
+  const locale = useLocale();
   const [selectedCategory, setSelectedCategory] = useState('Course');
   const [page, setPage] = useState(1);
   const [products, setProducts] = useState<Product[]>([]);
@@ -68,11 +71,30 @@ export default function MarketplaceSection() {
   };
 
   const getProductImage = (product: Product) => {
-    if (product.thumbnail) {
-      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${product.thumbnail}`;
+    const imgPath = product.thumbnail || (product as any).product_image || (product as any).icon || (product as any).image_url;
+    if (!imgPath) {
+      // Return the dummy image if no path is found
+      return 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80';
     }
-    // Fallback to a default image
-    return 'https://images.unsplash.com/photo-1503676382389-4809596d5290?auto=format&fit=crop&w=400&q=80';
+
+    // If it's already a full URL, return it
+    if (imgPath.startsWith('http')) {
+      return imgPath;
+    }
+
+    // Otherwise, construct the full URL from the backend URL
+    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+    const cleanPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
+    return `${baseUrl}${cleanPath}`;
+  };
+
+  const getPriceDisplay = (price: string | number | undefined) => {
+    if (!price || price === '0' || price === 0) return 'Free';
+    if (typeof price === 'string' && price.toLowerCase() === 'free') return 'Free';
+
+    // Clean price by removing any existing currency symbols
+    let cleanPrice = String(price).replace(/[$€£₹]/g, '').trim();
+    return cleanPrice && !isNaN(Number(cleanPrice)) ? `₹${cleanPrice}` : `₹${price}`;
   };
 
   if (loading) {
@@ -89,7 +111,7 @@ export default function MarketplaceSection() {
           color: '#ffffff',
           fontWeight: '500'
         }}>
-          Loading marketplace...
+          {t('loading')}
         </div>
       </section>
     );
@@ -143,7 +165,7 @@ export default function MarketplaceSection() {
           letterSpacing: 'clamp(1px, 1vw, 2px)',
           padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
-          Marketplace: Courses, Books, Apps, Gadgets
+          {t('title')}
         </h2>
         <p style={{
           fontSize: 'clamp(1rem, 3vw, 1.6rem)',
@@ -155,7 +177,7 @@ export default function MarketplaceSection() {
           textShadow: '0 2px 10px rgba(0,0,0,0.2)',
           padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
-          Discover amazing resources and tools for your journey
+          {t('subtitle')}
         </p>
       </div>
 
@@ -221,7 +243,7 @@ export default function MarketplaceSection() {
             gridTemplateColumns: 'repeat(auto-fit, minmax(clamp(250px, 80vw, 280px), 1fr))',
             gap: 'clamp(1rem, 4vw, 2rem)',
             maxWidth: '1400px',
-            margin: '0 auto clamp(1.5rem, 6vw, 3rem) auto',
+            margin: '2rem auto clamp(1.5rem, 6vw, 3rem) auto',
             padding: '0 clamp(1rem, 4vw, 2rem)',
             zIndex: 2,
             position: 'relative'
@@ -230,48 +252,60 @@ export default function MarketplaceSection() {
               <div
                 key={product.id}
                 className="product-card"
+                onClick={() => {
+                  const type = (product.product_type || product.type || 'course').toLowerCase().replace(/[^a-z]/g, '');
+                  let route = 'courses';
+                  if (type.includes('ebook')) route = 'ebook';
+                  else if (type.includes('app')) route = 'app';
+                  else if (type.includes('gadget')) route = 'gadget';
+                  window.location.href = `/${locale}/${route}/${product.id}`;
+                }}
+                tabIndex={0}
+                role="button"
+                aria-label={`View details for ${getProductDisplayName(product)}`}
                 style={{
-                  background: 'rgba(255,255,255,0.95)',
+                  background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
                   borderRadius: '24px',
                   display: 'flex',
                   flexDirection: 'column',
                   alignItems: 'center',
-                  justifyContent: 'flex-start',
-                  padding: 'clamp(1.5rem, 4vw, 2rem)',
+                  justifyContent: 'center',
+                  padding: 'clamp(1.5rem, 4vw, 2.5rem)',
                   position: 'relative',
-                  backdropFilter: 'blur(10px)',
-                  border: '1px solid rgba(255,255,255,0.2)',
-                  boxShadow: '0 20px 60px rgba(0,0,0,0.15)',
+                  border: '2px solid rgba(99, 102, 241, 0.1)',
+                  boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
                   transition: 'all 0.3s ease',
                   cursor: 'pointer',
-                  minHeight: '400px'
+                  width: '100%',
+                  maxWidth: '400px',
+                  minHeight: 'clamp(350px, 50vh, 450px)',
+                  margin: '0 auto',
+                  overflow: 'hidden'
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
-                  e.currentTarget.style.boxShadow = '0 30px 80px rgba(99, 102, 241, 0.25)';
+                  e.currentTarget.style.boxShadow = '0 25px 60px rgba(99, 102, 241, 0.25)';
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.3)';
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = 'translateY(0) scale(1)';
-                  e.currentTarget.style.boxShadow = '0 20px 60px rgba(0,0,0,0.15)';
+                  e.currentTarget.style.boxShadow = '0 12px 40px rgba(0,0,0,0.15)';
+                  e.currentTarget.style.borderColor = 'rgba(99, 102, 241, 0.1)';
                 }}
               >
-                {/* Product Image - Bigger and prominent */}
-                <div style={{
-                  width: '100%',
-                  height: '200px',
-                  marginBottom: '1.5rem',
-                  borderRadius: '20px',
-                  overflow: 'hidden',
-                  boxShadow: '0 8px 25px rgba(0,0,0,0.1)'
-                }}>
+                {/* Product Image - Circular and styled like consultant image */}
+                <div style={{ position: 'relative', marginBottom: '1.5rem', width: '100%', display: 'flex', justifyContent: 'center' }}>
                   <img
                     src={getProductImage(product)}
                     alt={getProductDisplayName(product)}
                     style={{
-                      width: '100%',
-                      height: '100%',
+                      width: '140px',
+                      height: '140px',
+                      borderRadius: '50%',
                       objectFit: 'cover',
-                      transition: 'transform 0.3s ease'
+                      border: '5px solid rgba(99, 102, 241, 0.2)',
+                      boxShadow: '0 12px 35px rgba(99, 102, 241, 0.2)',
+                      transition: 'all 0.3s ease'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'scale(1.05)';
@@ -289,21 +323,35 @@ export default function MarketplaceSection() {
                   width: '100%',
                   display: 'flex',
                   flexDirection: 'column',
-                  justifyContent: 'space-between'
+                  justifyContent: 'center'
                 }}>
-                  {/* Product Name - Bigger and prominent */}
+                  {/* Product Name - Styled like consultant name */}
                   <h3 style={{
                     fontWeight: '700',
-                    fontSize: 'clamp(1.3rem, 1.6vw, 1.5rem)',
-                    marginBottom: '1rem',
+                    fontSize: 'clamp(1.5rem, 2vw, 1.8rem)',
+                    marginBottom: '0.8rem',
                     color: '#1e1b4b',
-                    lineHeight: '1.3',
-                    textShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    lineHeight: '1.2',
+                    textShadow: '0 2px 4px rgba(0,0,0,0.1)'
                   }}>
                     {getProductDisplayName(product)}
                   </h3>
 
-                                                      {/* Description - Bigger and more readable */}
+                  {/* Price - Styled like expertise */}
+                  {Number(product.price) > 0 ? (
+                    <div style={{
+                      color: '#667eea',
+                      fontWeight: '600',
+                      fontSize: 'clamp(1.2rem, 1.6vw, 1.4rem)',
+                      marginBottom: '1rem',
+                      lineHeight: '1.4',
+                      textShadow: '0 1px 3px rgba(0,0,0,0.1)'
+                    }}>
+                      {getPriceDisplay(product.price)}
+                    </div>
+                  ) : null}
+
+                  {/* Description - Styled like consultant bio */}
                   <p
                     title={product.description.length > 300 ? product.description : undefined}
                     style={{
@@ -313,51 +361,44 @@ export default function MarketplaceSection() {
                       marginBottom: '1.5rem',
                       lineHeight: '1.6',
                       flex: 1,
-                      cursor: product.description.length > 300 ? 'help' : 'default'
+                      maxWidth: '100%',
+                      cursor: product.description.length > 300 ? 'help' : 'default',
+                      display: '-webkit-box',
+                      WebkitLineClamp: 3,
+                      WebkitBoxOrient: 'vertical',
+                      overflow: 'hidden'
                     }}
                   >
-                    {truncateDescription(product.description)}
+                    {truncateDescription(product.description, 100)}
                   </p>
 
-                  {/* Price - Prominent display */}
-                  {product.price && (
-                    <div style={{
-                      color: '#667eea',
-                      fontWeight: '800',
-                      fontSize: 'clamp(1.2rem, 1.4vw, 1.3rem)',
-                      marginBottom: '1.5rem',
-                      textShadow: '0 1px 3px rgba(0,0,0,0.1)'
-                    }}>
-                      ₹{product.price}
-                    </div>
-                  )}
-
-                  {/* Buy Button - Modern and prominent */}
+                  {/* Buy Button - Styled like appointment button */}
                   <button
                     style={{
-                      background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                      background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
                       color: '#ffffff',
                       border: 'none',
-                      borderRadius: '16px',
-                      padding: '1rem 2rem',
-                      fontWeight: '700',
-                      fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
+                      borderRadius: '25px',
+                      padding: '0.8rem 1.8rem',
+                      fontWeight: '600',
+                      fontSize: '1rem',
                       cursor: 'pointer',
-                      boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
+                      boxShadow: '0 4px 15px rgba(16, 185, 129, 0.3)',
                       transition: 'all 0.3s ease',
-                      width: '100%',
+                      width: 'fit-content',
+                      margin: '0 auto',
                       marginTop: 'auto'
                     }}
                     onMouseEnter={(e) => {
                       e.currentTarget.style.transform = 'translateY(-2px)';
-                      e.currentTarget.style.boxShadow = '0 12px 35px rgba(99, 102, 241, 0.4)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(16, 185, 129, 0.4)';
                     }}
                     onMouseLeave={(e) => {
                       e.currentTarget.style.transform = 'translateY(0)';
-                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)';
                     }}
                   >
-                    Buy Now
+                    {t('buyNow')}
                   </button>
                 </div>
               </div>
@@ -392,7 +433,7 @@ export default function MarketplaceSection() {
                   backdropFilter: 'blur(10px)'
                 }}
               >
-                ← Previous
+                ← {t('previous')}
               </button>
 
               {[...Array(totalPages)].map((_, i) => (
@@ -450,7 +491,7 @@ export default function MarketplaceSection() {
                   backdropFilter: 'blur(10px)'
                 }}
               >
-                Next →
+                {t('next')} →
               </button>
             </div>
           )}
@@ -474,14 +515,14 @@ export default function MarketplaceSection() {
             marginBottom: '1rem',
             fontWeight: '700'
           }}>
-            No products found
+            {t('noProductsTitle')}
           </h3>
           <p style={{
             color: 'rgba(255,255,255,0.8)',
             fontSize: 'clamp(1.1rem, 1.3vw, 1.2rem)',
             fontWeight: '500'
           }}>
-            No {selectedCategory.toLowerCase()} products available yet. Check back soon!
+            {t('noProductsDescription', { category: selectedCategory.toLowerCase() })}
           </p>
         </div>
       )}

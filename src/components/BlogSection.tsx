@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
+import { useTranslations } from 'next-intl';
 
 interface Blog {
   id: number;
@@ -23,6 +24,7 @@ interface TransformedBlog {
 }
 
 export default function BlogSection() {
+  const t = useTranslations('BlogSection');
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -182,7 +184,7 @@ export default function BlogSection() {
             textShadow: '0 2px 10px rgba(0,0,0,0.1)',
             letterSpacing: '1px'
           }}>
-            Blog & Media
+            {t('title')}
           </h2>
           <p style={{
             fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
@@ -192,7 +194,7 @@ export default function BlogSection() {
             lineHeight: '1.6',
             fontWeight: '400'
           }}>
-            Stay updated with our latest insights and stories
+            {t('subtitle')}
           </p>
         </div>
 
@@ -211,7 +213,7 @@ export default function BlogSection() {
             color: '#667eea',
             fontWeight: '600'
           }}>
-            Loading blogs...
+            {t('loading')}
           </div>
           <div style={{
             width: '50px',
@@ -286,7 +288,7 @@ export default function BlogSection() {
           textShadow: '0 2px 10px rgba(0,0,0,0.1)',
           letterSpacing: '1px'
         }}>
-          Blog & Media
+          {t('title')}
         </h2>
         <p style={{
           fontSize: 'clamp(1.1rem, 2.5vw, 1.3rem)',
@@ -296,7 +298,7 @@ export default function BlogSection() {
           lineHeight: '1.6',
           fontWeight: '400'
         }}>
-          Stay updated with our latest insights and stories
+          {t('subtitle')}
         </p>
       </div>
 
@@ -316,7 +318,7 @@ export default function BlogSection() {
           zIndex: 2,
           position: 'relative'
         }}>
-          {error} - Please try again later
+          {error}
         </div>
       )}
 
@@ -342,13 +344,13 @@ export default function BlogSection() {
             color: '#1e1b4b',
             marginBottom: '0.5rem'
           }}>
-            No blogs available yet
+            {t('noBlogsTitle')}
           </h3>
           <p style={{
             fontSize: 'clamp(1rem, 1.2vw, 1.1rem)',
             fontWeight: '500'
           }}>
-            Create your first blog in the admin panel!
+            {t('noBlogsDescription')}
           </p>
         </div>
       )}
@@ -505,16 +507,16 @@ export default function BlogSection() {
                     transition: 'all 0.3s ease',
                     boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
                   }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.transform = 'translateY(-2px)';
-                    e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.transform = 'translateY(0)';
-                    e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-                  }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.transform = 'translateY(-2px)';
+                      e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.transform = 'translateY(0)';
+                      e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+                    }}
                   >
-                    Read More →
+                    {t('readMore')} →
                   </button>
                 </div>
               </div>
@@ -543,16 +545,16 @@ export default function BlogSection() {
             transition: 'all 0.3s ease',
             boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)'
           }}
-          onMouseEnter={(e) => {
-            e.currentTarget.style.transform = 'translateY(-2px)';
-            e.currentTarget.style.boxShadow = '0 12px 35px rgba(99, 102, 241, 0.4)';
-          }}
-          onMouseLeave={(e) => {
-            e.currentTarget.style.transform = 'translateY(0)';
-            e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
-          }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'translateY(-2px)';
+              e.currentTarget.style.boxShadow = '0 12px 35px rgba(99, 102, 241, 0.4)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'translateY(0)';
+              e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
+            }}
           >
-            View All Blogs ({blogs.length})
+            {t('viewAll')} ({blogs.length})
           </button>
         </div>
       )}

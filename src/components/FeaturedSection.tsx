@@ -2,6 +2,7 @@
 
 import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
+import { useTranslations, useLocale } from 'next-intl';
 import { GoogleAuth } from './GoogleAuth';
 
 type Consultant = {
@@ -30,6 +31,8 @@ function getVisibleCount(width: number) {
 }
 
 export default function FeaturedSection() {
+  const t = useTranslations('FeaturedSection');
+  const locale = useLocale();
   const [consultants, setConsultants] = useState<Consultant[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -87,7 +90,7 @@ export default function FeaturedSection() {
   const handleBookClick = (consultant: Consultant) => {
     if (user) {
       // Redirect to consultations page if user is logged in
-      window.location.href = '/services/consultations';
+      window.location.href = `/${locale}/services/consultations`;
     } else {
       setPendingBookingConsultant(consultant);
       setShowLoginModal(true);
@@ -99,7 +102,7 @@ export default function FeaturedSection() {
     setShowLoginModal(false);
     setPendingBookingConsultant(null);
     // Redirect to consultations page after successful login
-    window.location.href = '/services/consultations';
+    window.location.href = `/${locale}/services/consultations`;
   };
 
   const handleLoginModalClose = () => {
@@ -109,7 +112,7 @@ export default function FeaturedSection() {
 
   // Fetch consultants from API
   useEffect(() => {
-          fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`)
+    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`)
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch consultants');
         return res.json();
@@ -169,8 +172,8 @@ export default function FeaturedSection() {
   if (loading) {
     return (
       <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
-        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
-        <div>Loading featured consultants...</div>
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>{t('title')}</h2>
+        <div>{t('loading')}</div>
       </section>
     );
   }
@@ -178,8 +181,8 @@ export default function FeaturedSection() {
   if (error) {
     return (
       <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
-        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
-        <div style={{ color: 'red' }}>{error}</div>
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>{t('title')}</h2>
+        <div style={{ color: 'red' }}>{t('error')}</div>
       </section>
     );
   }
@@ -187,8 +190,8 @@ export default function FeaturedSection() {
   if (consultants.length === 0 && !loading && !error) {
     return (
       <section className="featured-section" style={{ background: 'var(--card)', padding: '2.5rem 0', textAlign: 'center', position: 'relative' }} aria-label="Featured consultants and resources">
-        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>Featured Consultants & Resources</h2>
-        <div style={{ color: '#666', fontSize: 16 }}>No featured consultants available at the moment.</div>
+        <h2 style={{ fontFamily: 'Righteous, cursive', color: '#5a67d8', fontSize: 28, fontWeight: 700, marginBottom: 24 }}>{t('title')}</h2>
+        <div style={{ color: '#666', fontSize: 16 }}>{t('noConsultants')}</div>
       </section>
     );
   }
@@ -241,7 +244,7 @@ export default function FeaturedSection() {
           letterSpacing: 'clamp(1px, 1vw, 1px)',
           padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
-          Featured Consultants & About MIET
+          {t('title')}
         </h2>
         <p style={{
           fontSize: 'clamp(1rem, 3vw, 1.3rem)',
@@ -252,7 +255,7 @@ export default function FeaturedSection() {
           fontWeight: '400',
           padding: '0 clamp(1rem, 4vw, 2rem)'
         }}>
-          Discover our exceptional professionals and learn about our mission
+          {t('subtitle')}
         </p>
       </div>
 
@@ -285,46 +288,46 @@ export default function FeaturedSection() {
             marginBottom: '1.5rem',
             textAlign: 'center'
           }}>
-            Featured Consultants
+            {t('sectionTitle')}
           </h3>
 
-      <div
-        ref={sliderRef}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          position: 'relative',
+          <div
+            ref={sliderRef}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              position: 'relative',
               maxWidth: '100%',
-          margin: '0 auto',
-          overflow: 'visible',
-        }}
-        onMouseEnter={() => setHovering(true)}
-        onMouseLeave={() => setHovering(false)}
-      >
-        {/* Left Arrow */}
-        <button
+              margin: '0 auto',
+              overflow: 'visible',
+            }}
+            onMouseEnter={() => setHovering(true)}
+            onMouseLeave={() => setHovering(false)}
+          >
+            {/* Left Arrow */}
+            <button
               className="arrow-left"
-          onClick={goLeft}
-          aria-label="Previous featured consultant"
+              onClick={goLeft}
+              aria-label="Previous featured consultant"
               disabled={consultants.length <= 1}
-          style={{
+              style={{
                 opacity: consultants.length > 1 ? 1 : 0.3,
-            position: 'absolute',
+                position: 'absolute',
                 left: '-2rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none',
-            borderRadius: '50%',
+                borderRadius: '50%',
                 width: '48px',
                 height: '48px',
                 fontSize: '20px',
                 color: '#fff',
                 cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
-            zIndex: 10,
+                zIndex: 10,
                 boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
-            outline: 'none',
+                outline: 'none',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
@@ -341,7 +344,7 @@ export default function FeaturedSection() {
               }}
             >
               ←
-        </button>
+            </button>
 
             {/* Single Consultant Card */}
             <div style={{
@@ -355,11 +358,11 @@ export default function FeaturedSection() {
                 <div
                   className="consultant-card"
                   key={`${getCurrentConsultant()!.id}-${getCurrentConsultant()!.name}-${current}`}
-                  onClick={() => window.location.href = `/consultants/${getCurrentConsultant()!.id}`}
-              tabIndex={0}
-              role="button"
+                  onClick={() => window.location.href = `/${locale}/consultants/${getCurrentConsultant()!.id}`}
+                  tabIndex={0}
+                  role="button"
                   aria-label={`View details for ${getCurrentConsultant()!.name}`}
-              style={{
+                  style={{
                     background: 'linear-gradient(135deg, #fff 0%, #f8fafc 100%)',
                     borderRadius: '24px',
                     boxShadow: '0 12px 40px rgba(0,0,0,0.15)',
@@ -367,13 +370,13 @@ export default function FeaturedSection() {
                     width: '100%',
                     maxWidth: 'clamp(300px, 90vw, 500px)',
                     minHeight: 'clamp(300px, 60vh, 400px)',
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                justifyContent: 'center',
-                position: 'relative',
+                    display: 'flex',
+                    flexDirection: 'column',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    position: 'relative',
                     border: '2px solid rgba(99, 102, 241, 0.1)',
-                cursor: 'pointer',
+                    cursor: 'pointer',
                     transition: 'all 0.3s ease',
                     overflow: 'hidden'
                   }}
@@ -409,26 +412,26 @@ export default function FeaturedSection() {
                       }}
                     />
                     {(getCurrentConsultant()!.mode === 'Online' || getCurrentConsultant()!.status === 'online') && (
-                  <span style={{
-                    position: 'absolute',
+                      <span style={{
+                        position: 'absolute',
                         bottom: '8px',
                         right: '8px',
                         width: '32px',
                         height: '32px',
-                    borderRadius: '50%',
+                        borderRadius: '50%',
                         background: 'radial-gradient(circle, #10b981 60%, #10b98188 100%)',
                         boxShadow: '0 0 16px 4px #10b98188, 0 0 0 4px #fff',
                         border: '3px solid #fff',
-                    display: 'block',
-                    zIndex: 2,
-                    animation: 'glow-green 1.2s infinite alternate',
-                  }} />
-                )}
-              </div>
+                        display: 'block',
+                        zIndex: 2,
+                        animation: 'glow-green 1.2s infinite alternate',
+                      }} />
+                    )}
+                  </div>
 
                   {/* Consultant Info */}
                   <div style={{ textAlign: 'center', flex: 1, width: '100%' }}>
-                                        <h4 className="consultant-name" style={{
+                    <h4 className="consultant-name" style={{
                       fontSize: 'clamp(2rem, 2.5vw, 2.5rem)',
                       fontWeight: '700',
                       color: '#1e1b4b',
@@ -461,8 +464,8 @@ export default function FeaturedSection() {
                       textShadow: '0 1px 3px rgba(0,0,0,0.3)'
                     }}>
                       {getCurrentConsultant()!.bio ||
-                       getCurrentConsultant()!.tagline ||
-                       `Specialized ${getCurrentConsultant()!.expertise || getCurrentConsultant()!.speciality || 'consultant'} with extensive experience in providing personalized support and guidance.`}
+                        getCurrentConsultant()!.tagline ||
+                        `Specialized ${getCurrentConsultant()!.expertise || getCurrentConsultant()!.speciality || 'consultant'} with extensive experience in providing personalized support and guidance.`}
                     </p>
 
                     {getCurrentConsultant()!.city && (
@@ -519,37 +522,37 @@ export default function FeaturedSection() {
                           e.currentTarget.style.boxShadow = '0 4px 15px rgba(16, 185, 129, 0.3)';
                         }}
                       >
-                        Book Appointment
+                        {t('bookAppointment')}
                       </button>
                     </div>
                   </div>
-              </div>
+                </div>
               )}
             </div>
 
-        {/* Right Arrow */}
-        <button
+            {/* Right Arrow */}
+            <button
               className="arrow-right"
-          onClick={goRight}
-          aria-label="Next featured consultant"
+              onClick={goRight}
+              aria-label="Next featured consultant"
               disabled={consultants.length <= 1}
-          style={{
+              style={{
                 opacity: consultants.length > 1 ? 1 : 0.3,
-            position: 'absolute',
+                position: 'absolute',
                 right: '-2rem',
-            top: '50%',
-            transform: 'translateY(-50%)',
+                top: '50%',
+                transform: 'translateY(-50%)',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 border: 'none',
-            borderRadius: '50%',
+                borderRadius: '50%',
                 width: '48px',
                 height: '48px',
                 fontSize: '20px',
                 color: '#fff',
                 cursor: consultants.length > 1 ? 'pointer' : 'not-allowed',
-            zIndex: 10,
+                zIndex: 10,
                 boxShadow: '0 8px 25px rgba(99, 102, 241, 0.3)',
-            outline: 'none',
+                outline: 'none',
                 transition: 'all 0.3s ease',
               }}
               onMouseEnter={(e) => {
@@ -566,27 +569,27 @@ export default function FeaturedSection() {
               }}
             >
               →
-        </button>
-      </div>
+            </button>
+          </div>
 
           {/* Bullets - only show if we have more than one consultant */}
           {consultants.length > 1 && (
             <div style={{ display: 'flex', justifyContent: 'center', gap: '0.8rem', marginTop: '1.5rem' }}>
-          {consultants.map((_, idx) => (
-            <span
-              key={idx}
-              onClick={() => setCurrent(idx)}
-              style={{
+              {consultants.map((_, idx) => (
+                <span
+                  key={idx}
+                  onClick={() => setCurrent(idx)}
+                  style={{
                     width: '12px',
                     height: '12px',
-                borderRadius: '50%',
+                    borderRadius: '50%',
                     background: idx === current ? '#667eea' : 'rgba(99, 102, 241, 0.2)',
                     border: idx === current ? 'none' : '2px solid rgba(99, 102, 241, 0.3)',
                     boxShadow: idx === current ? '0 0 8px rgba(99, 102, 241, 0.4)' : 'none',
-                cursor: 'pointer',
+                    cursor: 'pointer',
                     transition: 'all 0.3s ease',
-                display: 'inline-block',
-              }}
+                    display: 'inline-block',
+                  }}
                   onMouseEnter={(e) => {
                     if (idx !== current) {
                       e.currentTarget.style.background = 'rgba(99, 102, 241, 0.4)';
@@ -599,10 +602,10 @@ export default function FeaturedSection() {
                       e.currentTarget.style.transform = 'scale(1)';
                     }
                   }}
-            />
-          ))}
-        </div>
-      )}
+                />
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Right: About MIET Section */}
@@ -625,7 +628,7 @@ export default function FeaturedSection() {
             marginBottom: '1.5rem',
             textAlign: 'center'
           }}>
-            About MIET
+            {t('aboutTitle')}
           </h3>
 
           <div style={{
@@ -653,7 +656,7 @@ export default function FeaturedSection() {
               marginBottom: '1rem',
               color: '#fff'
             }}>
-              MieT (मीत)
+              {t('aboutSubtitle')}
             </h4>
             <p style={{
               fontSize: '1.1rem',
@@ -661,7 +664,7 @@ export default function FeaturedSection() {
               marginBottom: '1rem',
               color: 'rgba(255,255,255,0.9)'
             }}>
-              A tech-enabled platform based in Gurgaon, empowering individuals with diverse abilities through personalized Special Education, Mental Health Services, and Counselling.
+              {t('aboutDescription')}
             </p>
             <div style={{
               display: 'flex',
@@ -676,7 +679,7 @@ export default function FeaturedSection() {
                 fontSize: '0.9rem',
                 fontWeight: '600'
               }}>
-                🎓 Special Education
+                🎓 {t('tags.specialEducation')}
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.2)',
@@ -685,7 +688,7 @@ export default function FeaturedSection() {
                 fontSize: '0.9rem',
                 fontWeight: '600'
               }}>
-                🧠 Mental Health
+                🧠 {t('tags.mentalHealth')}
               </div>
               <div style={{
                 background: 'rgba(255,255,255,0.2)',
@@ -694,7 +697,7 @@ export default function FeaturedSection() {
                 fontSize: '0.9rem',
                 fontWeight: '600'
               }}>
-                💬 Counselling
+                💬 {t('tags.counselling')}
               </div>
             </div>
           </div>
@@ -712,7 +715,7 @@ export default function FeaturedSection() {
               marginBottom: '1rem',
               textAlign: 'center'
             }}>
-              Our Mission
+              {t('missionTitle')}
             </h5>
             <p style={{
               fontSize: '1rem',
@@ -720,14 +723,14 @@ export default function FeaturedSection() {
               color: '#4b5563',
               marginBottom: '1rem'
             }}>
-              To unlock potential, nurture growth, and build an inclusive community for all individuals, regardless of their abilities or challenges.
+              {t('missionDescription')}
             </p>
             <div style={{
               display: 'flex',
               justifyContent: 'center',
               gap: '1rem'
             }}>
-              <a href="/about" style={{
+              <a href={`/${locale}/about`} style={{
                 display: 'inline-block',
                 background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                 color: '#fff',
@@ -739,18 +742,18 @@ export default function FeaturedSection() {
                 transition: 'all 0.3s ease',
                 boxShadow: '0 4px 15px rgba(99, 102, 241, 0.3)'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.transform = 'translateY(-2px)';
-                e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.transform = 'translateY(0)';
-                e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
-              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                  e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.4)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 4px 15px rgba(99, 102, 241, 0.3)';
+                }}
               >
-                Learn More
+                {t('learnMore')}
               </a>
-              <a href="/contact" style={{
+              <a href={`/${locale}/contact`} style={{
                 display: 'inline-block',
                 background: 'rgba(99, 102, 241, 0.1)',
                 color: '#667eea',
@@ -762,16 +765,16 @@ export default function FeaturedSection() {
                 border: '2px solid rgba(99, 102, 241, 0.3)',
                 transition: 'all 0.3s ease'
               }}
-              onMouseEnter={(e) => {
-                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
-                e.currentTarget.style.transform = 'translateY(-2px)';
-              }}
-              onMouseLeave={(e) => {
-                e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
-                e.currentTarget.style.transform = 'translateY(0)';
-              }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.2)';
+                  e.currentTarget.style.transform = 'translateY(-2px)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.background = 'rgba(99, 102, 241, 0.1)';
+                  e.currentTarget.style.transform = 'translateY(0)';
+                }}
               >
-                Contact Us
+                {t('contactUs')}
               </a>
             </div>
           </div>
@@ -1025,7 +1028,7 @@ export default function FeaturedSection() {
             <h2 style={{ color: 'var(--text-accent-alt)', fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Book Appointment</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
               {bookingConsultant.image && (
-                                  <img src={bookingConsultant.image.startsWith('/') ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${bookingConsultant.image}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${bookingConsultant.image}`} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
+                <img src={bookingConsultant.image.startsWith('/') ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${bookingConsultant.image}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${bookingConsultant.image}`} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
               )}
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16 }}>{bookingConsultant.name}</div>
