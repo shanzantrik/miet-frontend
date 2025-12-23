@@ -5,6 +5,7 @@ import TopBar from '@/components/TopBar';
 import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
+import { useLocale } from 'next-intl';
 
 interface Course {
   id: string | number;
@@ -45,6 +46,7 @@ interface Course {
 export default function CourseDetailPage({ params }: { params: any }) {
   const resolvedParams = params && (params instanceof Promise || (typeof params === 'object' && 'then' in params)) ? React.use(params as any) : params;
   const courseId = resolvedParams?.id;
+  const locale = useLocale();
 
   const [course, setCourse] = useState<Course | null>(null);
   const [loading, setLoading] = useState(true);
@@ -204,7 +206,7 @@ export default function CourseDetailPage({ params }: { params: any }) {
       <main style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
         <div style={{ textAlign: 'center' }}>
           <p style={{ color: '#ef4444' }}>Error: {error || 'Course not found'}</p>
-          <button onClick={fetchCourseData} style={{ padding: '0.75rem 1.5rem', background: '#3b82f6', color: 'white', borderRadius: '6px', cursor: 'pointer' }}>Try Again</button>
+          <button onClick={() => courseId && fetchCourseData(courseId)} style={{ padding: '0.75rem 1.5rem', background: '#3b82f6', color: 'white', borderRadius: '6px', cursor: 'pointer' }}>Try Again</button>
         </div>
       </main>
       <Footer />
