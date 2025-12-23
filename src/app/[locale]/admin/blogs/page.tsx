@@ -38,6 +38,8 @@ export default function BlogsPage() {
   const [showBlogModal, setShowBlogModal] = useState(false);
   const [deleteBlogId, setDeleteBlogId] = useState<number | null>(null);
   const [deleteBlogName, setDeleteBlogName] = useState<string>('');
+  const [thumbnailFile, setThumbnailFile] = useState<File | null>(null);
+  const [thumbnailPreview, setThumbnailPreview] = useState<string>('');
 
   // Auth check
   useEffect(() => {
@@ -84,14 +86,44 @@ export default function BlogsPage() {
         ? `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs/${blogEditId}`
         : `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/blogs`;
 
-      const res = await fetch(url, {
-        method,
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify(blogForm),
-      });
+      let res: Response;
+
+      // Use FormData if file is uploaded, otherwise use JSON
+      if (thumbnailFile) {
+        const formData = new FormData();
+        formData.append('title', blogForm.title || '');
+        formData.append('description', blogForm.description || '');
+        formData.append('category', blogForm.category || 'Therapy');
+        formData.append('author', blogForm.author || '');
+        formData.append('status', blogForm.status || 'active');
+        formData.append('thumbnail', thumbnailFile);
+
+        const headers: HeadersInit = { Authorization: `Bearer ${token}` };
+        // Don't set Content-Type header when using FormData - browser will set it with boundary
+
+        res = await fetch(url, {
+          method,
+          headers,
+          body: formData,
+        });
+      } else {
+        // Use JSON when no file is uploaded
+        const headers: HeadersInit = {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`
+        };
+
+        res = await fetch(url, {
+          method,
+          headers,
+          body: JSON.stringify(blogForm),
+        });
+      }
 
       if (res.ok) {
         setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' });
+        setThumbnailFile(null);
+        setThumbnailPreview('');
         setBlogEditId(null);
         setShowBlogModal(false);
         fetchBlogs();
@@ -109,7 +141,34 @@ export default function BlogsPage() {
   async function handleBlogEdit(blog: Blog) {
     setBlogEditId(blog.id ?? null);
     setBlogForm(blog);
+    setThumbnailFile(null);
+    setThumbnailPreview(blog.thumbnail || '');
     setShowBlogModal(true);
+  }
+
+  function handleThumbnailChange(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith('image/')) {
+        alert('Please select an image file');
+        return;
+      }
+      // Validate file size (5MB limit)
+      if (file.size > 5 * 1024 * 1024) {
+        alert('Image size should be less than 5MB');
+        return;
+      }
+      setThumbnailFile(file);
+      // Create preview
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setThumbnailPreview(reader.result as string);
+      };
+      reader.readAsDataURL(file);
+      // Clear thumbnail URL when file is selected
+      setBlogForm({ ...blogForm, thumbnail: '' });
+    }
   }
 
   async function handleBlogDelete() {
@@ -277,7 +336,13 @@ export default function BlogsPage() {
             </select>
             <button
               style={{ background: '#22543d', color: '#fff', border: 'none', borderRadius: 6, padding: '10px 24px', fontWeight: 700, fontSize: 16, cursor: 'pointer' }}
-              onClick={() => { setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' }); setBlogEditId(null); setShowBlogModal(true); }}
+              onClick={() => {
+                setBlogForm({ title: '', description: '', category: 'Therapy', thumbnail: '', author: '', status: 'active' });
+                setBlogEditId(null);
+                setThumbnailFile(null);
+                setThumbnailPreview('');
+                setShowBlogModal(true);
+              }}
             >
               + Add Blog
             </button>
@@ -373,23 +438,48 @@ export default function BlogsPage() {
                   <textarea value={blogForm.description || ''} onChange={e => setBlogForm(f => ({ ...f, description: e.target.value }))} required style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', minHeight: 60 }} />
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Author</label>
                   <input type="text" value={blogForm.author || ''} onChange={e => setBlogForm(f => ({ ...f, author: e.target.value }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }} />
-                  <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail</label>
+                  <label style={{ fontWeight: 600, color: '#22543d' }}>Thumbnail Image</label>
+                  <input
+                    type="file"
+                    accept="image/*"
+                    onChange={handleThumbnailChange}
+                    style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0', width: '100%' }}
+                  />
+                  <div style={{ marginTop: 8, fontSize: 12, color: '#6b7280' }}>
+                    Upload an image file (max 5MB) or use URL below
+                  </div>
+                  <label style={{ fontWeight: 600, color: '#22543d', marginTop: 12 }}>Or Enter Thumbnail URL</label>
                   <input
                     type="text"
                     value={blogForm.thumbnail || ''}
-                    onChange={e => setBlogForm(f => ({ ...f, thumbnail: e.target.value }))}
-                    placeholder="Enter thumbnail URL"
+                    onChange={e => {
+                      setBlogForm(f => ({ ...f, thumbnail: e.target.value }));
+                      if (e.target.value) {
+                        setThumbnailFile(null);
+                        setThumbnailPreview(e.target.value);
+                      }
+                    }}
+                    placeholder="Enter thumbnail URL (optional if uploading file)"
                     style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}
                   />
-                  {blogForm.thumbnail && (
-                    <img
-                      src={blogForm.thumbnail}
-                      alt="Thumbnail"
-                      style={{ width: 60, height: 60, objectFit: 'cover', borderRadius: 6, marginTop: 4 }}
-                      onError={(e) => {
-                        e.currentTarget.style.display = 'none';
-                      }}
-                    />
+                  {(thumbnailPreview || blogForm.thumbnail) && (
+                    <div style={{ marginTop: 12 }}>
+                      <div style={{ fontSize: 12, color: '#6b7280', marginBottom: 4 }}>Preview:</div>
+                      <img
+                        src={thumbnailPreview || blogForm.thumbnail}
+                        alt="Thumbnail preview"
+                        style={{
+                          width: 120,
+                          height: 120,
+                          objectFit: 'cover',
+                          borderRadius: 6,
+                          border: '1px solid #e2e8f0'
+                        }}
+                        onError={(e) => {
+                          e.currentTarget.style.display = 'none';
+                        }}
+                      />
+                    </div>
                   )}
                   <label style={{ fontWeight: 600, color: '#22543d' }}>Status</label>
                   <select value={blogForm.status} onChange={e => setBlogForm(f => ({ ...f, status: e.target.value as 'active' | 'inactive' | 'published' | 'draft' | 'pending' | 'archived' | 'live' | 'scheduled' | 'private' | 'public' | 'review' | 'approved' | 'rejected' | 'trash' | 'deleted' }))} style={{ padding: 10, borderRadius: 6, border: '1px solid #e2e8f0' }}>

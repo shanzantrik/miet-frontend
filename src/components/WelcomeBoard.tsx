@@ -271,7 +271,7 @@ export default function WelcomeBoard() {
               left: 302,
               top: 160,
               transform: 'translate(0, -50%)',
-              color: '#25d366',
+              color: '#5a67d8',
               fontWeight: 700,
               fontSize: 20,
               background: 'rgba(255,255,255,0.92)',

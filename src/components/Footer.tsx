@@ -207,7 +207,7 @@ export default function Footer() {
                   fontWeight: '500',
                   lineHeight: '1.6'
                 }}>
-                  📞 +91 90855 38844
+                  📞 +91 99999 89408
                 </div>
                 <div style={{
                   fontSize: 'clamp(1rem, 1.1vw, 1.05rem)',
@@ -276,13 +276,72 @@ export default function Footer() {
                 </div>
               </div>
             </div>
+
+            {/* Legal Links Section */}
+            <div style={{ textAlign: 'left' }}>
+              <h3 style={{
+                fontSize: 'clamp(1.3rem, 1.5vw, 1.4rem)',
+                fontWeight: '700',
+                color: '#ffffff',
+                marginBottom: '1.5rem',
+                textShadow: '0 1px 3px rgba(0,0,0,0.3)'
+              }}>
+                Legal
+              </h3>
+              <div className="footer-legal-links" style={{
+                display: 'flex',
+                flexDirection: 'row',
+                flexWrap: 'wrap',
+                gap: '1rem',
+                alignItems: 'center'
+              }}>
+                {[
+                  { name: 'Privacy Policy', href: '/privacy' },
+                  { name: 'Terms & Conditions', href: '/terms' },
+                  { name: 'Cancellation & Refund', href: '/cancellation-refund' },
+                  { name: 'Shipping Policy', href: '/shipping' }
+                ].map((link, index) => (
+                  <React.Fragment key={link.name}>
+                    <a
+                      href={`/${locale}${link.href}`}
+                      style={{
+                        color: 'rgba(255,255,255,0.8)',
+                        fontSize: 'clamp(0.9rem, 1vw, 1rem)',
+                        textDecoration: 'none',
+                        fontWeight: '500',
+                        transition: 'all 0.3s ease',
+                        display: 'inline-block',
+                        whiteSpace: 'nowrap'
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.color = '#ffffff';
+                        e.currentTarget.style.textShadow = '0 2px 8px rgba(255,255,255,0.3)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.color = 'rgba(255,255,255,0.8)';
+                        e.currentTarget.style.textShadow = 'none';
+                      }}
+                    >
+                      {link.name}
+                    </a>
+                    {index < 3 && (
+                      <span className="footer-legal-separator" style={{
+                        color: 'rgba(255,255,255,0.4)',
+                        fontSize: 'clamp(0.8rem, 0.9vw, 0.9rem)'
+                      }}>|</span>
+                    )}
+                  </React.Fragment>
+                ))}
+              </div>
+            </div>
           </div>
 
           {/* Footer Bottom */}
           <div style={{
             borderTop: '1px solid rgba(255,255,255,0.1)',
             paddingTop: '2rem',
-            textAlign: 'center'
+            textAlign: 'center',
+            marginTop: '2rem'
           }}>
             <p style={{
               color: 'rgba(255,255,255,0.7)',
@@ -290,7 +349,7 @@ export default function Footer() {
               fontWeight: '500',
               lineHeight: '1.6'
             }}>
-              &copy; {t('copyright', { year: new Date().getFullYear() })}
+               {t('copyright', { year: new Date().getFullYear() })}
             </p>
             <p style={{
               color: 'rgba(255,255,255,0.6)',
@@ -327,6 +386,17 @@ export default function Footer() {
               }
             }
 
+            @media (max-width: 640px) {
+              .footer-legal-links {
+                flex-direction: column !important;
+                gap: 0.5rem !important;
+              }
+
+              .footer-legal-separator {
+                display: none !important;
+              }
+            }
+
             @media (max-width: 480px) {
               .footer {
                 padding: 2rem 0 1rem 0 !important;
@@ -337,7 +407,7 @@ export default function Footer() {
       </footer>
       {/* WhatsApp Floating Button */}
       <a
-        href="https://wa.me/919085538844"
+        href="https://wa.me/919999989408"
         target="_blank"
         rel="noopener noreferrer"
         aria-label="Chat on WhatsApp"

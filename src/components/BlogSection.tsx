@@ -1,5 +1,6 @@
 import React, { useEffect, useState, useRef } from 'react';
-import { useTranslations } from 'next-intl';
+import { useTranslations, useLocale } from 'next-intl';
+import { useRouter } from 'next/navigation';
 
 interface Blog {
   id: number;
@@ -25,6 +26,8 @@ interface TransformedBlog {
 
 export default function BlogSection() {
   const t = useTranslations('BlogSection');
+  const locale = useLocale();
+  const router = useRouter();
   const [blogs, setBlogs] = useState<Blog[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -103,6 +106,16 @@ export default function BlogSection() {
   // Use API blogs only - no fallback data
   const displayBlogs = blogs;
 
+  // Helper function to get blog image URL from backend
+  const getBlogImage = (blog: Blog) => {
+    const imgPath = blog.thumbnail;
+    if (!imgPath) return '/intro.webp';
+    if (imgPath.startsWith('http')) return imgPath;
+    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+    const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
+    return `${baseUrl}${cleanImgPath}`;
+  };
+
   // Transform API blogs to match the display format
   const transformedBlogs: TransformedBlog[] = displayBlogs.map(blog => {
     console.log('Transforming blog:', blog);
@@ -111,7 +124,7 @@ export default function BlogSection() {
       // API blog format
       const transformed: TransformedBlog = {
         id: blog.id,
-        image: blog.thumbnail || 'https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80',
+        image: getBlogImage(blog),
         title: blog.title,
         excerpt: blog.description,
         author: blog.author,
@@ -384,6 +397,7 @@ export default function BlogSection() {
                 border: '1px solid rgba(255,255,255,0.2)',
                 minHeight: '450px'
               }}
+              onClick={() => router.push(`/${locale}/resources/blog/${post.id}`)}
               onMouseEnter={(e) => {
                 e.currentTarget.style.transform = 'translateY(-8px) scale(1.02)';
                 e.currentTarget.style.boxShadow = '0 30px 80px rgba(99, 102, 241, 0.25)';
@@ -414,6 +428,10 @@ export default function BlogSection() {
                   }}
                   onMouseLeave={(e) => {
                     e.currentTarget.style.transform = 'scale(1)';
+                  }}
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = '/intro.webp';
                   }}
                 />
                 {/* Category Badge */}
@@ -495,7 +513,12 @@ export default function BlogSection() {
                   </div>
 
                   {/* Read More Button */}
-                  <button style={{
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      router.push(`/${locale}/resources/blog/${post.id}`);
+                    }}
+                    style={{
                     background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
                     color: '#ffffff',
                     border: 'none',
@@ -526,7 +549,7 @@ export default function BlogSection() {
       )}
 
       {/* View All Button */}
-      {blogs.length > 6 && (
+      {blogs.length > 0 && (
         <div style={{
           textAlign: 'center',
           marginTop: '3rem',
@@ -553,6 +576,7 @@ export default function BlogSection() {
               e.currentTarget.style.transform = 'translateY(0)';
               e.currentTarget.style.boxShadow = '0 8px 25px rgba(99, 102, 241, 0.3)';
             }}
+            onClick={() => router.push(`/${locale}/resources/blog`)}
           >
             {t('viewAll')} ({blogs.length})
           </button>

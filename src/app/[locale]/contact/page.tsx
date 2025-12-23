@@ -288,28 +288,45 @@ export default function ContactPage() {
                   marginBottom: '1rem',
                   fontFamily: 'Righteous, cursive'
                 }}>
-                  {t('address.title')}
+                  Contact Information
                 </h2>
                 <div style={{
                   color: '#4b5563',
                   fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
                   lineHeight: '1.6',
                   marginBottom: '1rem'
-                }} dangerouslySetInnerHTML={{ __html: t.raw('address.content') }} />
+                }}>
+                  <strong style={{ color: '#1e1b4b' }}>MIET Life</strong>
+                </div>
                 <div style={{
                   color: '#4b5563',
                   fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
                   marginBottom: '0.75rem',
                   fontWeight: '500'
                 }}>
-                  <b style={{ color: '#1e1b4b' }}>{t('address.phone')}</b> 9319027664
+                  <b style={{ color: '#1e1b4b' }}>Email:</b>{' '}
+                  <a href="mailto:support@miet.life" style={{ color: '#6366f1', textDecoration: 'none' }}>
+                    support@miet.life
+                  </a>
                 </div>
                 <div style={{
                   color: '#4b5563',
                   fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+                  marginBottom: '0.75rem',
                   fontWeight: '500'
                 }}>
-                  <b style={{ color: '#1e1b4b' }}>{t('address.hours')}</b> {t('address.hoursContent')}
+                  <b style={{ color: '#1e1b4b' }}>Phone:</b>{' '}
+                  <a href="tel:+919319027664" style={{ color: '#6366f1', textDecoration: 'none' }}>
+                    +91-9319027664
+                  </a>
+                </div>
+                <div style={{
+                  color: '#4b5563',
+                  fontSize: 'clamp(1rem, 1.1vw, 1.1rem)',
+                  fontWeight: '500',
+                  lineHeight: '1.6'
+                }}>
+                  <b style={{ color: '#1e1b4b' }}>Address:</b> 214, Tower A, Spazedge, Sector 47, Gurgaon, Haryana - 122018
                 </div>
               </div>
             </div>
@@ -337,7 +354,7 @@ export default function ContactPage() {
               </h3>
               <iframe
                 title="MieT Location Map"
-                src="https://www.google.com/maps?q=214+Tower+A+Spazedge+Badshahpur+Sohna+Road+Highway+Malibu+Town+Sector+47+Gurugram+Haryana+India+122018&output=embed"
+                src="https://maps.google.com/maps?q=214+Tower+A+Spazedge+Sector+47+Gurgaon+Haryana+122018&t=&z=15&ie=UTF8&iwloc=&output=embed"
                 width="100%"
                 height="450"
                 style={{
