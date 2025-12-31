@@ -349,15 +349,7 @@ export default function Footer() {
               fontWeight: '500',
               lineHeight: '1.6'
             }}>
-               {t('copyright', { year: new Date().getFullYear() })}
-            </p>
-            <p style={{
-              color: 'rgba(255,255,255,0.6)',
-              fontSize: 'clamp(0.8rem, 0.9vw, 0.9rem)',
-              marginTop: '0.5rem',
-              fontWeight: '400'
-            }}>
-              {t('designedBy')}
+              © 2025 MieT (Mind Inclusion Education Technology). All rights reserved. Powered by <a href="https://www.sabsoftzone.com" target="_blank" rel="noopener noreferrer" style={{ color: '#ffffff', textDecoration: 'none', fontWeight: '600', transition: 'all 0.3s ease' }} onMouseEnter={(e) => e.currentTarget.style.textShadow = '0 0 8px rgba(255,255,255,0.5)'} onMouseLeave={(e) => e.currentTarget.style.textShadow = 'none'}> SABsoftzone Pvt. Ltd. </a>
             </p>
           </div>
         </div>
