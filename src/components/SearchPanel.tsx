@@ -770,7 +770,8 @@ export default function SearchPanel() {
                     backdropFilter: 'blur(10px)',
                     textAlign: 'center',
                     minHeight: 'clamp(200px, 25vw, 240px)',
-                    width: '100%'
+                    width: '100%',
+                    justifyContent: 'center'
                   }}
                   onClick={() => {
                     // Only handle booking when card is clicked - no map interaction
@@ -821,7 +822,7 @@ export default function SearchPanel() {
                       }} />
                     )}
                   </div>
-                  <div style={{ flex: 1, textAlign: 'center', width: '100%' }}>
+                  <div style={{ textAlign: 'center', width: '100%' }}>
                     <div
                       className="consultant-name"
                       style={{
@@ -876,7 +877,7 @@ export default function SearchPanel() {
                         if (geoAddresses[c.id]) {
                           return <div style={{ color: '#ffffff', fontSize: 'clamp(0.9rem, 1vw, 1rem)', marginTop: 4, fontWeight: 500 }}>📍 {geoAddresses[c.id]}</div>;
                         }
-                        return <div style={{ color: '#ffffff', fontSize: 'clamp(0.9rem, 1vw, 1rem)', marginTop: 4, fontWeight: 500 }}>📍 Lat: {lat}, Lng: {lng}</div>;
+                        return null;
                       }
                       return <div style={{ color: '#ffffff', fontSize: 'clamp(0.9rem, 1vw, 1rem)', marginTop: 4, fontWeight: 500 }}>📍 {c.location}</div>;
                     })()}
@@ -889,7 +890,6 @@ export default function SearchPanel() {
                       fontSize: 'clamp(0.8rem, 1.5vw, 0.9rem)',
                       fontWeight: 600,
                       textAlign: 'center',
-                      marginTop: '8px',
                       padding: '8px 12px',
                       background: 'rgba(102, 126, 234, 0.1)',
                       borderRadius: 8,
@@ -1308,9 +1308,7 @@ export default function SearchPanel() {
                                   <span>📍</span> {geoAddresses[selectedConsultant.id]}
                                 </div>;
                               }
-                              return <div style={{ color: '#888', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
-                                <span>📍</span> Lat: {lat}, Lng: {lng}
-                              </div>;
+                              return null;
                             }
                             return <div style={{ color: '#888', fontSize: 12, display: 'flex', alignItems: 'center', gap: 4 }}>
                               <span>📍</span> {selectedConsultant.location}

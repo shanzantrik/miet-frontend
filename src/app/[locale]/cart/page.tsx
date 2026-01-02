@@ -5,6 +5,7 @@ import TopBar from '@/components/TopBar';
 import Footer from '@/components/Footer';
 import RazorpayPayment from '@/components/RazorpayPayment';
 import { useCart } from '@/components/CartContext';
+import { useCurrency } from '@/components/CurrencyContext';
 
 interface CartItem {
   id: string | number;
@@ -39,6 +40,7 @@ type CheckoutStep = 'auth' | 'details' | 'payment' | 'confirmation';
 
 export default function CartPage() {
   const { cartItems, removeFromCart, clearCart, cartTotal, updateQuantity } = useCart();
+  const { formatPrice } = useCurrency();
   const [showCheckoutModal, setShowCheckoutModal] = useState(false);
 
   const getProductImage = (thumbnail: string | undefined) => {
@@ -302,7 +304,7 @@ export default function CartPage() {
                             </button>
                           </div>
                           <span style={{ fontWeight: '600', color: '#8b5cf6' }}>
-                            ₹{typeof item.price === 'string' ? parseFloat(item.price) : (item.price || 0)}
+                            {formatPrice(item.price)}
                           </span>
                         </div>
                       </div>
@@ -335,19 +337,19 @@ export default function CartPage() {
                 <div style={{ marginBottom: '1.5rem' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#6b7280' }}>Subtotal:</span>
-                    <span style={{ fontWeight: '600' }}>₹{calculateTotal().toFixed(2)}</span>
+                    <span style={{ fontWeight: '600' }}>{formatPrice(calculateTotal())}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#6b7280' }}>Shipping:</span>
-                    <span style={{ fontWeight: '600' }}>₹0.00</span>
+                    <span style={{ fontWeight: '600' }}>{formatPrice(0)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
                     <span style={{ color: '#6b7280' }}>Tax:</span>
-                    <span style={{ fontWeight: '600' }}>₹0.00</span>
+                    <span style={{ fontWeight: '600' }}>{formatPrice(0)}</span>
                   </div>
                   <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1px solid #e5e7eb', fontSize: '1.1rem', fontWeight: '700' }}>
                     <span style={{ color: 'var(--text-accent-alt)' }}>Total:</span>
-                    <span style={{ color: '#8b5cf6' }}>₹{calculateTotal().toFixed(2)}</span>
+                    <span style={{ color: '#8b5cf6' }}>{formatPrice(calculateTotal())}</span>
                   </div>
                 </div>
 
@@ -423,7 +425,7 @@ export default function CartPage() {
                   {checkoutStep === 'auth' && 'Please login to continue with your purchase'}
                   {checkoutStep === 'details' && 'Enter your delivery information'}
                   {checkoutStep === 'payment' && 'Choose your payment method'}
-                  {checkoutStep === 'confirmation' && `Order Total: ₹${calculateTotal().toFixed(2)}`}
+                  {checkoutStep === 'confirmation' && `Order Total: ${formatPrice(calculateTotal())}`}
                 </p>
               </div>
               <button

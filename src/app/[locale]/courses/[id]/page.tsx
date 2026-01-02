@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
 import { useLocale } from 'next-intl';
+import { useCurrency } from '@/components/CurrencyContext';
 
 interface Course {
   id: string | number;
@@ -59,6 +60,7 @@ export default function CourseDetailPage({ params }: { params: any }) {
   });
   const [showAddToCartSuccess, setShowAddToCartSuccess] = useState(false);
   const { addToCart: addToCartContext, isInCart } = useCart();
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     if (courseId) {
@@ -146,12 +148,6 @@ export default function CourseDetailPage({ params }: { params: any }) {
     const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
     const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
     return `${baseUrl}${cleanImgPath}`;
-  };
-  const getPriceDisplay = (price: string | number | undefined) => {
-    if (!price || price === '0' || price === 0) return 'Free';
-    if (typeof price === 'string' && price.toLowerCase() === 'free') return 'Free';
-    let cleanPrice = String(price).replace(/[$€£₹]/g, '').trim();
-    return cleanPrice && !isNaN(Number(cleanPrice)) ? `₹${cleanPrice}` : `₹${price}`;
   };
   const renderStars = (rating: number) => {
     const stars = [];
@@ -447,7 +443,7 @@ export default function CourseDetailPage({ params }: { params: any }) {
 
               <div style={{ padding: '2.5rem' }}>
                 <div style={{ display: 'flex', alignItems: 'baseline', marginBottom: '2rem' }}>
-                  <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e1b4b' }}>{getPriceDisplay(course.price)}</span>
+                  <span style={{ fontSize: '2.5rem', fontWeight: '900', color: '#1e1b4b' }}>{formatPrice(course.price)}</span>
                 </div>
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>

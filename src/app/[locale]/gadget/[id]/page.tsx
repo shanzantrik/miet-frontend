@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
 import { useLocale } from 'next-intl';
+import { useCurrency } from '@/components/CurrencyContext';
 
 interface GadgetProduct {
     id: string | number;
@@ -36,6 +37,7 @@ export default function GadgetDetailPage({ params }: { params: any }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { addToCart: addToCartContext } = useCart();
+    const { formatPrice } = useCurrency();
     const [showAddToCartSuccess, setShowAddToCartSuccess] = useState(false);
 
     useEffect(() => {
@@ -81,11 +83,6 @@ export default function GadgetDetailPage({ params }: { params: any }) {
         const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
         const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
         return `${baseUrl}${cleanImgPath}`;
-    };
-    const getPriceDisplay = (price: any) => {
-        if (!price || price === '0' || price === 0) return 'Unavailable';
-        let clean = String(price).replace(/[$€£₹]/g, '').trim();
-        return !isNaN(Number(clean)) ? `₹${clean}` : `₹${price}`;
     };
 
     const addToCart = () => {
@@ -253,7 +250,7 @@ export default function GadgetDetailPage({ params }: { params: any }) {
                         }}>
                             <div>
                                 <div style={{ fontSize: '3rem', fontWeight: '900', color: '#1e1b4b', marginBottom: '0.5rem' }}>
-                                    {getPriceDisplay(gadget.price)}
+                                    {formatPrice(gadget.price)}
                                 </div>
                                 {gadget.stock_status && (
                                     <div style={{

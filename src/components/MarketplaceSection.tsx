@@ -2,6 +2,7 @@
 import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { categories } from './marketplaceData';
+import { useCurrency } from './CurrencyContext';
 
 interface Product {
   id: number;
@@ -25,6 +26,7 @@ export default function MarketplaceSection() {
   const [page, setPage] = useState(1);
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
+  const { formatPrice } = useCurrency();
 
   useEffect(() => {
     fetchProducts();
@@ -88,14 +90,6 @@ export default function MarketplaceSection() {
     return `${baseUrl}${cleanPath}`;
   };
 
-  const getPriceDisplay = (price: string | number | undefined) => {
-    if (!price || price === '0' || price === 0) return 'Free';
-    if (typeof price === 'string' && price.toLowerCase() === 'free') return 'Free';
-
-    // Clean price by removing any existing currency symbols
-    let cleanPrice = String(price).replace(/[$€£₹]/g, '').trim();
-    return cleanPrice && !isNaN(Number(cleanPrice)) ? `₹${cleanPrice}` : `₹${price}`;
-  };
 
   if (loading) {
     return (
@@ -347,7 +341,7 @@ export default function MarketplaceSection() {
                       lineHeight: '1.4',
                       textShadow: '0 1px 3px rgba(0,0,0,0.1)'
                     }}>
-                      {getPriceDisplay(product.price)}
+                      {formatPrice(product.price)}
                     </div>
                   ) : null}
 

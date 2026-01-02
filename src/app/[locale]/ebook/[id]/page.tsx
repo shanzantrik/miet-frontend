@@ -6,6 +6,7 @@ import Footer from '@/components/Footer';
 import Link from 'next/link';
 import { useCart } from '@/components/CartContext';
 import { useLocale } from 'next-intl';
+import { useCurrency } from '@/components/CurrencyContext';
 
 interface EBook {
     id: string | number;
@@ -37,6 +38,7 @@ export default function EBookDetailPage({ params }: { params: any }) {
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
     const { addToCart: addToCartContext } = useCart();
+    const { formatPrice } = useCurrency();
     const [showAddToCartSuccess, setShowAddToCartSuccess] = useState(false);
 
     useEffect(() => {
@@ -77,11 +79,6 @@ export default function EBookDetailPage({ params }: { params: any }) {
         const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
         const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
         return `${baseUrl}${cleanImgPath}`;
-    };
-    const getPriceDisplay = (price: any) => {
-        if (!price || price === '0' || price === 0) return 'Free';
-        let clean = String(price).replace(/[$€£₹]/g, '').trim();
-        return !isNaN(Number(clean)) ? `₹${clean}` : `₹${price}`;
     };
 
     const addToCart = () => {
@@ -307,7 +304,7 @@ export default function EBookDetailPage({ params }: { params: any }) {
                             <div style={{ padding: '1.75rem' }}>
                                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
                                     <div style={{ fontSize: '2.25rem', fontWeight: '900', color: '#1e1b4b', display: 'flex', alignItems: 'baseline', gap: '0.2rem' }}>
-                                        {getPriceDisplay(ebook.price)}
+                                        {formatPrice(ebook.price)}
                                         {ebook.price !== 0 && ebook.price !== '0' && ebook.price !== 'Free' && (
                                             <span style={{ fontSize: '0.85rem', color: '#94a3b8', fontWeight: '600' }}>/ Lifetime</span>
                                         )}

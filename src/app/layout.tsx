@@ -4,6 +4,7 @@ import '@fontsource/josefin-sans';
 import "./globals.css";
 import { CartProvider } from '../components/CartContext';
 import { NotificationProvider } from '../components/NotificationSystem';
+import { CurrencyProvider } from '../components/CurrencyContext';
 
 export default function RootLayout({
   children,
@@ -13,11 +14,13 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body style={{ fontFamily: 'Josefin Sans, Arial, sans-serif' }}>
-        <CartProvider>
-          <NotificationProvider>
-            {children}
-          </NotificationProvider>
-        </CartProvider>
+        <CurrencyProvider>
+          <CartProvider>
+            <NotificationProvider>
+              {children}
+            </NotificationProvider>
+          </CartProvider>
+        </CurrencyProvider>
         {/* Footer remains as before, or you can import Footer from /components/Footer if desired */}
       </body>
     </html>

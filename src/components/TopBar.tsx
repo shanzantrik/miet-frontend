@@ -9,6 +9,7 @@ import Link from 'next/link';
 import Image from 'next/image';
 import { useCart } from './CartContext';
 import { GoogleAuth } from './GoogleAuth';
+import { useCurrency } from './CurrencyContext';
 
 const Flag = ({ code }: { code: 'en' | 'hi' }) => (
   <Image
@@ -28,7 +29,7 @@ export default function TopBar() {
   // const [lang, setLang] = useState<'en' | 'hi'>('en'); // Removed manual state
   const [showLang, setShowLang] = useState(false);
   const [showCurrency, setShowCurrency] = useState(false);
-  const [currency, setCurrency] = useState('INR');
+  const { currency, setCurrency } = useCurrency();
   const [fontSize, setFontSize] = useState(1);
   const [highContrast, setHighContrast] = useState(false);
   const [mobileMenu, setMobileMenu] = useState(false);
