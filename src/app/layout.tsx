@@ -6,6 +6,8 @@ import { CartProvider } from '../components/CartContext';
 import { NotificationProvider } from '../components/NotificationSystem';
 import { CurrencyProvider } from '../components/CurrencyContext';
 
+import { ChatBot } from '../components/ChatBot';
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -18,6 +20,7 @@ export default function RootLayout({
           <CartProvider>
             <NotificationProvider>
               {children}
+              <ChatBot />
             </NotificationProvider>
           </CartProvider>
         </CurrencyProvider>
