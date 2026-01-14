@@ -5,6 +5,7 @@ import TopBar from '@/components/TopBar';
 import Footer from '@/components/Footer';
 import { useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 interface Blog {
   id: number;
@@ -39,8 +40,7 @@ export default function BlogDetailPage({ params }: { params: any }) {
       setLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-      const response = await fetch(`${backendUrl}/api/blogs/${targetId}`);
+      const response = await fetch(getApiUrl(`api/blogs/${targetId}`));
 
       if (!response.ok) {
         throw new Error(`Failed to fetch blog: ${response.status}`);
@@ -67,7 +67,7 @@ export default function BlogDetailPage({ params }: { params: any }) {
     const imgPath = blog.thumbnail;
     if (!imgPath) return '/intro.webp';
     if (imgPath.startsWith('http')) return imgPath;
-    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+    const baseUrl = getBackendUrl();
     const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
     return `${baseUrl}${cleanImgPath}`;
   };

@@ -5,6 +5,7 @@ import { FaStar, FaVideo, FaUsers, FaClock, FaSpinner } from 'react-icons/fa';
 import TopBar from '@/components/TopBar';
 import Footer from '@/components/Footer';
 import { useTranslations, useLocale } from 'next-intl';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 interface Course {
   id: string;
@@ -43,18 +44,14 @@ export default function CoursesPage() {
       setError(null);
 
       // Debug environment variable
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL;
-      console.log('🔧 Backend URL:', backendUrl);
-
-      if (!backendUrl) {
-        throw new Error('Backend URL not configured. Please check your environment variables.');
-      }
+      const apiUrl = getApiUrl('api/products');
+      console.log('🔧 API URL:', apiUrl);
 
       // Fetch courses from backend API with timeout
       const controller = new AbortController();
       const timeoutId = setTimeout(() => controller.abort(), 10000); // 10 second timeout
 
-      const response = await fetch(`${backendUrl}/api/products`, {
+      const response = await fetch(apiUrl, {
         signal: controller.signal
       });
 
@@ -145,7 +142,7 @@ export default function CoursesPage() {
   const getDefaultImage = (course: Course) => {
     if (course.thumbnail) {
       // Use the same pattern as marketplace for image URLs
-      return `${process.env.NEXT_PUBLIC_BACKEND_URL}${course.thumbnail}`;
+      return `${getBackendUrl()}${course.thumbnail}`;
     }
     // Return default image based on course type or use a generic one
     return '/intro.webp';

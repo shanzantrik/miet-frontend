@@ -4,6 +4,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useTranslations, useLocale } from 'next-intl';
 import { GoogleAuth } from './GoogleAuth';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 type Consultant = {
   id: number;
@@ -67,7 +68,7 @@ export default function FeaturedSection() {
         return;
       }
 
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/auth/profile`, {
+      const response = await fetch(getApiUrl('api/auth/profile'), {
         headers: {
           'Authorization': `Bearer ${token}`
         }
@@ -112,7 +113,7 @@ export default function FeaturedSection() {
 
   // Fetch consultants from API
   useEffect(() => {
-    fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`)
+    fetch(getApiUrl('api/consultants/public'))
       .then(res => {
         if (!res.ok) throw new Error('Failed to fetch consultants');
         return res.json();
@@ -395,7 +396,7 @@ export default function FeaturedSection() {
                   <div style={{ position: 'relative', marginBottom: '1.5rem' }}>
                     <img
                       className="consultant-image"
-                      src={getCurrentConsultant()!.image && getCurrentConsultant()!.image!.startsWith('/') ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${getCurrentConsultant()!.image}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${getCurrentConsultant()!.image}`}
+                      src={getCurrentConsultant()!.image && getCurrentConsultant()!.image!.startsWith('/') ? `${getBackendUrl()}${getCurrentConsultant()!.image}` : `${getBackendUrl()}/uploads/${getCurrentConsultant()!.image}`}
                       alt={getCurrentConsultant()!.name}
                       style={{
                         width: '140px',
@@ -1028,7 +1029,7 @@ export default function FeaturedSection() {
             <h2 style={{ color: 'var(--text-accent-alt)', fontWeight: 700, fontSize: 22, marginBottom: 10 }}>Book Appointment</h2>
             <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 18 }}>
               {bookingConsultant.image && (
-                <img src={bookingConsultant.image.startsWith('/') ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${bookingConsultant.image}` : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${bookingConsultant.image}`} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
+                <img src={bookingConsultant.image.startsWith('/') ? `${getBackendUrl()}${bookingConsultant.image}` : `${getBackendUrl()}/uploads/${bookingConsultant.image}`} alt={bookingConsultant.name} style={{ width: 44, height: 44, borderRadius: '50%', objectFit: 'cover', border: '2px solid var(--accent)' }} />
               )}
               <div>
                 <div style={{ fontWeight: 700, color: 'var(--text-accent-alt)', fontSize: 16 }}>{bookingConsultant.name}</div>

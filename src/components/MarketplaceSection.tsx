@@ -3,6 +3,7 @@ import React, { useState, useEffect } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { categories } from './marketplaceData';
 import { useCurrency } from './CurrencyContext';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 interface Product {
   id: number;
@@ -34,7 +35,7 @@ export default function MarketplaceSection() {
 
   const fetchProducts = async () => {
     try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_BACKEND_URL}/api/products`);
+      const response = await fetch(getApiUrl('api/products'));
       if (response.ok) {
         const data = await response.json();
         const productsArray = data.products || data;
@@ -85,7 +86,7 @@ export default function MarketplaceSection() {
     }
 
     // Otherwise, construct the full URL from the backend URL
-    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+    const baseUrl = getBackendUrl();
     const cleanPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
     return `${baseUrl}${cleanPath}`;
   };

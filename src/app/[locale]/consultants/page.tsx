@@ -5,6 +5,7 @@ import TopBar from "@/components/TopBar";
 import Footer from "@/components/Footer";
 import Image from "next/image";
 import { useTranslations } from 'next-intl';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 const PAGE_SIZE = 4;
 
@@ -43,7 +44,7 @@ export default function ConsultantsPage() {
     setError("");
 
     try {
-      const url = `${process.env.NEXT_PUBLIC_BACKEND_URL}/api/consultants/public`;
+      const url = getApiUrl('api/consultants/public');
       console.log('Fetching all consultants with URL:', url);
 
       const res = await fetch(url);
@@ -525,8 +526,8 @@ export default function ConsultantsPage() {
                           <img
                             src={
                               consultant.image.startsWith('/')
-                                ? `${process.env.NEXT_PUBLIC_BACKEND_URL}${consultant.image}`
-                                : `${process.env.NEXT_PUBLIC_BACKEND_URL}/uploads/${consultant.image}`
+                                ? `${getBackendUrl()}${consultant.image}`
+                                : `${getBackendUrl()}/uploads/${consultant.image}`
                             }
                             alt={consultant.name}
                             width={100}

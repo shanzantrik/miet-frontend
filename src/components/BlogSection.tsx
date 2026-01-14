@@ -1,6 +1,7 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { useTranslations, useLocale } from 'next-intl';
 import { useRouter } from 'next/navigation';
+import { getApiUrl, getBackendUrl } from '@/utils/api';
 
 interface Blog {
   id: number;
@@ -45,20 +46,19 @@ export default function BlogSection() {
       setLoading(true);
       setError(null);
 
-      const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || '';
-      console.log('Fetching blogs from:', `${backendUrl}/api/blogs`);
-      console.log('Environment variable NEXT_PUBLIC_BACKEND_URL:', process.env.NEXT_PUBLIC_BACKEND_URL);
+      const apiUrl = getApiUrl('api/blogs');
+      console.log('Fetching blogs from:', apiUrl);
 
       // Test if the endpoint is reachable
       try {
-        const testResponse = await fetch(`${backendUrl}/api/blogs`, { method: 'HEAD' });
+        const testResponse = await fetch(apiUrl, { method: 'HEAD' });
         console.log('API endpoint test - Status:', testResponse.status);
         console.log('API endpoint test - Headers:', Object.fromEntries(testResponse.headers.entries()));
       } catch (testErr) {
         console.log('API endpoint test failed:', testErr);
       }
 
-      const response = await fetch(`${backendUrl}/api/blogs`);
+      const response = await fetch(apiUrl);
       console.log('Main API response status:', response.status);
       console.log('Main API response headers:', Object.fromEntries(response.headers.entries()));
 
@@ -111,7 +111,7 @@ export default function BlogSection() {
     const imgPath = blog.thumbnail;
     if (!imgPath) return '/intro.webp';
     if (imgPath.startsWith('http')) return imgPath;
-    const baseUrl = (process.env.NEXT_PUBLIC_BACKEND_URL || '').replace(/\/$/, '');
+    const baseUrl = getBackendUrl();
     const cleanImgPath = imgPath.startsWith('/') ? imgPath : `/${imgPath}`;
     return `${baseUrl}${cleanImgPath}`;
   };
