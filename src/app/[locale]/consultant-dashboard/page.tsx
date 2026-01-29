@@ -680,9 +680,9 @@ export default function ConsultantDashboard() {
                               fontSize: '12px',
                               fontWeight: '600',
                               background: appointment.status === 'scheduled' ? '#e3f2fd' :
-                                         appointment.status === 'confirmed' ? '#e8f5e8' : '#ffebee',
+                                appointment.status === 'confirmed' ? '#e8f5e8' : '#ffebee',
                               color: appointment.status === 'scheduled' ? '#1976d2' :
-                                     appointment.status === 'confirmed' ? '#388e3c' : '#d32f2f'
+                                appointment.status === 'confirmed' ? '#388e3c' : '#d32f2f'
                             }}>
                               {appointment.status}
                             </span>
@@ -914,6 +914,7 @@ export default function ConsultantDashboard() {
                         <input
                           type="date"
                           value={newAvailability.date}
+                          min={new Date().toISOString().split('T')[0]}
                           onChange={(e) => setNewAvailability({ ...newAvailability, date: e.target.value })}
                           style={{
                             width: '100%',

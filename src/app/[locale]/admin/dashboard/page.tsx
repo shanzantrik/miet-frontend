@@ -3463,6 +3463,7 @@ export default function AdminDashboard() {
                               <input
                                 type="date"
                                 value={slot.date}
+                                min={new Date().toISOString().split('T')[0]}
                                 onChange={e => handleSlotChange(idx, 'date', e.target.value)}
                                 style={{
                                   padding: '8px 12px',
@@ -4262,6 +4263,7 @@ export default function AdminDashboard() {
                               type="date"
                               name="subscription_start"
                               value={serviceForm.subscription_start || ''}
+                              min={new Date().toISOString().split('T')[0]}
                               onChange={handleServiceFormChange}
                               style={{
                                 width: '100%',
@@ -4288,6 +4290,7 @@ export default function AdminDashboard() {
                               type="date"
                               name="subscription_end"
                               value={serviceForm.subscription_end || ''}
+                              min={new Date().toISOString().split('T')[0]}
                               onChange={handleServiceFormChange}
                               style={{
                                 width: '100%',

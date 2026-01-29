@@ -40,7 +40,12 @@ export default function AdminLogin() {
       });
 
       const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Login failed");
+
+      if (!res.ok) {
+        // Show detailed error message from backend
+        const errorMessage = data.error || data.message || data.details || `Login failed with status ${res.status}`;
+        throw new Error(errorMessage);
+      }
 
       // Save JWT token
       localStorage.setItem("admin_jwt", data.token);
@@ -59,8 +64,9 @@ export default function AdminLogin() {
       if (err instanceof Error) {
         setError(err.message);
       } else {
-        setError('Login failed');
+        setError('Login failed. Please check your credentials and try again.');
       }
+      console.error('Login error:', err);
     } finally {
       setLoading(false);
     }

@@ -137,7 +137,7 @@ export default function RazorpayPayment({
           }
         },
         modal: {
-          ondismiss: function() {
+          ondismiss: function () {
             if (onClose) {
               onClose();
             }
