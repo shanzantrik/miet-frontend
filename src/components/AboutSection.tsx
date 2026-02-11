@@ -1,10 +1,39 @@
 "use client";
 import React, { useState } from 'react';
 import { useTranslations } from 'next-intl';
+import { getApiUrl } from '@/utils/api';
 
 export default function AboutSection() {
   const t = useTranslations('AboutSection');
   const [activeTab, setActiveTab] = useState(0);
+
+  const [teamData, setTeamData] = useState<any[]>([]);
+  const [programmeData, setProgrammeData] = useState<any[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+
+  React.useEffect(() => {
+    async function fetchData() {
+      try {
+        const [teamRes, programmeRes] = await Promise.all([
+          fetch(getApiUrl('api/team')),
+          fetch(getApiUrl('api/programmes'))
+        ]);
+        if (teamRes.ok) {
+          const data = await teamRes.json();
+          setTeamData(data.team || data);
+        }
+        if (programmeRes.ok) {
+          const data = await programmeRes.json();
+          setProgrammeData(data.programmes || data);
+        }
+      } catch (err) {
+        console.error('Error fetching about data:', err);
+      } finally {
+        setIsLoading(false);
+      }
+    }
+    fetchData();
+  }, []);
 
   const tabs = [
     {
@@ -100,27 +129,123 @@ export default function AboutSection() {
     {
       label: t('tabs.team'),
       content: (
-        <div
-          style={{
-            maxWidth: 'min(1200px, 96vw)',
-            margin: '0 auto',
-            color: '#22543d',
-            fontSize: 18,
-            lineHeight: 1.7,
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 40,
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <img src="/team.webp" alt="MieT Team" style={{ width: '100%', maxWidth: 480, borderRadius: 16, margin: '18px 0', boxShadow: '0 2px 12px #5a67d822' }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h3 style={{ color: '#5a67d8', fontWeight: 700 }}>{t('team.title')}</h3>
-            <p>{t('team.description')}</p>
-            <a href="https://miet.life/meet-our-team" target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', fontWeight: 600, textDecoration: 'underline', marginTop: 12, display: 'inline-block' }}>{t('team.meetTeam')}</a>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 40 }}>
+          <h2 style={{
+            textAlign: 'center',
+            fontSize: '2.5rem',
+            fontWeight: 800,
+            color: '#1e293b',
+            marginBottom: '1rem',
+            background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+            WebkitBackgroundClip: 'text',
+            WebkitTextFillColor: 'transparent'
+          }}>Meet Our Team</h2>
+
+          <div style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+            gap: 30,
+            padding: '20px 0'
+          }}>
+            {isLoading ? (
+              <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '40px', color: '#5a67d8', fontWeight: 600 }}>Loading team data...</div>
+            ) : teamData.length > 0 ? teamData.map((member: any, index: number) => (
+              <div
+                key={index}
+                style={{
+                  background: 'rgba(255,255,255,0.8)',
+                  borderRadius: '24px',
+                  padding: '30px',
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 24,
+                  alignItems: 'center',
+                  boxShadow: '0 10px 25px rgba(0,0,0,0.05)',
+                  border: '1px solid rgba(102, 126, 234, 0.1)',
+                  transition: 'transform 0.3s ease, box-shadow 0.3s ease',
+                  cursor: 'pointer'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = 'translateY(-5px)';
+                  e.currentTarget.style.boxShadow = '0 15px 35px rgba(102, 126, 234, 0.15)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = 'translateY(0)';
+                  e.currentTarget.style.boxShadow = '0 10px 25px rgba(0,0,0,0.05)';
+                }}
+              >
+                <div style={{ flexShrink: 0 }}>
+                  <img
+                    src={member.image_url ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000') + member.image_url : (member.image || "/team.webp")}
+                    alt={member.title}
+                    style={{
+                      width: 120,
+                      height: 120,
+                      borderRadius: '50%',
+                      objectFit: 'cover',
+                      border: '4px solid #fff',
+                      boxShadow: '0 4px 12px rgba(0,0,0,0.1)'
+                    }}
+                  />
+                </div>
+                <div style={{ flex: 1 }}>
+                  <span style={{
+                    fontSize: '0.9rem',
+                    fontWeight: 700,
+                    color: '#667eea',
+                    textTransform: 'uppercase',
+                    letterSpacing: '1px'
+                  }}>
+                    {member.role || 'Team Member'}
+                  </span>
+                  <h3 style={{
+                    color: '#1e293b',
+                    fontWeight: 700,
+                    fontSize: '1.4rem',
+                    margin: '4px 0 10px 0',
+                    fontFamily: 'inherit'
+                  }}>
+                    {member.title}
+                  </h3>
+                  <p style={{
+                    fontSize: '1rem',
+                    lineHeight: '1.6',
+                    color: '#475569',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 3,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden'
+                  }} title={member.description}>
+                    {member.description}
+                  </p>
+
+                </div>
+              </div>
+            )) : (
+              <div
+                style={{
+                  maxWidth: 'min(1200px, 96vw)',
+                  margin: '0 auto',
+                  color: '#22543d',
+                  fontSize: 18,
+                  lineHeight: 1.7,
+                  display: 'flex',
+                  flexDirection: 'row',
+                  gap: 40,
+                  flexWrap: 'wrap',
+                  alignItems: 'flex-start',
+                }}
+              >
+                <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                  <img src="/team.webp" alt="MieT Team" style={{ width: '100%', maxWidth: 480, borderRadius: 16, margin: '18px 0', boxShadow: '0 2px 12px #5a67d822' }} />
+                </div>
+                <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                  <h3 style={{ color: '#5a67d8', fontWeight: 700 }}>{t('team.title')}</h3>
+                  <p>{t('team.description')}</p>
+                  <a href="https://miet.life/meet-our-team" target="_blank" rel="noopener noreferrer" style={{ color: '#5a67d8', fontWeight: 600, textDecoration: 'underline', marginTop: 12, display: 'inline-block' }}>{t('team.meetTeam')}</a>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       ),
@@ -128,30 +253,46 @@ export default function AboutSection() {
     {
       label: t('tabs.programmes'),
       content: (
-        <div
-          style={{
-            maxWidth: 'min(1200px, 96vw)',
-            margin: '0 auto',
-            color: '#22543d',
-            fontSize: 18,
-            lineHeight: 1.7,
-            display: 'flex',
-            flexDirection: 'row',
-            gap: 40,
-            flexWrap: 'wrap',
-            alignItems: 'flex-start',
-          }}
-        >
-          <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
-            <img src="/programmes.webp" alt="MieT Programmes" style={{ width: '100%', maxWidth: 480, borderRadius: 16, margin: '18px 0', boxShadow: '0 2px 12px #5a67d822' }} />
-          </div>
-          <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-            <h3 style={{ color: '#5a67d8', fontWeight: 700 }}>{t('programmes.title')}</h3>
-            <h4 style={{ color: '#22543d', fontWeight: 700, marginTop: 18 }}>{t('programmes.p1Title')}</h4>
-            <p dangerouslySetInnerHTML={{ __html: t.raw('programmes.p1Desc') }} />
-            <h4 style={{ color: '#22543d', fontWeight: 700, marginTop: 18 }}>{t('programmes.p2Title')}</h4>
-            <p dangerouslySetInnerHTML={{ __html: t.raw('programmes.p2Desc') }} />
-          </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 60 }}>
+          {programmeData.length > 0 ? programmeData.map((prog: any, index: number) => (
+            <div
+              key={index}
+              style={{
+                maxWidth: 'min(1200px, 96vw)',
+                margin: '0 auto',
+                color: '#22543d',
+                fontSize: 18,
+                lineHeight: 1.7,
+                display: 'flex',
+                flexDirection: index % 2 === 0 ? 'row' : 'row-reverse',
+                gap: 40,
+                flexWrap: 'wrap',
+                alignItems: 'flex-start',
+                padding: '20px 0'
+              }}
+            >
+              <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                <img
+                  src={
+                    prog.image_url ? (process.env.NEXT_PUBLIC_BACKEND_URL || 'http://localhost:4000') + prog.image_url :
+                      (prog.image || "/programmes.webp")
+                  }
+                  alt={prog.title}
+                  style={{ width: '100%', maxWidth: 480, borderRadius: 16, boxShadow: '0 2px 12px #5a67d822' }}
+                />
+              </div>
+              <div style={{ flex: 1, minWidth: 280, display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <h3 style={{ color: '#5a67d8', fontWeight: 700, fontSize: '1.8rem', marginBottom: '1.5rem' }}>{prog.title}</h3>
+                {prog.description && <p style={{ marginBottom: 20 }}>{prog.description}</p>}
+                {prog.p1_title && <h4 style={{ color: '#22543d', fontWeight: 700, marginTop: 18 }}>{prog.p1_title}</h4>}
+                {prog.p1_description && <p dangerouslySetInnerHTML={{ __html: prog.p1_description }} />}
+                {prog.p2_title && <h4 style={{ color: '#22543d', fontWeight: 700, marginTop: 18 }}>{prog.p2_title}</h4>}
+                {prog.p2_description && <p dangerouslySetInnerHTML={{ __html: prog.p2_description }} />}
+              </div>
+            </div>
+          )) : (
+            <div style={{ textAlign: 'center', padding: '40px' }}>Loading programmes...</div>
+          )}
         </div>
       ),
     },

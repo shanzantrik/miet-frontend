@@ -3,7 +3,7 @@ import React, { useEffect, useState, useMemo } from "react";
 import { useRouter } from "next/navigation";
 import Footer from "@/components/Footer";
 import Image from 'next/image';
-import { FaThLarge, FaList, FaTags, FaUserCircle, FaSignOutAlt, FaChevronLeft, FaChevronRight, FaUserMd, FaChevronDown, FaSearch, FaEdit, FaTrash, FaPlus, FaEye } from "react-icons/fa";
+import { FaThLarge, FaList, FaTags, FaUserCircle, FaSignOutAlt, FaChevronLeft, FaChevronRight, FaUserMd, FaChevronDown, FaSearch, FaEdit, FaTrash, FaPlus, FaEye, FaUsers, FaGraduationCap } from "react-icons/fa";
 import { GoogleMap, Marker, useJsApiLoader } from '@react-google-maps/api';
 import { getApiUrl } from "@/utils/api";
 import { useNotifications } from "@/components/NotificationSystem";
@@ -195,6 +195,28 @@ interface Consultation {
   updated_at?: string;
 }
 
+interface TeamMember {
+  id?: number;
+  title: string;
+  description: string;
+  role: string;
+  image?: string;
+  imageFile?: File;
+}
+
+interface Programme {
+  id?: number;
+  title: string;
+  description: string;
+  p1_title?: string;
+  p1_description?: string;
+  p2_title?: string;
+  p2_description?: string;
+  image?: string;
+  imageFile?: File;
+}
+
+
 export default function AdminDashboard() {
   const router = useRouter();
   const { addNotification } = useNotifications();
@@ -208,7 +230,7 @@ export default function AdminDashboard() {
   const [loading, setLoading] = useState(false);
   const [sidebarOpen, setSidebarOpen] = useState(true);
   const [ailmentsExpanded, setAilmentsExpanded] = useState(false);
-  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs' | 'webinars' | 'consultations'>('dashboard');
+  const [activeMenu, setActiveMenu] = useState<'dashboard' | 'categories' | 'subcategories' | 'consultants' | 'users' | 'services' | 'products' | 'blogs' | 'webinars' | 'consultations' | 'team' | 'programmes'>('dashboard');
   const [isClient, setIsClient] = useState(false);
   // Consultant state
   const [consultants, setConsultants] = useState<Consultant[]>([]);
@@ -380,6 +402,15 @@ export default function AdminDashboard() {
   const [showBlogModal, setShowBlogModal] = useState(false);
   const [deleteBlogId, setDeleteBlogId] = useState<number | null>(null);
   const [deleteBlogName, setDeleteBlogName] = useState<string>('');
+  const [team, setTeam] = useState<TeamMember[]>([]);
+  const [teamForm, setTeamForm] = useState<Partial<TeamMember>>({ title: '', description: '', role: '' });
+  const [showTeamModal, setShowTeamModal] = useState(false);
+  const [teamEditId, setTeamEditId] = useState<number | null>(null);
+
+  const [programmes, setProgrammes] = useState<Programme[]>([]);
+  const [programmeForm, setProgrammeForm] = useState<Partial<Programme>>({ title: '', description: '' });
+  const [showProgrammeModal, setShowProgrammeModal] = useState(false);
+  const [programmeEditId, setProgrammeEditId] = useState<number | null>(null);
 
   // Client-side hydration fix
   useEffect(() => {
@@ -592,6 +623,40 @@ export default function AdminDashboard() {
     }
   }, [activeMenu]);
 
+  async function fetchTeam() {
+    try {
+      const res = await fetch(getApiUrl("api/team"), {
+        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setTeam(data.team || data);
+      }
+    } catch (error) {
+      console.error("Error fetching team:", error);
+    }
+  }
+
+  async function fetchProgrammes() {
+    try {
+      const res = await fetch(getApiUrl("api/programmes"), {
+        headers: { Authorization: `Bearer ${localStorage.getItem("admin_jwt")}` },
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setProgrammes(data.programmes || data);
+      }
+    } catch (error) {
+      console.error("Error fetching programmes:", error);
+    }
+  }
+
+  useEffect(() => {
+    if (activeMenu === 'team') fetchTeam();
+    if (activeMenu === 'programmes') fetchProgrammes();
+  }, [activeMenu]);
+
+
   // Debug: Log products state changes
   useEffect(() => {
     console.log('Products state changed:', products);
@@ -722,6 +787,8 @@ export default function AdminDashboard() {
     { key: 'blogs', label: 'Blogs & Media', icon: <FaList size={20} /> },
     { key: 'webinars', label: 'Webinars', icon: <FaList size={20} /> },
     { key: 'consultations', label: 'Consultations', icon: <FaUserMd size={20} /> },
+    { key: 'team', label: 'Team', icon: <FaUsers size={20} /> },
+    { key: 'programmes', label: 'Programmes', icon: <FaGraduationCap size={20} /> },
   ];
 
   // Helper to save slots to backend
@@ -1302,6 +1369,7 @@ export default function AdminDashboard() {
   };
 
   const paginateData = (data: any[], currentPage: number, itemsPerPage: number) => {
+    if (!Array.isArray(data)) return [];
     const startIndex = (currentPage - 1) * itemsPerPage;
     const endIndex = startIndex + itemsPerPage;
     return data.slice(startIndex, endIndex);
@@ -1584,6 +1652,116 @@ export default function AdminDashboard() {
       alert('Error deleting consultation');
     }
   }
+
+  async function handleTeamSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = teamEditId ? "PUT" : "POST";
+      const url = teamEditId ? getApiUrl(`api/team/${teamEditId}`) : getApiUrl("api/team");
+
+      const formData = new FormData();
+      formData.append('title', teamForm.title || '');
+      formData.append('description', teamForm.description || '');
+      formData.append('role', teamForm.role || '');
+      if (teamForm.imageFile) {
+        formData.append('image', teamForm.imageFile);
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (res.ok) {
+        setTeamForm({ title: '', description: '', role: '' });
+        setTeamEditId(null);
+        setShowTeamModal(false);
+        fetchTeam();
+        addNotification({ type: 'success', title: 'Success', message: teamEditId ? 'Team member updated!' : 'Team member added!' });
+      }
+    } catch (error) {
+      console.error("Error saving team:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleTeamDelete(id: number) {
+    if (!confirm('Are you sure you want to delete this team member?')) return;
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl(`api/team/${id}`), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setTeam(team.filter(t => t.id !== id));
+        addNotification({ type: 'success', title: 'Deleted', message: 'Team member removed.' });
+      }
+    } catch (error) {
+      console.error('Error deleting team member:', error);
+    }
+  }
+
+  async function handleProgrammeSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const method = programmeEditId ? "PUT" : "POST";
+      const url = programmeEditId ? getApiUrl(`api/programmes/${programmeEditId}`) : getApiUrl("api/programmes");
+
+      const formData = new FormData();
+      formData.append('title', programmeForm.title || '');
+      formData.append('description', programmeForm.description || '');
+      formData.append('p1_title', programmeForm.p1_title || '');
+      formData.append('p1_description', programmeForm.p1_description || '');
+      formData.append('p2_title', programmeForm.p2_title || '');
+      formData.append('p2_description', programmeForm.p2_description || '');
+      if (programmeForm.imageFile) {
+        formData.append('image', programmeForm.imageFile);
+      }
+
+      const res = await fetch(url, {
+        method,
+        headers: { Authorization: `Bearer ${token}` },
+        body: formData,
+      });
+
+      if (res.ok) {
+        setProgrammeForm({ title: '', description: '', p1_title: '', p1_description: '', p2_title: '', p2_description: '' });
+        setProgrammeEditId(null);
+        setShowProgrammeModal(false);
+        fetchProgrammes();
+        addNotification({ type: 'success', title: 'Success', message: programmeEditId ? 'Programme updated!' : 'Programme added!' });
+      }
+    } catch (error) {
+      console.error("Error saving programme:", error);
+    } finally {
+      setLoading(false);
+    }
+  }
+
+  async function handleProgrammeDelete(id: number) {
+    if (!confirm('Are you sure you want to delete this programme?')) return;
+    try {
+      const token = localStorage.getItem("admin_jwt");
+      const res = await fetch(getApiUrl(`api/programmes/${id}`), {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (res.ok) {
+        setProgrammes(programmes.filter(p => p.id !== id));
+        addNotification({ type: 'success', title: 'Deleted', message: 'Programme removed.' });
+      }
+    } catch (error) {
+      console.error('Error deleting programme:', error);
+    }
+  }
+
 
   // Google OAuth setup handler
   async function handleGoogleOAuthSetup() {
@@ -7490,10 +7668,285 @@ export default function AdminDashboard() {
               )}
             </section>
           )}
+
+          {/* Team CRUD */}
+          {activeMenu === 'team' && (
+            <section>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 24,
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <h2 style={{
+                  fontSize: 'clamp(20px, 3vw, 28px)',
+                  fontWeight: 700,
+                  color: '#667eea',
+                  margin: 0,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>Manage Team</h2>
+                <button
+                  onClick={() => {
+                    setTeamForm({ title: '', description: '', role: '' });
+                    setTeamEditId(null);
+                    setShowTeamModal(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '14px 24px',
+                    fontWeight: 700,
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <FaPlus size={16} /> Add Team Member
+                </button>
+              </div>
+
+              <DataTable
+                data={team}
+                columns={[
+                  {
+                    key: 'image',
+                    label: 'Image',
+                    render: (value, item: any) => (
+                      <img
+                        src={item.image_url ? 'http://localhost:4000' + item.image_url : '/placeholder.png'}
+                        alt="Team"
+                        style={{ width: 50, height: 50, borderRadius: '50%', objectFit: 'cover' }}
+                      />
+                    )
+                  },
+                  { key: 'title', label: 'Title', sortable: true },
+                  { key: 'description', label: 'Description', sortable: true },
+                  { key: 'role', label: 'Role' }
+                ]}
+                onEdit={(item) => {
+                  setTeamForm(item);
+                  setTeamEditId(item.id);
+                  setShowTeamModal(true);
+                }}
+                onDelete={(item) => handleTeamDelete(item.id)}
+                title="Team Members"
+              />
+            </section>
+          )}
+
+          {/* Programmes CRUD */}
+          {activeMenu === 'programmes' && (
+            <section>
+              <div style={{
+                display: 'flex',
+                justifyContent: 'space-between',
+                alignItems: 'center',
+                marginBottom: 24,
+                flexWrap: 'wrap',
+                gap: '16px'
+              }}>
+                <h2 style={{
+                  fontSize: 'clamp(20px, 3vw, 28px)',
+                  fontWeight: 700,
+                  color: '#667eea',
+                  margin: 0,
+                  background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                  WebkitBackgroundClip: 'text',
+                  WebkitTextFillColor: 'transparent',
+                  backgroundClip: 'text'
+                }}>Manage Programmes</h2>
+                <button
+                  onClick={() => {
+                    setProgrammeForm({ title: '', description: '' });
+                    setProgrammeEditId(null);
+                    setShowProgrammeModal(true);
+                  }}
+                  style={{
+                    background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)',
+                    color: '#fff',
+                    border: 'none',
+                    borderRadius: '12px',
+                    padding: '14px 24px',
+                    fontWeight: 700,
+                    fontSize: '16px',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 4px 12px rgba(102, 126, 234, 0.3)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '8px'
+                  }}
+                  onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-2px)'}
+                  onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+                >
+                  <FaPlus size={16} /> Add Programme
+                </button>
+              </div>
+
+              <DataTable
+                data={programmes}
+                columns={[
+                  {
+                    key: 'image',
+                    label: 'Image',
+                    render: (value, item: any) => (
+                      <img
+                        src={item.image_url ? 'http://localhost:4000' + item.image_url : '/placeholder.png'}
+                        alt="Programme"
+                        style={{ width: 80, height: 50, borderRadius: '8px', objectFit: 'cover' }}
+                      />
+                    )
+                  },
+                  { key: 'title', label: 'Title', sortable: true },
+                  { key: 'description', label: 'Description', sortable: true }
+                ]}
+                onEdit={(item) => {
+                  setProgrammeForm(item);
+                  setProgrammeEditId(item.id);
+                  setShowProgrammeModal(true);
+                }}
+                onDelete={(item) => handleProgrammeDelete(item.id)}
+                title="Programmes"
+              />
+            </section>
+          )}
+
         </main>
       </div>
+      {/* Team Modal */}
+      {showTeamModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '40px', width: '100%', maxWidth: '600px', maxHeight: '90vh', overflow: 'auto' }}>
+            <h2 style={{ marginBottom: '24px', color: '#667eea' }}>{teamEditId ? 'Edit Team Member' : 'Add Team Member'}</h2>
+            <form onSubmit={handleTeamSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Title *</label>
+                <input
+                  type="text"
+                  value={teamForm.title}
+                  onChange={e => setTeamForm({ ...teamForm, title: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Description *</label>
+                <textarea
+                  value={teamForm.description}
+                  onChange={e => setTeamForm({ ...teamForm, description: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', minHeight: '100px' }}
+                  required
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Role</label>
+                <input
+                  type="text"
+                  value={teamForm.role}
+                  onChange={e => setTeamForm({ ...teamForm, role: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                />
+              </div>
+              <div>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Image</label>
+                <input
+                  type="file"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) setTeamForm({ ...teamForm, imageFile: file });
+                  }}
+                  accept="image/*"
+                  style={{ width: '100%', padding: '10px 0' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px' }}>
+                <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                  {teamEditId ? 'Update' : 'Add'} Member
+                </button>
+                <button type="button" onClick={() => setShowTeamModal(false)} style={{ flex: 1, background: '#6b7280', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Programme Modal */}
+      {showProgrammeModal && (
+        <div style={{
+          position: 'fixed', top: 0, left: 0, width: '100vw', height: '100vh',
+          background: 'rgba(0,0,0,0.5)', zIndex: 3000, display: 'flex',
+          alignItems: 'center', justifyContent: 'center', padding: '20px'
+        }}>
+          <div style={{ background: '#fff', borderRadius: '20px', padding: '40px', width: '100%', maxWidth: '800px', maxHeight: '90vh', overflow: 'auto' }}>
+            <h2 style={{ marginBottom: '24px', color: '#667eea' }}>{programmeEditId ? 'Edit Programme' : 'Add Programme'}</h2>
+            <form onSubmit={handleProgrammeSubmit} style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '24px' }}>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Main Title *</label>
+                <input
+                  type="text"
+                  value={programmeForm.title}
+                  onChange={e => setProgrammeForm({ ...programmeForm, title: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db' }}
+                  required
+                />
+              </div>
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Description *</label>
+                <textarea
+                  value={programmeForm.description}
+                  onChange={e => setProgrammeForm({ ...programmeForm, description: e.target.value })}
+                  style={{ width: '100%', padding: '12px', borderRadius: '8px', border: '1px solid #d1d5db', minHeight: '100px' }}
+                  required
+                />
+              </div>
+
+              <div style={{ gridColumn: 'span 2' }}>
+                <label style={{ display: 'block', marginBottom: '8px', fontWeight: 600 }}>Image</label>
+                <input
+                  type="file"
+                  onChange={e => {
+                    const file = e.target.files?.[0];
+                    if (file) setProgrammeForm({ ...programmeForm, imageFile: file });
+                  }}
+                  accept="image/*"
+                  style={{ width: '100%', padding: '10px 0' }}
+                />
+              </div>
+              <div style={{ display: 'flex', gap: '12px', marginTop: '20px', gridColumn: 'span 2' }}>
+                <button type="submit" style={{ flex: 1, background: 'linear-gradient(135deg, #667eea 0%, #764ba2 100%)', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 700, cursor: 'pointer' }}>
+                  {programmeEditId ? 'Update' : 'Add'} Programme
+                </button>
+                <button type="button" onClick={() => setShowProgrammeModal(false)} style={{ flex: 1, background: '#6b7280', color: '#fff', border: 'none', padding: '14px', borderRadius: '12px', fontWeight: 600, cursor: 'pointer' }}>
+                  Cancel
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
       {/* Category Modal */}
       {showCategoryModal && (
+
         <div style={{
           position: 'fixed',
           top: 0,

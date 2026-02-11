@@ -42,7 +42,7 @@ export default function TopBar() {
   // Responsive: detect small screens
   const [isMobile, setIsMobile] = React.useState(false);
   React.useEffect(() => {
-    const handleResize = () => setIsMobile(window.innerWidth <= 900);
+    const handleResize = () => setIsMobile(window.innerWidth <= 1100);
     handleResize();
     window.addEventListener('resize', handleResize);
     return () => window.removeEventListener('resize', handleResize);
@@ -665,19 +665,13 @@ export default function TopBar() {
             </Link>
           </nav>
         )}
-        {/* Hamburger for mobile */}
-        {isMobile && (
-          <button onClick={() => setMobileMenu(m => !m)} aria-label="Open menu" style={{ background: 'none', border: 'none', fontSize: 32, color: highContrast ? '#fff' : '#5a67d8', cursor: 'pointer', marginLeft: 16 }}>
-            {mobileMenu ? <FaTimes /> : <FaBars />}
-          </button>
-        )}
-        {/* Login/Signup and Cart */}
+        {/* Login/Signup, Cart, and Hamburger for mobile */}
         <div className="login-section" style={{
           display: 'flex',
           alignItems: 'center',
           gap: 'clamp(0.5rem, 2vw, 1.5rem)',
-          marginLeft: 'clamp(1rem, 3vw, 2rem)',
-          flexWrap: 'wrap'
+          marginLeft: 'auto',
+          flexWrap: 'nowrap'
         }}>
           {/* Cart Icon */}
           <Link href={`/${locale}/cart`} style={{
@@ -733,8 +727,27 @@ export default function TopBar() {
             )}
           </Link>
 
-          {/* Google Auth Login */}
-          <GoogleAuth />
+          {/* Google Auth Login - Desktop Only */}
+          {!isMobile && <GoogleAuth />}
+
+          {/* Hamburger for mobile - Inside this group now */}
+          {isMobile && (
+            <button
+              onClick={() => setMobileMenu(m => !m)}
+              aria-label="Open menu"
+              style={{
+                background: 'none',
+                border: 'none',
+                fontSize: 28,
+                color: highContrast ? '#fff' : '#5a67d8',
+                cursor: 'pointer',
+                marginLeft: 4,
+                display: 'flex',
+                alignItems: 'center'
+              }}>
+              {mobileMenu ? <FaTimes /> : <FaBars />}
+            </button>
+          )}
         </div>
         {/* Mobile Left Drawer */}
         <div
@@ -820,6 +833,10 @@ export default function TopBar() {
 
           {/* Drawer Content */}
           <div style={{ padding: '1.5rem' }}>
+            {/* Mobile Auth Button */}
+            <div style={{ marginBottom: '1.5rem', display: 'flex', justifyContent: 'center' }}>
+              <GoogleAuth />
+            </div>
             {/* Search Section */}
             <div style={{ marginBottom: '2rem' }}>
               <h3 style={{
@@ -1181,24 +1198,29 @@ export default function TopBar() {
             overflow: hidden !important;
           }
 
-          @media (max-width: 768px) {
+          @media (max-width: 1100px) {
             .topbar-root {
-              min-height: 70px !important;
+              min-height: 60px !important;
             }
 
             .topbar-root .main-row {
-              flex-direction: column !important;
-              align-items: stretch !important;
-              gap: 1rem !important;
+              flex-direction: row !important;
+              align-items: center !important;
+              justify-content: space-between !important;
+              padding: 0.5rem 1rem !important;
+              gap: 0 !important;
             }
 
             .topbar-root .login-section {
-              justify-content: center !important;
+              margin-left: auto !important;
               gap: 1rem !important;
+              width: auto !important;
+              justify-content: flex-end !important;
             }
 
             .topbar-root .logo-section {
-              justify-content: center !important;
+              /* Keep logo left */
+              justify-content: flex-start !important;
             }
 
             .mobile-drawer {
